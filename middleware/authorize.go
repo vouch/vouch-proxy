@@ -1,5 +1,7 @@
 package middleware
 
+// TODO I think we can kill this file
+
 import (
 	// "net/http"
 

@@ -3,6 +3,7 @@ package jwtmanager
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	cfg "git.fs.bnf.net/bnfinet/lasso/lib/cfg"
@@ -18,12 +19,19 @@ type LassoClaims struct {
 }
 
 var Key = []byte(cfg.Get("jwt.secret"))
+var expiresAtMinutes int
+
 var StandardClaims jwt.StandardClaims
 
 func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: "lasso",
 	}
+	expiresAtMinutes, err := strconv.Atoi(cfg.Get("jwt.expiresAt"))
+	if err != nil {
+		log.Error("expiresAtMinutes uninitialized %s", err)
+	}
+	log.Infof("jwt expiresAtMinutes set to %d", expiresAtMinutes)
 }
 
 // CreateUserTokenString
@@ -33,7 +41,8 @@ func CreateUserTokenString(u structs.User) string {
 		u.Email,
 		StandardClaims,
 	}
-	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 1).Unix()
+
+	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(expiresAtMinutes)).Unix()
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)

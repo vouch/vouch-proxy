@@ -18,15 +18,17 @@ type Cfg struct {
 }
 
 var cCfg Cfg
+var cDomain string
 
 func init() {
 	cfg.UnmarshalKey("cookie", &cCfg)
+	cDomain = cfg.Get("cdomain")
 }
 
 // SetCookie set the lasso jwt cookie
 func SetCookie(c *gin.Context, val string, domain string) {
 	// foreach domain
-	c.SetCookie(cCfg.Name, val, cCfg.MaxAge, "/", domain, cCfg.Secure, cCfg.HTTPOnly)
+	c.SetCookie(cCfg.Name, val, cCfg.MaxAge, "/", cDomain, cCfg.Secure, cCfg.HTTPOnly)
 }
 
 // Cookie get the lasso jwt cookie

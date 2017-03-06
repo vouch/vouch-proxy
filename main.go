@@ -16,6 +16,7 @@ import (
 
 func main() {
 	log.Info("starting lasso")
+	log.SetLevel(log.DebugLevel)
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Static("/css", "./static/css")

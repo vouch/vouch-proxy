@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -86,7 +85,6 @@ func GetUser(key string, v interface{}) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(userBucket)
 		val := b.Get([]byte(key))
-		fmt.Printf("The answer is: %s\n", v)
 		gob.NewDecoder(bytes.NewReader(val)).Decode(v)
 		log.Infof("v.Email: %s", v.(*structs.User).Email)
 		return nil

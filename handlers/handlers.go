@@ -179,8 +179,15 @@ func GCallbackHandler(c *gin.Context) {
 	tokenstring := jwtmanager.CreateUserTokenString(user)
 	cookie.SetCookie(c, tokenstring, c.Request.URL.Host)
 
-	c.HTML(http.StatusOK, "index.tmpl", gin.H{"extra": tokenstring})
+	// TODO store the originally requested URL so we can redirec on the roundtrip
+	redirectURL := session.Values["requestedURL"].(string)
+	if redirectURL != "" {
+		c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		return
+		// = "http://bnf.net/?requested=" + state
+	}
 
+	c.HTML(http.StatusOK, "index.tmpl", gin.H{"extra": tokenstring})
 }
 
 func LoginHandler(c *gin.Context) {
