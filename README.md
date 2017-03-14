@@ -2,11 +2,56 @@
 # Lasso
 
 # TODO
-# we left off trying to set the cookie in cookie.go
+ * commit!
+ * validate the users' domain against `hd` from google response
+ * other validations
+ * Docker container that's not Dockerfile.fromscratch
+ * offer a `/validate` endpoint that *any* service can connect to that validates the `X-LASSO-TOKEN` token
+ * user management
 
-# okay, we need a session to hold the nonce
+the flow of first time login
+ * Bob visits https://private.oursites.com
+ * nginx reverse proxy 
+   * recieves the request for private.oursites.com from Bob
+   * uses the `auth_request` module configured for the `/authrequest` path
+   * `/authrequest` is configured to `proxy_pass` requests to https://login.oursites.com/authrequest
+     * if `/authrequest` returns...
+       * 200 OK then SUCCESS allow Bob through
+       * 401 NotAuthorized then 
+         * respond to Bob with a 302 redirect to https://login.oursites.com/login?url=https://private.oursites.com
+     
+ * nginx contacts https://login.oursites.com/authrequest
+   * recieves the request for private.oursites.com from Bob via nginx `proxy_pass`
+   * it looks for a cookie named "oursitesSSO" that contains a JWT
+   * if the cookie is found, and the JWT is valid
+       * returns 200 to nginx, which will allow access (bob notices nothing)
+   * if the cookie is NOT found, or the JWT is NOT valid
+       * return 401 NotAuthorized to nginx (which forwards the request on to login)
 
-# and maybe we should re-write this thing in echo or in go-kit
+ * Bob is first forwarded briefly to https://login.oursites.com/login?url=https://private.oursites.com
+   * clears out the cookie named "oursitesSSO" if it exists
+   * generates a nonce and stores it in session variable "state"
+   * stores the url "https://private.oursites.com" from the query string in session variable "requestedURL"
+   * respond to Bob with a 302 redirec to Google's OAuth Login form, including the "state" nonce
+
+ *  Bob logs into his Google account using Oauth
+   * after successful login
+   * Google responds to Bob with a 302 redirect to https://login.oursites.com/auth?state=$STATE
+
+ * Bob is forwarded to https://login.oursites.com/auth?state=$STATE
+   * if the "state" nonce from the url matches the session variable "state"
+   * make a request of google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
+   * if the email address matches the domain oursites.com (it does)
+     * create a user in our database with key bob@oursites.com
+     * issue bob a JWT in the form of a cookie named "oursitesSSO"
+     * retrieve the session variable "requestedURL" and 302 redirect bob back to https://private.oursites.com 
+
+Note that outside of some innocuos redirection, Bob only ever sees https://private.oursites.com and the Google Login screen in his browser.  While Lasso does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
+
+If lasso is on the same host as the nginx reverse proxy the response time from the `/authrequest` endpoint to nginx should be less than 1ms 
+
+Once the JWT is set, Bob's will be authorized for any other sites which are configured to use https://login.oursites.com/authrequest from the `auth_request` nginx module
+
 
 an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
 
@@ -35,6 +80,7 @@ an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx
    yes..
       - issue jwt into a cookie for each domain using an image
 
+# leaving teams out of this for now
 /admin/domains domain rights
   - authorize roles
   - authorize users
