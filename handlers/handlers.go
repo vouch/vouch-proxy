@@ -166,9 +166,9 @@ func VerifyUser(u structs.User) (ok bool, err error) {
 	// is Hd google specific? probably yes
 	// TODO rewrite / abstract this validation
 	ok = false
-	if !domains.DomainUnderManagement(u.Email) {
+	if !domains.IsUnderManagement(u.Email) {
 		err = fmt.Errorf("Email %s is not within a lasso managed domain", u.Email)
-	} else if !domains.DomainUnderManagement(u.HostDomain) {
+	} else if !domains.IsUnderManagement(u.HostDomain) {
 		err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
 	} else {
 		ok = true

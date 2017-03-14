@@ -10,8 +10,9 @@ import (
 // TODO sort domains by length from longest to shortest
 // https://play.golang.org/p/N6GbEgBffd
 
-// MatchingDomain returns one of the domains we're configured for
-func MatchingDomain(s string) string {
+// Matches returns one of the domains we're configured for
+// TODO return all matches
+func Matches(s string) string {
 	for i, v := range cfg.Cfg.Domains {
 		log.Debugf("array value at [%d]=%v", i, v)
 		if strings.Contains(s, v) {
@@ -21,9 +22,9 @@ func MatchingDomain(s string) string {
 	return ""
 }
 
-// DomainUnderManagement check if string contains a lasso managed domain
-func DomainUnderManagement(s string) bool {
-	match := MatchingDomain(s)
+// IsUnderManagement check if string contains a lasso managed domain
+func IsUnderManagement(s string) bool {
+	match := Matches(s)
 	if match != "" {
 		return true
 	}

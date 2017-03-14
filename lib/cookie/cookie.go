@@ -13,7 +13,7 @@ import (
 // SetCookie set the lasso jwt cookie
 func SetCookie(c *gin.Context, val string) {
 	// foreach domain
-	domain := domains.MatchingDomain(c.Request.Host)
+	domain := domains.Matches(c.Request.Host)
 	var expires = cfg.Cfg.JWT.MaxAge * 60
 	log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
 	c.SetCookie(cfg.Cfg.Cookie.Name,
@@ -40,7 +40,7 @@ func Cookie(c *gin.Context) (string, error) {
 
 // ClearCookie get rid of the existing cookie
 func ClearCookie(c *gin.Context) {
-	domain := domains.MatchingDomain(c.Request.Host)
+	domain := domains.Matches(c.Request.Host)
 	log.Debugf("clearing cookie %s in %s", cfg.Cfg.Cookie.Name, domain)
 	c.SetCookie(cfg.Cfg.Cookie.Name,
 		"delete",
