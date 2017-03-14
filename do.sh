@@ -11,7 +11,7 @@ export LASSO_ROOT=/home/bfoote/go/src/git.fs.bnf.net/bnfinet/lasso/
 IMAGE=dreg.bnf.net/bnfnet/lasso
 GOIMAGE=dreg.bnf.net/bnfnet/golang
 NAME=lasso
-APIPORT=4040
+HTTPPORT=9090
 SWAGGERPORT=4048
 SWAGNAME=swagger
 GODOC_PORT=5050
@@ -48,7 +48,17 @@ drun () {
       docker rm $NAME
    fi
 
-   docker run --rm -i -t --name $NAME $IMAGE $*
+   CMD="docker run --rm -i -t 
+    -p ${HTTPPORT}:${HTTPPORT} 
+    --name $NAME 
+    -v ${SDIR}/config:/config 
+    -v ${SDIR}/data:/data 
+    -v ${SDIR}/templates:/templates 
+    -v ${SDIR}/static:/static 
+    $IMAGE $* "
+
+    echo $CMD
+    $CMD
 }
 
 swagger_gen_server() {
@@ -96,15 +106,19 @@ watch () {
     echo -e "starting watcher for:\n\t$CMD"
     $CMD&
     WATCH_PID=$!
-    while inotifywait -q --exclude .swp -e modify -r .; do
-      if [ -z "$WATCH_PID"]; then
+    echo WATCH_PID $WATCH_PID
+    FIRST_TIME=1
+    while inotifywait -q --exclude .db --exclude .git --exclude do.sh -e modify -r .; do
+      if [ -n "$WATCH_PID" ]; then
+        echo "killing $WATCH_PID and restarting $CMD"
         kill $WATCH_PID
         sleep 3
       fi
-      clear
-	    $CMD&
-      WATCH_PID=$!
-    done;
+     clear
+	   $CMD&
+     WATCH_PID=$!
+     echo WATCH_PID $WATCH_PID
+   done;
 }
 
 goget () {
