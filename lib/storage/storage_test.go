@@ -7,7 +7,8 @@ import (
 	"os"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
+	// log "github.com/Sirupsen/logrus"
+
 	"github.com/stretchr/testify/assert"
 
 	"git.fs.bnf.net/bnfinet/lasso/lib/structs"
@@ -16,7 +17,7 @@ import (
 var testdb = "storage-test.db"
 
 func init() {
-	log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
 }
 
 func TestPutUserGetUser(t *testing.T) {

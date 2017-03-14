@@ -15,6 +15,7 @@ type User struct {
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
 	Gender        string `json:"gender"`
+	HostDomain    string `json:"hd"`
 	// jwt.StandardClaims
 }
 

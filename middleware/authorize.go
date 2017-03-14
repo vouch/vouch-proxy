@@ -1,6 +1,6 @@
 package middleware
 
-// TODO I think we can kill this file
+// TODO use this middleware and the main.go call to build out the management interface
 
 import (
 	// "net/http"

@@ -40,7 +40,7 @@ var encoder *gob.Encoder
 // may want to use encode/gob to store the user record
 func init() {
 	encoder = gob.NewEncoder(&buf)
-	Db, _ = Open(os.Getenv("LASSO_ROOT") + cfg.Get("db.file"))
+	Db, _ = Open(os.Getenv("LASSO_ROOT") + cfg.Cfg.DB.File)
 }
 
 // Open the boltdb
@@ -86,7 +86,7 @@ func GetUser(key string, v interface{}) error {
 		b := tx.Bucket(userBucket)
 		val := b.Get([]byte(key))
 		gob.NewDecoder(bytes.NewReader(val)).Decode(v)
-		log.Infof("v.Email: %s", v.(*structs.User).Email)
+		log.Debugf("retrieved %s from db", v.(*structs.User).Email)
 		return nil
 	})
 }

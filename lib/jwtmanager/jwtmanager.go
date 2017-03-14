@@ -3,38 +3,31 @@ package jwtmanager
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	cfg "git.fs.bnf.net/bnfinet/lasso/lib/cfg"
-	structs "git.fs.bnf.net/bnfinet/lasso/lib/structs"
+	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
+	"git.fs.bnf.net/bnfinet/lasso/lib/structs"
 	log "github.com/Sirupsen/logrus"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+// LassoClaims jwt Claims specific to lasso
 type LassoClaims struct {
 	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
-var Key = []byte(cfg.Get("jwt.secret"))
-var expiresAtMinutes int
-
+// StandardClaims jwt.StandardClaims implimentation
 var StandardClaims jwt.StandardClaims
 
 func init() {
 	StandardClaims = jwt.StandardClaims{
-		Issuer: "lasso",
+		Issuer: cfg.Cfg.JWT.Issuer,
 	}
-	expiresAtMinutes, err := strconv.Atoi(cfg.Get("jwt.expiresAt"))
-	if err != nil {
-		log.Error("expiresAtMinutes uninitialized %s", err)
-	}
-	log.Infof("jwt expiresAtMinutes set to %d", expiresAtMinutes)
 }
 
-// CreateUserTokenString
+// CreateUserTokenString converts user to signed jwt
 func CreateUserTokenString(u structs.User) string {
 	// User`token`
 	claims := LassoClaims{
@@ -42,17 +35,21 @@ func CreateUserTokenString(u structs.User) string {
 		StandardClaims,
 	}
 
-	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(expiresAtMinutes)).Unix()
+	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-
 	log.Debugf("token: %v", token)
 
+	// log.Debugf("token: %v", token)
+	log.Debugf("token expires: %d", claims.StandardClaims.ExpiresAt)
+	log.Debugf("diff from now: %d", claims.StandardClaims.ExpiresAt-time.Now().Unix())
+
 	// token -> string. Only server knows this secret (foobar).
-	ss, err := token.SignedString(Key)
-	if err != nil {
-		log.Debugf("%v %s", ss, err)
+	ss, err := token.SignedString(cfg.Cfg.JWT.Secret)
+	// ss, err := token.SignedString([]byte("testing"))
+	if ss == "" || err != nil {
+		log.Errorf("signed token error: %s", err)
 	}
 	return ss
 }
@@ -65,7 +62,7 @@ func tokenIsValid(token *jwt.Token, err error) bool {
 			log.Errorf("token malformed")
 		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 			// Token is either expired or not active yet
-			log.Errorf("token expired")
+			log.Errorf("token expired %s", err)
 		} else {
 			log.Errorf("token unknown error")
 		}
@@ -75,30 +72,29 @@ func tokenIsValid(token *jwt.Token, err error) bool {
 	return false
 }
 
+// ParseTokenString converts signed token to jwt struct
 func ParseTokenString(tokenString string) (*jwt.Token, error) {
+	log.Debugf("tokenString %s", tokenString)
 
-	ptoken, err := jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// ptoken, err := jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
+	return jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.GetSigningMethod("HS256") {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		// if !tokenString {
-		// 	log.Error(token)
-		// 	return nil, fmt.Errorf("invalid token")
-		// }
-		return Key, nil
+		return cfg.Cfg.JWT.Secret, nil
 	})
-	if !tokenIsValid(ptoken, err) {
-		return nil, errors.New("token is not valid")
-	}
-	return ptoken, err
-
+	// if ptoken == nil || !tokenIsValid(ptoken, err) {
+	// 	// return nil, errors.New("token is not valid")
+	// 	return nil, err
+	// }
+	// return ptoken, err
 }
 
-// PTokenEmail returns the Email in the validated ptoken
+// PTokenToEmail returns the Email in the validated ptoken
 func PTokenToEmail(ptoken *jwt.Token) (string, error) {
 
 	ptokenClaims, ok := ptoken.Claims.(*LassoClaims)
-	if !ok {
+	if ptokenClaims == nil || !ok {
 		return "", errors.New("cannot parse claims")
 	}
 	return ptokenClaims.Email, nil

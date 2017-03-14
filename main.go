@@ -7,18 +7,29 @@ package main
 //  * replace gin sessions with pulling from storage
 
 import (
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 
 	"git.fs.bnf.net/bnfinet/lasso/handlers"
+	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
 	"git.fs.bnf.net/bnfinet/lasso/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	log.Info("starting lasso")
-	log.SetLevel(log.DebugLevel)
+	if cfg.Cfg.LogLevel == "debug" {
+		log.SetLevel(log.DebugLevel)
+		log.Debug("logLevel set to debug")
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
-	router.Use(gin.Logger())
+	if cfg.Cfg.LogLevel == "debug" {
+		router.Use(gin.Logger())
+	}
 	router.Static("/css", "./static/css")
 	router.Static("/img", "./static/img")
 	router.LoadHTMLGlob("templates/*")
@@ -33,8 +44,9 @@ func main() {
 	{
 		authorized.GET("/field", handlers.FieldHandler)
 	}
-	router.Run("0.0.0.0:9090")
-
+	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+	log.Infof("running lasso on %s", listen)
+	router.Run(listen)
 	// go func() {
 	// 	log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 	// }()
