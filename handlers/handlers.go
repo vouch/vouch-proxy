@@ -10,12 +10,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/lib/cookie"
-	"git.fs.bnf.net/bnfinet/lasso/lib/domains"
-	"git.fs.bnf.net/bnfinet/lasso/lib/jwtmanager"
-	"git.fs.bnf.net/bnfinet/lasso/lib/storage"
-	"git.fs.bnf.net/bnfinet/lasso/lib/structs"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cookie"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/jwtmanager"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/storage"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
@@ -25,6 +25,7 @@ import (
 var (
 	gcred       structs.GCredentials
 	oauthclient *oauth2.Config
+	oauthopts   oauth2.AuthCodeOption
 
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Name))
 )
@@ -43,6 +44,8 @@ func init() {
 		},
 		Endpoint: google.Endpoint,
 	}
+	log.Infof("seting hd to %s", cfg.Cfg.PreferredDomain)
+	oauthopts = oauth2.SetAuthURLParam("hd", cfg.Cfg.PreferredDomain)
 }
 
 func randString() string {
@@ -54,7 +57,8 @@ func randString() string {
 func loginURL(state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var url = oauthclient.AuthCodeURL(state)
+
+	var url = oauthclient.AuthCodeURL(state, oauthopts)
 	// log.Debugf("loginUrl %s", url)
 	return url
 }
@@ -231,14 +235,14 @@ func GCallbackHandler(c *gin.Context) {
 
 	// SUCCESS!! they are authorized
 
-	// store the user
+	// store the user in the database
 	storage.PutUser(user)
 
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user)
 	cookie.SetCookie(c, tokenstring)
 
-	// TODO store the originally requested URL so we can redirect on the roundtrip
+	// get the originally requested URL so we can send them on their way
 	redirectURL := session.Values["requestedURL"].(string)
 	if redirectURL != "" {
 		// clear out the session value
@@ -249,7 +253,7 @@ func GCallbackHandler(c *gin.Context) {
 		c.Redirect(302, redirectURL)
 		return
 	}
-
+	// otherwise serve an html page
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{"extra": tokenstring})
 }
 
