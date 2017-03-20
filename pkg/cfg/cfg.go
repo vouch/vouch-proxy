@@ -10,12 +10,12 @@ import (
 
 // Cfg lasso jwt cookie configuration
 type CfgT struct {
-	LogLevel string `mapstructure:"logLevel"`
-	Listen   string `mapstructure:"listen"`
-	Port     int    `mapstructure:"port"`
-	// TODO figue out how to make a map of strings from the yaml
-	Domains []string `mapstructure:"domains"`
-	JWT     struct {
+	LogLevel        string   `mapstructure:"logLevel"`
+	Listen          string   `mapstructure:"listen"`
+	Port            int      `mapstructure:"port"`
+	Domains         []string `mapstructure:"domains"`
+	PreferredDomain string   `mapstructre:"preferredDomain"`
+	JWT             struct {
 		MaxAge int    `mapstructure:"maxAge"`
 		Issuer string `mapstructure:"issuer"`
 		Secret []byte `mapstructure:"secret"`

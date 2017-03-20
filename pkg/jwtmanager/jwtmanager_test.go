@@ -3,8 +3,8 @@ package jwtmanager
 import (
 	"testing"
 
-	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/lib/structs"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

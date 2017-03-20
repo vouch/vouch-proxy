@@ -5,9 +5,9 @@ package middleware
 import (
 	// "net/http"
 
-	// "git.fs.bnf.net/bnfinet/lasso/lib/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/lib/cookie"
-	jwtmanager "git.fs.bnf.net/bnfinet/lasso/lib/jwtmanager"
+	// "git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cookie"
+	jwtmanager "git.fs.bnf.net/bnfinet/lasso/pkg/jwtmanager"
 	log "github.com/Sirupsen/logrus"
 	jwt "github.com/dgrijalva/jwt-go"
 

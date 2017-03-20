@@ -3,9 +3,9 @@ package cookie
 import (
 	"errors"
 
-	// "git.fs.bnf.net/bnfinet/lasso/lib/structs"
-	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/lib/domains"
+	// "git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 )

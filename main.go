@@ -12,8 +12,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"git.fs.bnf.net/bnfinet/lasso/handlers"
-	"git.fs.bnf.net/bnfinet/lasso/lib/cfg"
 	"git.fs.bnf.net/bnfinet/lasso/middleware"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
 	"github.com/gin-gonic/gin"
 )
 
