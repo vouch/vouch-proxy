@@ -2,3 +2,4 @@ config/config.yml
 data/lasso_bolt.db
 pkg/model/protobuf/examples/*
 pkg/model/storage-test.db
+main
