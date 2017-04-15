@@ -14,7 +14,7 @@ import (
 	"git.fs.bnf.net/bnfinet/lasso/pkg/cookie"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/jwtmanager"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/storage"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/model"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -44,7 +44,7 @@ func init() {
 		},
 		Endpoint: google.Endpoint,
 	}
-	log.Infof("seting hd to %s", cfg.Cfg.PreferredDomain)
+	log.Infof("seting oauth prefered login domain param 'hd' to %s", cfg.Cfg.PreferredDomain)
 	oauthopts = oauth2.SetAuthURLParam("hd", cfg.Cfg.PreferredDomain)
 }
 
@@ -120,7 +120,7 @@ func AuthRequestHandler(c *gin.Context) {
 	log.Infof("email from jwt cookie: %s", email)
 
 	user := structs.User{}
-	err = storage.GetUser(email, &user)
+	err = model.User(email, &user)
 	if err != nil {
 		// no email in jwt
 		error401(c, err.Error())
@@ -236,7 +236,7 @@ func GCallbackHandler(c *gin.Context) {
 	// SUCCESS!! they are authorized
 
 	// store the user in the database
-	storage.PutUser(user)
+	model.PutUser(user)
 
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user)

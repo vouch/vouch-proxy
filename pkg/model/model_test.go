@@ -1,4 +1,4 @@
-package storage
+package model
 
 // modeled after
 // https://www.opsdash.com/blog/persistent-key-value-store-golang.html

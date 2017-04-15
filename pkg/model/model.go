@@ -1,4 +1,4 @@
-package storage
+package model
 
 // modeled after
 // https://www.opsdash.com/blog/persistent-key-value-store-golang.html
@@ -81,7 +81,7 @@ func PutUser(u structs.User) {
 }
 
 // GetUser lookup user from key
-func GetUser(key string, v interface{}) error {
+func User(key string, v interface{}) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(userBucket)
 		val := b.Get([]byte(key))
