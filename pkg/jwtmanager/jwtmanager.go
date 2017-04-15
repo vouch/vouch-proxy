@@ -12,18 +12,28 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+const numSites = 1
+
 // LassoClaims jwt Claims specific to lasso
 type LassoClaims struct {
-	Email string `json:"email"`
+	Email string           `json:"email"`
+	Sites [numSites]string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	jwt.StandardClaims
 }
 
 // StandardClaims jwt.StandardClaims implimentation
 var StandardClaims jwt.StandardClaims
 
+// Sites just testing
+var Sites [numSites]string
+
 func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
+	}
+	for i := 0; i < numSites; i++ {
+		// Sites[i] = fmt.Sprintf("site%d.bnf.net", i)
+		Sites[i] = "naga.bnf.net"
 	}
 }
 
@@ -32,6 +42,7 @@ func CreateUserTokenString(u structs.User) string {
 	// User`token`
 	claims := LassoClaims{
 		u.Email,
+		Sites,
 		StandardClaims,
 	}
 
@@ -54,7 +65,8 @@ func CreateUserTokenString(u structs.User) string {
 	return ss
 }
 
-func tokenIsValid(token *jwt.Token, err error) bool {
+// TokenIsValid gett better error reporting
+func TokenIsValid(token *jwt.Token, err error) bool {
 	if token.Valid {
 		return true
 	} else if ve, ok := err.(*jwt.ValidationError); ok {
@@ -72,6 +84,19 @@ func tokenIsValid(token *jwt.Token, err error) bool {
 	return false
 }
 
+// TokenClaimsIncludeSite searches does the token contain the site?
+func TokenClaimsIncludeSite(token *jwt.Token, site string) bool {
+	if claims, ok := token.Claims.(*LassoClaims); ok {
+		for _, s := range claims.Sites {
+			if s == site {
+				return true
+			}
+		}
+	}
+	log.Errorf("site %s not found in token", site)
+	return false
+}
+
 // ParseTokenString converts signed token to jwt struct
 func ParseTokenString(tokenString string) (*jwt.Token, error) {
 	log.Debugf("tokenString %s", tokenString)
@@ -81,13 +106,9 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		if token.Method != jwt.GetSigningMethod("HS256") {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
+
 		return cfg.Cfg.JWT.Secret, nil
 	})
-	// if ptoken == nil || !tokenIsValid(ptoken, err) {
-	// 	// return nil, errors.New("token is not valid")
-	// 	return nil, err
-	// }
-	// return ptoken, err
 }
 
 // PTokenToEmail returns the Email in the validated ptoken

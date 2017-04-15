@@ -23,7 +23,16 @@ func AuthorizeRequest() gin.HandlerFunc {
 			// c.HTML(http.StatusUnauthorized, "error.tmpl", gin.H{"message": "Please login."})
 			c.Abort()
 		}
-		log.Infof("token %s", token)
+		if !jwtmanager.TokenIsValid(token, err) {
+			c.Redirect(302, "/login")
+			c.Abort()
+		}
+		if !jwtmanager.TokenClaimsIncludeSite(token, c.Request.Host) {
+			c.Redirect(302, "/login")
+			c.Abort()
+		}
+
+		log.Debugf("token %s", token)
 		c.Next()
 	}
 }
@@ -38,7 +47,8 @@ func jwtFromCookie(c *gin.Context) (*jwt.Token, error) {
 	if err != nil {
 		log.Errorf("bad jwt %s", err)
 		c.Abort()
+		return nil, err
 	}
+
 	return token, nil
-	// return cookie, nil
 }
