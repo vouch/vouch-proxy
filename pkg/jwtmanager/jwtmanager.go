@@ -1,8 +1,12 @@
 package jwtmanager
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
@@ -62,6 +66,9 @@ func CreateUserTokenString(u structs.User) string {
 	if ss == "" || err != nil {
 		log.Errorf("signed token error: %s", err)
 	}
+	if cfg.Cfg.JWT.Compress {
+		return compressAndEncodeTokenString(ss)
+	}
 	return ss
 }
 
@@ -100,15 +107,20 @@ func TokenClaimsIncludeSite(token *jwt.Token, site string) bool {
 // ParseTokenString converts signed token to jwt struct
 func ParseTokenString(tokenString string) (*jwt.Token, error) {
 	log.Debugf("tokenString %s", tokenString)
+	if cfg.Cfg.JWT.Compress {
+		tokenString = decodeAndDecompressTokenString(tokenString)
+		log.Debugf("decompressed tokenString %s", tokenString)
+	}
 
-	// ptoken, err := jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
 	return jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// return jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.GetSigningMethod("HS256") {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return cfg.Cfg.JWT.Secret, nil
 	})
+
 }
 
 // PTokenToEmail returns the Email in the validated ptoken
@@ -119,4 +131,41 @@ func PTokenToEmail(ptoken *jwt.Token) (string, error) {
 		return "", errors.New("cannot parse claims")
 	}
 	return ptokenClaims.Email, nil
+}
+
+func decodeAndDecompressTokenString(encgzipss string) string {
+
+	var gzipss []byte
+	// gzipss, err := url.QueryUnescape(encgzipss)
+	gzipss, err := base64.URLEncoding.DecodeString(encgzipss)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	breader := bytes.NewReader(gzipss)
+	zr, err := gzip.NewReader(breader)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := zr.Close(); err != nil {
+		log.Fatal(err)
+	}
+	ss, _ := ioutil.ReadAll(zr)
+	return string(ss)
+}
+
+func compressAndEncodeTokenString(ss string) string {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write([]byte(ss)); err != nil {
+		log.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	ret := base64.URLEncoding.EncodeToString(buf.Bytes())
+	// ret := url.QueryEscape(buf.String())
+	log.Debugf("compressed string: %s", ret)
+	return ret
 }

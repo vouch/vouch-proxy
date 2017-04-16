@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Cfg lasso jwt cookie configuration
+// CfgT lasso jwt cookie configuration
 type CfgT struct {
 	LogLevel        string   `mapstructure:"logLevel"`
 	Listen          string   `mapstructure:"listen"`
@@ -16,9 +16,10 @@ type CfgT struct {
 	Domains         []string `mapstructure:"domains"`
 	PreferredDomain string   `mapstructre:"preferredDomain"`
 	JWT             struct {
-		MaxAge int    `mapstructure:"maxAge"`
-		Issuer string `mapstructure:"issuer"`
-		Secret []byte `mapstructure:"secret"`
+		MaxAge   int    `mapstructure:"maxAge"`
+		Issuer   string `mapstructure:"issuer"`
+		Secret   []byte `mapstructure:"secret"`
+		Compress bool   `mapstructure:"compress"`
 	}
 	Cookie struct {
 		Name     string `mapstructure:"name"`
@@ -37,6 +38,7 @@ type CfgT struct {
 	}
 }
 
+// Cfg the main exported config variable
 var Cfg CfgT
 
 func init() {
@@ -52,10 +54,12 @@ func init() {
 
 }
 
+// UnmarshalKey populate struct from contents of cfg tree at key
 func UnmarshalKey(key string, rawVal interface{}) error {
 	return viper.UnmarshalKey(key, rawVal)
 }
 
+// Get string value for key
 func Get(key string) string {
 	return viper.GetString(key)
 }

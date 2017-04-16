@@ -2,6 +2,13 @@
 
 ## TODO
 
+* optionally compress the cookie (gzip && base64)
+* use url.QueryEscape() instead of base64 https://golang.org/pkg/net/url/#QueryEscape, or maybe use QueryEscape after base64
+* can we stuff all the user/sites into a 4093 byte cookie, or perhaps a cookie half that size to leave room for other cookies
+  a quick test shows that a raw jwt at 1136 bytes can be gzip and base64 compressed to 471 bytes ~/tmp/jwttests
+  that is probably worth doing
+  http://stackoverflow.com/questions/4164276/storing-compressed-data-in-a-cookie#13675023
+
 * issue tokens manually for webhooks
   * tokens are special, they don't expire, they include an additional claim
     * do they have to be so large?
@@ -39,12 +46,6 @@
 * graphviz of Bob visit flow
 * other validations (like what?)
 
-* optionally compress the cookie (gzip && base64)
-* use url.QueryEscape() instead of base64 https://golang.org/pkg/net/url/#QueryEscape, or maybe use QueryEscape after base64
-* can we stuff all the user/sites into a 4093 byte cookie, or perhaps a cookie half that size to leave room for other cookies
-  a quick test shows that a raw jwt at 1136 bytes can be gzip and base64 compressed to 471 bytes ~/tmp/jwttests
-  http://stackoverflow.com/questions/4164276/storing-compressed-data-in-a-cookie#13675023
-  that is probably worth doing
 
 ## DONE
 
