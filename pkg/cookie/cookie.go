@@ -2,51 +2,53 @@ package cookie
 
 import (
 	"errors"
+	"net/http"
 
 	// "git.fs.bnf.net/bnfinet/lasso/pkg/structs"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
 	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/gin"
 )
 
-// SetCookie set the lasso jwt cookie
-func SetCookie(c *gin.Context, val string) {
+var defaulMaxAge = cfg.Cfg.JWT.MaxAge * 60
+
+// SetCookie http
+func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
+	setCookie(w, r, val, defaulMaxAge)
+}
+
+func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// foreach domain
-	domain := domains.Matches(c.Request.Host)
-	var expires = cfg.Cfg.JWT.MaxAge * 60
-	log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
-	c.SetCookie(cfg.Cfg.Cookie.Name,
-		val,
-		expires,
-		"/",
-		domain,
-		cfg.Cfg.Cookie.Secure,
-		cfg.Cfg.Cookie.HTTPOnly)
+	if maxAge == 0 {
+		maxAge = defaulMaxAge
+	}
+	domain := domains.Matches(r.Host)
+	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
+	http.SetCookie(w, &http.Cookie{
+		Name:     cfg.Cfg.Cookie.Name,
+		Value:    val,
+		Path:     "/",
+		Domain:   domain,
+		MaxAge:   maxAge,
+		Secure:   cfg.Cfg.Cookie.Secure,
+		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+	})
 }
 
 // Cookie get the lasso jwt cookie
-func Cookie(c *gin.Context) (string, error) {
-	cookie, err := c.Cookie(cfg.Cfg.Cookie.Name)
+func Cookie(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(cfg.Cfg.Cookie.Name)
 	if err != nil {
 		return "", err
 	}
-	if cookie == "" {
+	if cookie.Value == "" {
 		return "", errors.New("Cookie token empty")
 	}
-	log.Debugf("cookie %s: %s", cfg.Cfg.Cookie.Name, cookie)
-	return cookie, err
+	log.Debugf("cookie %s: %s", cfg.Cfg.Cookie.Name, cookie.Value)
+	return cookie.Value, err
 }
 
 // ClearCookie get rid of the existing cookie
-func ClearCookie(c *gin.Context) {
-	domain := domains.Matches(c.Request.Host)
-	log.Debugf("clearing cookie %s in %s", cfg.Cfg.Cookie.Name, domain)
-	c.SetCookie(cfg.Cfg.Cookie.Name,
-		"delete",
-		-1,
-		"/",
-		domain,
-		cfg.Cfg.Cookie.Secure,
-		cfg.Cfg.Cookie.HTTPOnly)
+func ClearCookie(w http.ResponseWriter, r *http.Request) {
+	setCookie(w, r, "delete", -1)
 }

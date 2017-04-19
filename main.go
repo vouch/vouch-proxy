@@ -7,14 +7,17 @@ package main
 //  * replace gin sessions with pulling from storage
 
 import (
+	"net/http"
 	"strconv"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
 	"git.fs.bnf.net/bnfinet/lasso/handlers"
-	"git.fs.bnf.net/bnfinet/lasso/middleware"
 	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	"github.com/gin-gonic/gin"
+	"git.fs.bnf.net/bnfinet/lasso/pkg/timelog"
+	// "github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -22,31 +25,42 @@ func main() {
 	if cfg.Cfg.LogLevel == "debug" {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("logLevel set to debug")
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
+		// gin.SetMode(gin.DebugMode)
 	}
-	router := gin.Default()
-	if cfg.Cfg.LogLevel == "debug" {
-		router.Use(gin.Logger())
-	}
-	router.Static("/css", "./static/css")
-	router.Static("/img", "./static/img")
-	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/", handlers.IndexHandler)
-	router.GET("/authrequest", handlers.AuthRequestHandler)
-	router.GET("/login", handlers.LoginHandler)
-	router.GET("/auth", handlers.GCallbackHandler)
+	router := mux.NewRouter()
 
-	authorized := router.Group("/battle")
-	authorized.Use(middleware.AuthorizeRequest())
-	{
-		authorized.GET("/field", handlers.FieldHandler)
-	}
+	// router.HandleFunc("/", handlers.IndexHandler)
+
+	authH := http.HandlerFunc(handlers.AuthRequestHandler)
+	router.HandleFunc("/authrequest", timelog.TimeLog(authH))
+
+	loginH := http.HandlerFunc(handlers.LoginHandler)
+	router.HandleFunc("/login", timelog.TimeLog(loginH))
+
+	gcallH := http.HandlerFunc(handlers.GCallbackHandler)
+	router.HandleFunc("/auth", timelog.TimeLog(gcallH))
+
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	// authorized := router.Group("/battle")
+	// authorized.Use(middleware.AuthorizeRequest())
+	// {
+	// 	authorized.GET("/field", handlers.FieldHandler)
+	// }
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	log.Infof("running lasso on %s", listen)
-	router.Run(listen)
+
+	// router.Run(listen)
+
+	srv := &http.Server{
+		Handler: router,
+		Addr:    listen,
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	log.Fatal(srv.ListenAndServe())
 	// go func() {
 	// 	log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 	// }()
