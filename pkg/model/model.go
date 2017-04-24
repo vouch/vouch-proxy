@@ -80,13 +80,30 @@ func PutUser(u structs.User) {
 	})
 }
 
-// GetUser lookup user from key
-func User(key string, v interface{}) error {
+// User lookup user from key
+func User(key []byte, u interface{}) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(userBucket)
 		val := b.Get([]byte(key))
-		gob.NewDecoder(bytes.NewReader(val)).Decode(v)
-		log.Debugf("retrieved %s from db", v.(*structs.User).Email)
+		gob.NewDecoder(bytes.NewReader(val)).Decode(u)
+		log.Debugf("retrieved %s from db", u.(*structs.User).FamilyName)
+		return nil
+	})
+}
+
+// AllUsers collect all items
+func AllUsers(users *[]structs.User) error {
+	return Db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(userBucket)
+		// c := b.Cursor()
+		b.ForEach(func(k, v []byte) error {
+			log.Debugf("key=%s, value=%s\n", k, v)
+			u := structs.User{}
+			User(k, &u)
+			*users = append(*users, u)
+			return nil
+		})
+		log.Debugf("users %v", users)
 		return nil
 	})
 }

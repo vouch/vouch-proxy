@@ -41,6 +41,7 @@ var (
 )
 
 func init() {
+	log.Debug("init handlers")
 	cfg.UnmarshalKey("google", &gcred)
 
 	oauthclient = &oauth2.Config{
@@ -78,7 +79,7 @@ func loginURL(state string) string {
 // 	c.HTML(http.StatusOK, "index.tmpl", gin.H{})
 // }
 
-func emailFromCookieJWT(w http.ResponseWriter, r *http.Request) (string, error) {
+func EmailFromCookieJWT(w http.ResponseWriter, r *http.Request) (string, error) {
 	// get jwt from cookie.name
 	// parse the jwt
 	jwtCookie, err := cookie.Cookie(r)
@@ -122,7 +123,7 @@ func error401na(w http.ResponseWriter, r *http.Request) {
 // TODO this should use the handler interface
 func AuthRequestHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/authrequest")
-	email, err := emailFromCookieJWT(w, r)
+	email, err := EmailFromCookieJWT(w, r)
 	if err != nil {
 		// no email in jwt
 		error401(w, r, err.Error())
@@ -130,8 +131,9 @@ func AuthRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Infof("email from jwt cookie: %s", email)
 
+	// lookup the User
 	user := structs.User{}
-	err = model.User(email, &user)
+	err = model.User([]byte(email), &user)
 	if err != nil {
 		// no email in jwt
 		error401(w, r, err.Error())
@@ -277,11 +279,3 @@ func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// otherwise serve an html page
 	renderIndex(w, tokenstring)
 }
-
-// // FieldHandler is a rudementary handler for logged in users.
-// func FieldHandler(c *gin.Context) {
-// 	// (w http.ResponseWriter, req http.Request)
-// 	// session := sessions.Default(c)
-// 	// userID := session.Get("user-id")
-// 	c.HTML(http.StatusOK, "field.tmpl", gin.H{"user": "userID"})
-// }

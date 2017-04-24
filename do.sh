@@ -107,14 +107,14 @@ watch () {
     $CMD&
     WATCH_PID=$!
     echo WATCH_PID $WATCH_PID
-    FIRST_TIME=1
-    while inotifywait -q --exclude .db --exclude .git --exclude do.sh -e modify -r .; do
+    # FIRST_TIME=1
+    while inotifywait -q --exclude *.db --exclude .git/.* --exclude do.sh -e modify -r .; do
       if [ -n "$WATCH_PID" ]; then
         echo "killing $WATCH_PID and restarting $CMD"
         kill $WATCH_PID
         sleep 3
       fi
-     clear
+     echo "---restart---"
 	   $CMD&
      WATCH_PID=$!
      echo WATCH_PID $WATCH_PID

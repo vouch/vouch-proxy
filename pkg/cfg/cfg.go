@@ -42,6 +42,7 @@ type CfgT struct {
 var Cfg CfgT
 
 func init() {
+	log.Debug("opening config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(os.Getenv("LASSO_ROOT") + "config")
@@ -51,7 +52,10 @@ func init() {
 		panic(err)
 	}
 	UnmarshalKey("lasso", &Cfg)
-
+	if Cfg.LogLevel == "debug" {
+		log.SetLevel(log.DebugLevel)
+		log.Debug("logLevel set to debug")
+	}
 }
 
 // UnmarshalKey populate struct from contents of cfg tree at key
