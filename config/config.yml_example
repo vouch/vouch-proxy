@@ -1,0 +1,38 @@
+
+# lasso config
+
+# create new credentials at:
+# https://console.developers.google.com/apis/credentials
+google:
+  client_id: 
+  client_secret: 
+  callback_url: http://login.yourdomain.com:9090/auth
+
+lasso:
+  # logLevel: debug
+  logLevel: info
+  listen: 0.0.0.0
+  port: 9090
+  # each of these domains must serve the url https://login.$domains[0] https://login.$domains[1] ...
+  domains:
+  - yourdomain.com
+  # gets sent to google as a primer
+  preferredDomain: yourdomain.com
+  jwt:
+    issuer: Lasso
+    maxAge: 240
+    secret: your_random_string
+    compress: true
+  cookie: 
+    # name of cookie to store the jwt
+    # cookiename must match the nginx config  
+    name: Lasso
+    secure: false
+    httpOnly: true
+  headers:
+    sso: X-Lasso-Token
+    redirect: X-Lasso-Requested-URI
+  db: 
+    file: data/lasso_bolt.db
+  session:
+    name: lasso
