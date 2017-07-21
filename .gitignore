@@ -3,4 +3,4 @@ data/lasso_bolt.db
 pkg/model/storage-test.db
 main
 config/google_config.json
-.vscode
+.vscode/*
