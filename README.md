@@ -8,6 +8,7 @@ If lasso is running on the same host as the nginx reverse proxy the response tim
 
 * `cp ./config/config.yml_example ./config/config.yml`
 * create oauth credentials for lasso at https://console.developers.google.com/apis/credentials
+  * be sure to direct the callback URL to the `/auth` endpoint
 * configure nginx...
 
 ```{.nginxconf}

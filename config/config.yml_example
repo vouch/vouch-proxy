@@ -6,6 +6,7 @@
 google:
   client_id: 
   client_secret: 
+  # must be the /auth endpoint
   callback_url: http://login.yourdomain.com:9090/auth
 
 lasso:
