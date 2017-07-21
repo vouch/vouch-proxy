@@ -4,7 +4,54 @@ an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx
 
 If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
-## the flow of first time login
+## Installation
+
+* `cp ./config/config.yml_example ./config/config.yml`
+* create oauth credentials for lasso at https://console.developers.google.com/apis/credentials
+* configure nginx...
+
+```{.nginxconf}
+server {
+    listen 80 default_server;
+    server_name dev.bnf.net;
+
+    root /var/www/html/;
+    auth_request /validate;
+    error_page 401 = @error401;
+
+    location @error401 {
+        return 302 https://login.bnf.net:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    }
+
+    location = /validate {
+       internal;
+
+       proxy_pass https://login.bnf.net:9090;
+       proxy_pass_request_body     off;
+
+       proxy_set_header Content-Length "";
+       proxy_set_header Host $http_host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header Cookie $http_cookie;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+
+       # these return values are fed to the @error401 call
+       auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
+       auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
+       auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
+    }
+}
+
+```
+
+## Running from Docker
+
+* `./do.sh drun`
+
+And that's it!  Or if you can examing the docker command in `do.sh`
+
+## the flow of login and authentication using Google Oauth
 
 * Bob visits `https://private.oursites.com`
 * the nginx reverse proxy...
@@ -47,44 +94,3 @@ Note that outside of some innocuos redirection, Bob only ever sees `https://priv
 Once the JWT is set, Bob's will be authorized for all other sites which are configured to use `https://login.oursites.com/validate` from the `auth_request` nginx module.
 
 The next time Bob is forwarded to google for login, since he has already authorized the site it immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.
-
-## Installation
-
-example nginx config...
-
-```{.nginxconf}
-server {
-    listen 80 default_server;
-    server_name dev.bnf.net;
-
-    root /var/www/html/;
-    auth_request /validate;
-    error_page 401 = @error401;
-
-    location @error401 {
-        return 302 https://login.bnf.net:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
-    }
-
-    location = /validate {
-       internal;
-
-       proxy_pass https://login.bnf.net:9090;
-       proxy_pass_request_body     off;
-
-       proxy_set_header Content-Length "";
-       proxy_set_header Host $http_host;
-       proxy_set_header X-Real-IP $remote_addr;
-       proxy_set_header Cookie $http_cookie;
-       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-       proxy_set_header X-Forwarded-Proto $scheme;
-
-       # these return values are fed to the @error401 call
-       auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
-       auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
-       auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
-    }
-}
-
-```
-
-## Docker
