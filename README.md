@@ -1,70 +1,22 @@
 # Lasso
 
-## TODO
+an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
 
-* optionally compress the cookie (gzip && base64)
-* use url.QueryEscape() instead of base64 https://golang.org/pkg/net/url/#QueryEscape, or maybe use QueryEscape after base64
-* can we stuff all the user/sites into a 4093 byte cookie, or perhaps a cookie half that size to leave room for other cookies
-  a quick test shows that a raw jwt at 1136 bytes can be gzip and base64 compressed to 471 bytes ~/tmp/jwttests
-  that is probably worth doing
-  http://stackoverflow.com/questions/4164276/storing-compressed-data-in-a-cookie#13675023
+If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
-* issue tokens manually for webhooks
-  * tokens are special, they don't expire, they include an additional claim
-    * do they have to be so large?
-      * otherwise we do the database lookup
-  * any of these are valid..
-  * TODO is this the order that these are evaluated in?
-    * http cookie contents
-    * X-Lasso-Token: ${TOKEN}
-    * Authorization: Bearer ${TOKEN}
-    * ?lasso-token=${TOKEN}
-
-  * who should get issued the token?
-    * the user?
-      * pobably yes
-      * how do we validate the token
-        * its just a jwt with an expires on date in the future
-      * how do we expire the token?
-        * blacklist tokens
-        * does user exist?
-
-* rest api
-  * tempting to do protobuf or something but lets just do rest for now
-  * `/api/users`
-    * GET list users
-  * `/api/users/${userid}`
-    * GET user info
-    * POST update user info
-    * PUT create user
-  * `/api/validate` endpoint that *any* service can connect to that validates the `X-LASSO-TOKEN` header
-* move binaries under a cmd/ subdirectory
-* user management
-  * twitter bootstrap
-  * js build environment
-* Docker container that's not Dockerfile.fromscratch
-* graphviz of Bob visit flow
-* other validations (like what?)
-
-
-## DONE
-
-* validate the users' domain against `hd` from google response
-* move library code under a pkg/ subdirectory
-
-the flow of first time login
+## the flow of first time login
 
 * Bob visits `https://private.oursites.com`
 * the nginx reverse proxy...
   * recieves the request for private.oursites.com from Bob
-  * uses the `auth_request` module configured for the `/authrequest` path
-  * `/authrequest` is configured to `proxy_pass` requests to the authentication service at `https://login.oursites.com/authrequest`
-    * if `/authrequest` returns...
+  * uses the `auth_request` module configured for the `/validate` path
+  * `/validate` is configured to `proxy_pass` requests to the authentication service at `https://login.oursites.com/validate`
+    * if `/validate` returns...
       * 200 OK then SUCCESS allow Bob through
       * 401 NotAuthorized then
         * respond to Bob with a 302 redirect to `https://login.oursites.com/login?url=https://private.oursites.com`
 
-* nginx contacts `https://login.oursites.com/authrequest`
+* nginx contacts `https://login.oursites.com/validate`
   * recieves the request for private.oursites.com from Bob via nginx `proxy_pass`
   * it looks for a cookie named "oursitesSSO" that contains a JWT
   * if the cookie is found, and the JWT is valid
@@ -92,57 +44,47 @@ the flow of first time login
 
 Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser.  While Lasso does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
 
-Once the JWT is set, Bob's will be authorized for any other sites which are configured to use `https://login.oursites.com/authrequest` from the `auth_request` nginx module.
+Once the JWT is set, Bob's will be authorized for all other sites which are configured to use `https://login.oursites.com/validate` from the `auth_request` nginx module.
 
-The next time Bob is forwarded to google for login, since he has already authorized the site it immediately forwards him back and sets the cookie and sends him on his merry way.
+The next time Bob is forwarded to google for login, since he has already authorized the site it immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.
 
-If lasso is on the same host as the nginx reverse proxy the response time from the `/authrequest` endpoint to nginx should be less than 1ms
+## Installation
 
+example nginx config...
 
-an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
+```{.nginxconf}
+server {
+    listen 80 default_server;
+    server_name dev.bnf.net;
 
-/auth validate jwt at
+    root /var/www/html/;
+    auth_request /validate;
+    error_page 401 = @error401;
 
-* is jwt in cookie
-  * present?
-  * valid including a user
+    location @error401 {
+        return 302 https://login.bnf.net:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    }
 
-   no.. redirect to login
+    location = /validate {
+       internal;
 
-* is user
-  * authed for the resource?
+       proxy_pass https://login.bnf.net:9090;
+       proxy_pass_request_body     off;
 
-   no.. redirect to login
+       proxy_set_header Content-Length "";
+       proxy_set_header Host $http_host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header Cookie $http_cookie;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
 
-* is domain
-  * valid? matches authoritative domains (meedan.com, meedan.net, checkmedia.org)
-  * present in the auth system
-  no.. notify admin for additional assignment
+       # these return values are fed to the @error401 call
+       auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
+       auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
+       auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
+    }
+}
 
-/login login & auth
+```
 
-* offer login
-* is user
-  * exists?  no..
-    * create user
-    * assign default roles (based on domain or other heuristic)
-    * notify admin for additional auth
-    then..
-   yes..
-      * issue jwt into a cookie for each domain using an image
-
-## leaving teams out of this for now
-
-/admin/domains domain rights
-
-* authorize roles
-* authorize users
-
-/admin/roles role assignment
-
-* create roles
-* assign users to roles
-
-## interfaces
-
-* User
+## Docker

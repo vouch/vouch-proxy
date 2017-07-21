@@ -3,7 +3,7 @@ package domains
 import (
 	"strings"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
+	"github.com/bnfinet/lasso/pkg/cfg"
 	log "github.com/Sirupsen/logrus"
 )
 

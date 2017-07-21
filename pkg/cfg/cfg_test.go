@@ -2,7 +2,7 @@ package cfg
 
 import (
 	"testing"
-	// "git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	// "github.com/bnfinet/lasso/pkg/structs"
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ var (
 )
 
 func init() {
-	log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
 }
 
 func TestConfigParsing(t *testing.T) {
@@ -25,6 +25,6 @@ func TestConfigParsing(t *testing.T) {
 	assert.Equal(t, cfg.Port, 9090)
 	assert.Equal(t, cfg.Cookie.Name, "bnfSSO")
 
-	assert.NotEmpty(t, cfg.MaxAge)
+	assert.NotEmpty(t, cfg.JWT.MaxAge)
 
 }

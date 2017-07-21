@@ -1,16 +1,16 @@
 package transciever
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"time"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/model"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/model"
+	"github.com/bnfinet/lasso/pkg/structs"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/gorilla/websocket"
 )
@@ -72,22 +72,50 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, message, err := c.conn.ReadMessage()
+		var p pkg
+		err := c.conn.ReadJSON(&p)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v", err)
+				log.Errorf("error: %v", err)
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		var p pkg
-		json.Unmarshal(message, &p)
-		log.Infof("ws message: %s, %v", message, p)
+		log.Infof("ws message: %v", p)
+
+		// _, message, err := c.conn.ReadMessage()
+		// if err != nil {
+		// 	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+		// 		log.Errorf("error: %v", err)
+		// 	}
+		// 	break
+		// }
+		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// json.Unmarshal(message, &p)
+		// log.Infof("ws message: %s, %v", message, p)
 		if p.T == "getusers" {
 			c.getUsers()
+		} else if p.T == "getsites" {
+			c.getSites()
+		} else if p.T == "getteams" {
+			c.getTeams()
+		} else if p.T == "updateteam" {
+			c.updateTeam(p.D)
 		}
-		c.hub.broadcast <- message
+		// c.hub.broadcast <- []byte(p)
 	}
+}
+
+func (c *Client) updateTeam(data interface{}) {
+	log.Debugf("creating team from %v", data)
+
+	t := structs.Team{}
+	mapstructure.Decode(data, &t)
+	// if err := json.Unmarshal(data, &t); err != nil {
+	// 	log.Error(err)
+	// 	return
+	// }
+	model.PutTeam(t)
+	c.getTeams()
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -143,10 +171,27 @@ func (c *Client) getUsers() {
 	c.shipping("users", users)
 }
 
+func (c *Client) getSites() {
+	var sites []structs.Site
+	model.AllSites(&sites)
+	log.Debugf("shipping sites %v", sites)
+	c.shipping("sites", sites)
+}
+
+func (c *Client) getTeams() {
+	var teams []structs.Team
+	model.AllTeams(&teams)
+	log.Debugf("shipping teams %v", teams)
+	c.shipping("teams", teams)
+}
+
 func (c *Client) shipping(t string, v interface{}) {
 	// d, _ := json.Marshal(v)
 	p := &pkg{t, v}
-	j, _ := json.Marshal(p)
+	j, err := json.Marshal(p)
+	if err != nil {
+		log.Error(err)
+	}
 	c.send <- j
 }
 

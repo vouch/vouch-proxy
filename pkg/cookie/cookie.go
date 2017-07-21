@@ -4,23 +4,23 @@ import (
 	"errors"
 	"net/http"
 
-	// "git.fs.bnf.net/bnfinet/lasso/pkg/structs"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
+	// "github.com/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/cfg"
+	"github.com/bnfinet/lasso/pkg/domains"
 	log "github.com/Sirupsen/logrus"
 )
 
-var defaulMaxAge = cfg.Cfg.JWT.MaxAge * 60
+var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
-	setCookie(w, r, val, defaulMaxAge)
+	setCookie(w, r, val, defaultMaxAge)
 }
 
 func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// foreach domain
 	if maxAge == 0 {
-		maxAge = defaulMaxAge
+		maxAge = defaultMaxAge
 	}
 	domain := domains.Matches(r.Host)
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)

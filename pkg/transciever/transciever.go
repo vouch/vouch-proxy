@@ -3,10 +3,6 @@ package transciever
 import (
 	"net/http"
 
-	"git.fs.bnf.net/bnfinet/lasso/handlers"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/model"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
-
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -32,15 +28,20 @@ func init() {
 
 func (WS WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Infof("ws endpoint")
-	email, err := handlers.EmailFromCookieJWT(w, r)
-	// lookup the User
-	user := structs.User{}
-	err = model.User([]byte(email), &user)
-	if err != nil {
-		// no email in jwt
-		http.Error(w, "your mother", http.StatusUnauthorized)
-		return
-	}
+	// jwt := handlers.FindJWT(r)
+	// if jwt == "" {
+	// 	http.Error(w, "your mother", http.StatusUnauthorized)
+	// 	return
+	// }
+	// claims, err := handlers.ClaimsFromJWT(jwt)
+	// // lookup the User
+	// user := structs.User{}
+	// err = model.User([]byte(claims.Email), &user)
+	// if err != nil {
+	// 	// no email in jwt
+	// 	http.Error(w, "your mother", http.StatusUnauthorized)
+	// 	return
+	// }
 	log.Info("hub %v", hh.Hub)
 	serveWs(hh.Hub, w, r)
 }

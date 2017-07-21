@@ -12,13 +12,13 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	lctx "git.fs.bnf.net/bnfinet/lasso/pkg/context"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cookie"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/domains"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/jwtmanager"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/model"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/cfg"
+	lctx "github.com/bnfinet/lasso/pkg/context"
+	"github.com/bnfinet/lasso/pkg/cookie"
+	"github.com/bnfinet/lasso/pkg/domains"
+	"github.com/bnfinet/lasso/pkg/jwtmanager"
+	"github.com/bnfinet/lasso/pkg/model"
+	"github.com/bnfinet/lasso/pkg/structs"
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -27,6 +27,12 @@ import (
 // Index variables passed to index.tmpl
 type Index struct {
 	Msg string
+}
+
+// AuthError sets the values to return to nginx
+type AuthError struct {
+	Error string
+	JWT   string
 }
 
 var (
@@ -74,73 +80,118 @@ func loginURL(state string) string {
 	return url
 }
 
-// IndexHandler /
-// func IndexHandler(c *gin.Context) {
-// 	c.HTML(http.StatusOK, "index.tmpl", gin.H{})
-// }
+// FindJWT look for JWT in Cookie, Header and Query String in that order
+func FindJWT(r *http.Request) string {
+	jwt, err := cookie.Cookie(r)
+	if err != nil {
+		log.Error(err)
+		// return ""
+	}
+	log.Debugf("jwtCookie from cookie: %s", jwt)
+	if jwt == "" {
+		jwt = r.Header.Get(cfg.Cfg.Headers.SSO)
+		log.Debugf("jwtCookie from header %s: %s", cfg.Cfg.Headers.SSO, jwt)
+	}
+	if jwt == "" {
+		jwt = r.URL.Query().Get(cfg.Cfg.Headers.SSO)
+		log.Debugf("jwtCookie from querystring %s: %s", cfg.Cfg.Headers.SSO, jwt)
+	}
+	return jwt
+}
 
-func EmailFromCookieJWT(w http.ResponseWriter, r *http.Request) (string, error) {
+// ClaimsFromJWT look everywhere for the JWT, then parse the jwt and return the claims
+func ClaimsFromJWT(jwt string) (jwtmanager.LassoClaims, error) {
 	// get jwt from cookie.name
 	// parse the jwt
-	jwtCookie, err := cookie.Cookie(r)
-	if err != nil {
-		return "", err
-	}
-	log.Debugf("jwtCookie from cookie: %s", jwtCookie)
-	if jwtCookie == "" {
-		jwtCookie = r.Header.Get(cfg.Cfg.Headers.SSO)
-		log.Debugf("jwtCookie from header %s: %s", cfg.Cfg.Headers.SSO, jwtCookie)
-	}
-	jwtParsed, err := jwtmanager.ParseTokenString(jwtCookie)
+	var claims jwtmanager.LassoClaims
+
+	jwtParsed, err := jwtmanager.ParseTokenString(jwt)
 	if err != nil {
 		// it didn't parse, which means its bad, start over
 		log.Error("jwtParsed returned error, clearing cookie")
-		cookie.ClearCookie(w, r)
-		return "", err
+		return claims, err
 	}
 
-	email, err := jwtmanager.PTokenToEmail(jwtParsed)
+	claims, err = jwtmanager.PTokenClaims(jwtParsed)
 	if err != nil {
-		return "", err
+		// claims = jwtmanager.PTokenClaims(jwtParsed)
+		// if claims == &jwtmanager.LassoClaims{} {
+		return claims, err
 	}
-	return email, nil
+	return claims, nil
 }
 
 // the standard error
 // this is captured by nginx, which converts the 401 into 302 to the login page
-func error401(w http.ResponseWriter, r *http.Request, errStr string) {
+func error401(w http.ResponseWriter, r *http.Request, ae AuthError) {
+	log.Error(ae.Error)
+	cookie.ClearCookie(w, r)
 	context.WithValue(r.Context(), lctx.StatusCode, http.StatusUnauthorized)
-	http.Error(w, errStr, http.StatusUnauthorized)
+	// w.Header().Set("X-Lasso-Error", ae.Error)
+	http.Error(w, ae.Error, http.StatusUnauthorized)
 	// TODO put this back in place if multiple auth mechanism are available
 	// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": errStr})
 }
 
 func error401na(w http.ResponseWriter, r *http.Request) {
-	error401(w, r, "not authorized")
+	error401(w, r, AuthError{Error: "not authorized"})
 }
 
-// AuthRequestHandler /authrequest
+// ValidateRequestHandler /validate
 // TODO this should use the handler interface
-func AuthRequestHandler(w http.ResponseWriter, r *http.Request) {
-	log.Debug("/authrequest")
-	email, err := EmailFromCookieJWT(w, r)
-	if err != nil {
-		// no email in jwt
-		error401(w, r, err.Error())
-		return
-	}
-	log.Infof("email from jwt cookie: %s", email)
+func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("/validate")
 
-	// lookup the User
-	user := structs.User{}
-	err = model.User([]byte(email), &user)
-	if err != nil {
-		// no email in jwt
-		error401(w, r, err.Error())
+	jwt := FindJWT(r)
+	// if jwt != "" {
+	if jwt == "" {
+		error401(w, r, AuthError{Error: "no jwt found"})
 		return
 	}
 
-	renderIndex(w, "user found from email "+user.Email)
+	claims, err := ClaimsFromJWT(jwt)
+	if err != nil {
+		// no email in jwt
+		error401(w, r, AuthError{err.Error(), jwt})
+		return
+	}
+	if claims.Email == "" {
+		// no email in jwt
+		error401(w, r, AuthError{"no email found in jwt", jwt})
+		return
+	}
+	log.Infof("email from jwt cookie: %s", claims.Email)
+
+	if !jwtmanager.SiteInClaims(r.Host, &claims) {
+		error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+		return
+	}
+
+	// renderIndex(w, "user found from email "+user.Email)
+	renderIndex(w, "user found in jwt "+claims.Email)
+
+	// TODO
+	// parse the jwt and see if the claim is valid for the domain
+
+	// update user last access in a go routine
+	// user := structs.User{}
+	// err = model.User([]byte(email), &user)
+	// if err != nil {
+	// 	// no email in jwt, or no email in db
+	// 	error401(w, r, err.Error())
+	// 	return
+	// }
+	// if user.Email == "" {
+	// 	error401(w, r, "no email found in db")
+	// 	return
+	// }
+
+	// put the site
+	go func() {
+		s := structs.Site{Domain: r.Host}
+		log.Debugf("site struct: %v", s)
+		model.PutSite(s)
+	}()
 }
 
 // LoginHandler /login
@@ -160,6 +211,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
+	// increment the failure counter for this domain
+
 	// redirectURL comes from nginx in the query string
 	var redirectURL = r.URL.Query().Get("url")
 	if redirectURL != "" {
@@ -168,15 +221,30 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 	}
 
+	// stop them after three failures for this URL
+	var failcount = 0
+	if session.Values[redirectURL] != nil {
+		failcount = session.Values[redirectURL].(int)
+		log.Debugf("failcount for %s is %d", redirectURL, failcount)
+	}
+	failcount++
+	session.Values[redirectURL] = failcount
+
 	log.Debug("saving session")
 	session.Save(r, w)
 
-	// bounce to google for login
-	var googleURL = loginURL(state)
-	log.Debugf("redirecting to Google %s", googleURL)
-	context.WithValue(r.Context(), lctx.StatusCode, 302)
-	http.Redirect(w, r, googleURL, 302)
-	// c.Writer.Write([]byte("<html><title>Golang Google</title> <body> <a href='" + url + "'><button>Login with Google!</button> </a> </body></html>"))
+	if failcount > 2 {
+		var lassoError = r.URL.Query().Get("error")
+		renderIndex(w, "too many redirects for "+redirectURL+" - "+lassoError)
+	} else {
+		// bounce to google for login
+		var googleURL = loginURL(state)
+		log.Debugf("redirecting to Google %s", googleURL)
+		context.WithValue(r.Context(), lctx.StatusCode, 302)
+		http.Redirect(w, r, googleURL, 302)
+		// c.Writer.Write([]byte("<html><title>Golang Google</title> <body> <a href='" + url + "'><button>Login with Google!</button> </a> </body></html>"))
+	}
+
 }
 
 func renderIndex(w http.ResponseWriter, msg string) {
@@ -269,6 +337,7 @@ func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectURL != "" {
 		// clear out the session value
 		session.Values["requestedURL"] = ""
+		session.Values[redirectURL] = 0
 		session.Save(r, w)
 
 		// and redirect

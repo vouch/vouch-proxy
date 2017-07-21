@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	"flag"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
@@ -18,7 +19,7 @@ type CfgT struct {
 	JWT             struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
-		Secret   []byte `mapstructure:"secret"`
+		Secret   string `mapstructure:"secret"`
 		Compress bool   `mapstructure:"compress"`
 	}
 	Cookie struct {
@@ -41,8 +42,23 @@ type CfgT struct {
 // Cfg the main exported config variable
 var Cfg CfgT
 
+// V viper object
+// var V viper
+
 func init() {
-	log.Debug("opening config")
+	ParseConfig()
+	var ll = flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	flag.Parse()
+	if *ll == "debug" {
+		log.SetLevel(log.DebugLevel)
+		log.Debug("logLevel set to debug")
+	}
+	log.Debug(viper.AllSettings())
+}
+
+// ParseConfig parse the config file
+func ParseConfig() {
+	log.Info("opening config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(os.Getenv("LASSO_ROOT") + "config")
@@ -52,10 +68,14 @@ func init() {
 		panic(err)
 	}
 	UnmarshalKey("lasso", &Cfg)
-	if Cfg.LogLevel == "debug" {
-		log.SetLevel(log.DebugLevel)
-		log.Debug("logLevel set to debug")
-	}
+	// nested defaults is currently *broken*
+	// https://github.com/spf13/viper/issues/309
+	// viper.SetDefault("listen", "0.0.0.0")
+	// viper.SetDefault(Cfg.Port, 9090)
+	// viper.SetDefault("Headers.SSO", "X-Lasso-Token")
+	// viper.SetDefault("Headers.Redirect", "X-Lasso-Requested-URI")
+	// viper.SetDefault("Cookie.Name", "Lasso")
+	log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }
 
 // UnmarshalKey populate struct from contents of cfg tree at key

@@ -1,5 +1,0 @@
-# the tiniest ever
-FROM scratch
-COPY main /
-EXPOSE 9090
-ENTRYPOINT ["/main"]

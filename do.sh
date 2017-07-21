@@ -6,36 +6,24 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export LASSO_ROOT=/home/bfoote/go/src/git.fs.bnf.net/bnfinet/lasso/
+export LASSO_ROOT=/home/bfoote/go/src/github.com/bnfinet/lasso/
 
-IMAGE=dreg.bnf.net/bnfnet/lasso
-GOIMAGE=dreg.bnf.net/bnfnet/golang
+IMAGE=bnfnet/lasso
+GOIMAGE=golang:1.8
 NAME=lasso
 HTTPPORT=9090
-SWAGGERPORT=4048
-SWAGNAME=swagger
 GODOC_PORT=5050
 
-usage() {
-   cat <<EOF
-   usage:
-     $0 build            - build docker container
-     $0 drun [args]      - run docker container
-     $0 gogo [gocmd]     - run, build, any go cmd
-     $0 swagger [cmd]    - swagger
-     $0 watch [cmd]]     - watch the $CWD for any change and re-reun the [cmd]
-
-EOF
-
-
+gogo () {
+  docker run --rm -i -t -v /var/run/docker.sock:/var/run/docker.sock -v ${SDIR}/go:/go --name gogo $GOIMAGE $*
 }
 
-gogo () {
-    docker run --rm -i -t -v /var/run/docker.sock:/var/run/docker.sock -v ${SDIR}/go:/go --name gogo $GOIMAGE $*
+revproxy () {
+  /home/bfoote/files/docker/bnfinet/dockerfiles/bnfnet/lasso-nginx-test/run_docker.sh $*
 }
 
 dbuild () {
-   docker build -f Dockerfile.scratch -t $IMAGE .
+  docker build -f Dockerfile -t $IMAGE .
 }
 
 gobuildstatic () {
@@ -61,41 +49,6 @@ drun () {
     $CMD
 }
 
-swagger_gen_server() {
-  cd $SDIR/api;
-  swagger generate server -A cbp
-  go install ./cmd/cbp-server/
-}
-
-start_api() {
-  $GOPATH/bin/cbp-server --port $APIPORT;
-  echo "api:    http://localhost:${APIPORT}"
-}
-
-start_api_browser() {
-
-  if [ "$(docker ps -a | grep $SWAGNAME)" ]; then
-     docker stop $SWAGNAME
-     docker rm $SWAGNAME
-  fi
-  docker run -d --name $SWAGNAME -p ${SWAGGERPORT}:8080 swaggerapi/swagger-ui
-  # swagger serve --no-open --port=${SWAGGERPORT} http://localhost:${APIPORT}/swagger.json &
-  echo "swagger: http://localhost:${SWAGGERPORT}/?url=http://localhost:${APIPORT}"
-}
-
-swagger () {
-#   docker run \
-#     --rm \
-#     -it \
-#     -e GOROOT=${GOROOT} \
-#     -e GOPATH=${GOPATH} \
-#     -v $HOME:$HOME \
-#     -w $CURDIR \
-#     quay.io/goswagger/swagger \
-#     $@;
-  $GOPATH/bin/swagger $@;
-}
-
 
 watch () {
     CMD=$@;
@@ -104,18 +57,18 @@ watch () {
     fi
     clear
     echo -e "starting watcher for:\n\t$CMD"
-    $CMD&
+    $CMD &
     WATCH_PID=$!
     echo WATCH_PID $WATCH_PID
     # FIRST_TIME=1
-    while inotifywait -q --exclude *.db --exclude .git/.* --exclude do.sh -e modify -r .; do
+    while inotifywait -q --exclude *.db --exclude './.git/FETCH_HEAD' --exclude do.sh -e modify -r .; do
       if [ -n "$WATCH_PID" ]; then
         echo "killing $WATCH_PID and restarting $CMD"
         kill $WATCH_PID
         sleep 3
       fi
-     echo "---restart---"
-	   $CMD&
+     echo -e "\n---restart---\n"
+	   $CMD &
      WATCH_PID=$!
      echo WATCH_PID $WATCH_PID
    done;
@@ -126,23 +79,40 @@ goget () {
   go get -v ./...
 }
 test () {
-  # install all the things
-  go test -v $*
+  # test all the things
+  if [ -n "$*" ]; then
+    go test -v $*
+  else
+    go test -v ./...
+  fi
+}
+
+
+usage() {
+   cat <<EOF
+   usage:
+     $0 build                  - build docker container
+     $0 drun [args]            - run docker container
+     $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
+     $0 revproxy               - run an nginx reverseproxy for naga.bnf.net
+     $0 gogo [gocmd]           - run, build, any go cmd
+     $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
+
+EOF
+
 }
 
 ARG=$1; shift;
 
-# I think these can be replaced with
-#   build|drun|....)
-#      $ARG $*
-#      ;;
 case "$ARG" in
    'build')
-#   gobuildstatic
    dbuild
    ;;
    'drun')
    drun $*
+   ;;
+   'revproxy')
+   revproxy $*
    ;;
    'test')
    test $*
@@ -159,13 +129,6 @@ case "$ARG" in
    ;;
    'watch')
    watch $*
-   ;;
-   'swagger')
-   swagger $*
-   ;;
-   'startapi')
-   start_api &
-   start_api_browser
    ;;
    'gobuildstatic')
    gobuildstatic $*

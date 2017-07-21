@@ -3,8 +3,8 @@ package jwtmanager
 import (
 	"testing"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/cfg"
+	"github.com/bnfinet/lasso/pkg/structs"
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +17,17 @@ var (
 		Name:          "Test Name",
 	}
 
-	lc = LassoClaims{
-		u1.Email,
-		StandardClaims,
-	}
+	lc LassoClaims
 )
 
 func init() {
-	log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
+
+	lc = LassoClaims{
+		u1.Email,
+		Sites,
+		StandardClaims,
+	}
 }
 
 func TestCreateUserTokenStringAndParseToEmail(t *testing.T) {
@@ -36,6 +39,7 @@ func TestCreateUserTokenStringAndParseToEmail(t *testing.T) {
 	if utsParsed == nil || err != nil {
 		t.Error(err)
 	} else {
+		log.Debugf("test parsed token string %v", utsParsed)
 		ptemail, _ := PTokenToEmail(utsParsed)
 		assert.Equal(t, u1.Email, ptemail)
 	}
@@ -43,6 +47,7 @@ func TestCreateUserTokenStringAndParseToEmail(t *testing.T) {
 }
 
 func TestClaims(t *testing.T) {
+	cfg.ParseConfig()
 
 	log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
 	assert.NotEmpty(t, cfg.Cfg.JWT.Secret)
@@ -53,5 +58,8 @@ func TestClaims(t *testing.T) {
 	// log.Infof("lc d %s", d.String())
 	// lc.StandardClaims.ExpiresAt = now.Add(time.Duration(ExpiresAtMinutes) * time.Minute).Unix()
 	// log.Infof("lc expiresAt %d", now.Unix()-lc.StandardClaims.ExpiresAt)
+	uts := CreateUserTokenString(u1)
+	utsParsed, _ := ParseTokenString(uts)
+	assert.True(t, SiteInToken("naga.bnf.net", utsParsed))
 
 }

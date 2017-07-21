@@ -4,14 +4,11 @@ package model
 // https://www.opsdash.com/blog/persistent-key-value-store-golang.html
 
 import (
-	"bytes"
-	"encoding/gob"
 	"errors"
 	"os"
 	"time"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/cfg"
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
@@ -29,17 +26,12 @@ var (
 	Db *bolt.DB
 
 	userBucket = []byte("users")
+	teamBucket = []byte("teams")
+	siteBucket = []byte("sites")
 )
-
-// the result goes into this buffer
-var buf bytes.Buffer
-
-// make an encoder that will write into the buffer
-var encoder *gob.Encoder
 
 // may want to use encode/gob to store the user record
 func init() {
-	encoder = gob.NewEncoder(&buf)
 	Db, _ = Open(os.Getenv("LASSO_ROOT") + cfg.Cfg.DB.File)
 }
 
@@ -59,51 +51,11 @@ func Open(dbfile string) (*bolt.DB, error) {
 
 }
 
-// PutUser inna da db
-func PutUser(u structs.User) {
-	// store some data
-
-	Db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists(userBucket)
-		if err != nil {
-			return err
-		}
-		encoder.Encode(u) // stores u in buf
-		out := buf.Bytes()
-		log.Debugf("last bytes %s", out[len(out)-20:len(out)])
-
-		err = bucket.Put([]byte(u.Email), out)
-		if err != nil {
-			return err
-		}
+func getBucket(tx *bolt.Tx, key []byte) *bolt.Bucket {
+	b, err := tx.CreateBucketIfNotExists(key)
+	if err != nil {
+		log.Errorf("could not create bucket %s", err)
 		return nil
-	})
-}
-
-// User lookup user from key
-func User(key []byte, u interface{}) error {
-	return Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(userBucket)
-		val := b.Get([]byte(key))
-		gob.NewDecoder(bytes.NewReader(val)).Decode(u)
-		log.Debugf("retrieved %s from db", u.(*structs.User).FamilyName)
-		return nil
-	})
-}
-
-// AllUsers collect all items
-func AllUsers(users *[]structs.User) error {
-	return Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(userBucket)
-		// c := b.Cursor()
-		b.ForEach(func(k, v []byte) error {
-			log.Debugf("key=%s, value=%s\n", k, v)
-			u := structs.User{}
-			User(k, &u)
-			*users = append(*users, u)
-			return nil
-		})
-		log.Debugf("users %v", users)
-		return nil
-	})
+	}
+	return b
 }

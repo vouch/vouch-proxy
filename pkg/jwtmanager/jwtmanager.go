@@ -9,19 +9,19 @@ import (
 	"io/ioutil"
 	"time"
 
-	"git.fs.bnf.net/bnfinet/lasso/pkg/cfg"
-	"git.fs.bnf.net/bnfinet/lasso/pkg/structs"
+	"github.com/bnfinet/lasso/pkg/cfg"
+	"github.com/bnfinet/lasso/pkg/structs"
 	log "github.com/Sirupsen/logrus"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-const numSites = 1
+const numSites = 2
 
 // LassoClaims jwt Claims specific to lasso
 type LassoClaims struct {
-	Email string           `json:"email"`
-	Sites [numSites]string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	Email string   `json:"email"`
+	Sites []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	jwt.StandardClaims
 }
 
@@ -29,16 +29,20 @@ type LassoClaims struct {
 var StandardClaims jwt.StandardClaims
 
 // Sites just testing
-var Sites [numSites]string
+var Sites []string
 
 func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
-	for i := 0; i < numSites; i++ {
-		// Sites[i] = fmt.Sprintf("site%d.bnf.net", i)
-		Sites[i] = "naga.bnf.net"
-	}
+	Sites = make([]string, 0)
+		Sites = append(Sites, "naga.bnf.net")
+	Sites = append(Sites, "login.bnf.net")
+
+	// for i := 0; i < numSites; i++ {
+	// 	// Sites[i] = fmt.Sprintf("site%d.bnf.net", i)
+	// 	Sites[i] = "naga.bnf.net"
+	// }
 }
 
 // CreateUserTokenString converts user to signed jwt
@@ -61,7 +65,7 @@ func CreateUserTokenString(u structs.User) string {
 	log.Debugf("diff from now: %d", claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
 	// token -> string. Only server knows this secret (foobar).
-	ss, err := token.SignedString(cfg.Cfg.JWT.Secret)
+	ss, err := token.SignedString([]byte(cfg.Cfg.JWT.Secret))
 	// ss, err := token.SignedString([]byte("testing"))
 	if ss == "" || err != nil {
 		log.Errorf("signed token error: %s", err)
@@ -91,13 +95,12 @@ func TokenIsValid(token *jwt.Token, err error) bool {
 	return false
 }
 
-// TokenClaimsIncludeSite searches does the token contain the site?
-func TokenClaimsIncludeSite(token *jwt.Token, site string) bool {
+// SiteInToken searches does the token contain the site?
+func SiteInToken(site string, token *jwt.Token) bool {
 	if claims, ok := token.Claims.(*LassoClaims); ok {
-		for _, s := range claims.Sites {
-			if s == site {
-				return true
-			}
+		log.Debugf("site %s claim %v", site, claims)
+		if SiteInClaims(site, claims) {
+			return true
 		}
 	}
 	log.Errorf("site %s not found in token", site)
@@ -118,19 +121,49 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return cfg.Cfg.JWT.Secret, nil
+		return []byte(cfg.Cfg.JWT.Secret), nil
 	})
 
 }
 
+// SiteInClaims does the claim contain the value?
+func SiteInClaims(site string, claims *LassoClaims) bool {
+	for _, s := range claims.Sites {
+		if site == s {
+			log.Debugf("evaluating %s == %s", s, site)
+			return true
+		}
+	}
+	return false
+}
+
+// TODO HERE there's something wrong with claims parsing, probably related to LassoClaims not being a pointer
+// PTokenClaims get all the claims
+func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
+	// func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
+	// return ptoken.Claims, nil
+
+	// return ptoken.Claims.(*LassoClaims), nil
+	ptokenClaims, ok := ptoken.Claims.(*LassoClaims)
+	if !ok {
+		log.Debugf("failed claims: %v %v", ptokenClaims, ptoken.Claims)
+		return *ptokenClaims, errors.New("cannot parse claims")
+	}
+	log.Debugf("*ptokenCLaims: %v", *ptokenClaims)
+	return *ptokenClaims, nil
+}
+
 // PTokenToEmail returns the Email in the validated ptoken
 func PTokenToEmail(ptoken *jwt.Token) (string, error) {
+	return ptoken.Claims.(*LassoClaims).Email, nil
 
-	ptokenClaims, ok := ptoken.Claims.(*LassoClaims)
-	if ptokenClaims == nil || !ok {
-		return "", errors.New("cannot parse claims")
-	}
-	return ptokenClaims.Email, nil
+	// var ptokenClaims LassoClaims
+	// ptokenClaims, err := PTokenClaims(ptoken)
+	// if err != nil {
+	// 	log.Error(err)
+	// 	return "", err
+	// }
+	// return ptokenClaims.Email, nil
 }
 
 func decodeAndDecompressTokenString(encgzipss string) string {
