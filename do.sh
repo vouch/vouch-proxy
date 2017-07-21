@@ -8,7 +8,7 @@ cd $SDIR
 
 export LASSO_ROOT=${GOPATH}/src/github.com/bnfinet/lasso/
 
-IMAGE=bnfnet/lasso
+IMAGE=bfoote/lasso
 GOIMAGE=golang:1.8
 NAME=lasso
 HTTPPORT=9090
