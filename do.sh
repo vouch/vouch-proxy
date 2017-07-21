@@ -6,7 +6,7 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export LASSO_ROOT=/home/bfoote/go/src/github.com/bnfinet/lasso/
+export LASSO_ROOT=${GOPATH}/src/github.com/bnfinet/lasso/
 
 IMAGE=bnfnet/lasso
 GOIMAGE=golang:1.8
@@ -41,8 +41,6 @@ drun () {
     --name $NAME 
     -v ${SDIR}/config:/config 
     -v ${SDIR}/data:/data 
-    -v ${SDIR}/templates:/templates 
-    -v ${SDIR}/static:/static 
     $IMAGE $* "
 
     echo $CMD
