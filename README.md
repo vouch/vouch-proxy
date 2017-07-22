@@ -50,7 +50,7 @@ server {
 
 * `./do.sh drun`
 
-And that's it!  Or if you can examing the docker command in `do.sh`
+And that's it!  Or if you can examine the docker command in `do.sh`
 
 ## the flow of login and authentication using Google Oauth
 
@@ -92,6 +92,6 @@ And that's it!  Or if you can examing the docker command in `do.sh`
 
 Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser.  While Lasso does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
 
-Once the JWT is set, Bob's will be authorized for all other sites which are configured to use `https://login.oursites.com/validate` from the `auth_request` nginx module.
+Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://login.oursites.com/validate` from the `auth_request` nginx module.
 
 The next time Bob is forwarded to google for login, since he has already authorized the site it immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.

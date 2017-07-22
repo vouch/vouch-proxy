@@ -7,16 +7,17 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/bnfinet/lasso/pkg/cfg"
 	"github.com/bnfinet/lasso/pkg/structs"
-	log "github.com/Sirupsen/logrus"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-const numSites = 2
+// const numSites = 2
 
 // LassoClaims jwt Claims specific to lasso
 type LassoClaims struct {
@@ -36,13 +37,10 @@ func init() {
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
 	Sites = make([]string, 0)
-		Sites = append(Sites, "naga.bnf.net")
-	Sites = append(Sites, "login.bnf.net")
 
-	// for i := 0; i < numSites; i++ {
-	// 	// Sites[i] = fmt.Sprintf("site%d.bnf.net", i)
-	// 	Sites[i] = "naga.bnf.net"
-	// }
+	for i := 0; i < len(cfg.Cfg.Domains); i++ {
+		Sites = append(Sites, cfg.Cfg.Domains[i])
+	}
 }
 
 // CreateUserTokenString converts user to signed jwt
@@ -129,8 +127,8 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 // SiteInClaims does the claim contain the value?
 func SiteInClaims(site string, claims *LassoClaims) bool {
 	for _, s := range claims.Sites {
-		if site == s {
-			log.Debugf("evaluating %s == %s", s, site)
+		if strings.Contains(site, s) {
+			log.Debugf("evaluating %s contains %s", site, s)
 			return true
 		}
 	}
