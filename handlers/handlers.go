@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -53,7 +54,7 @@ func init() {
 	oauthclient = &oauth2.Config{
 		ClientID:     gcred.ClientID,
 		ClientSecret: gcred.ClientSecret,
-		RedirectURL:  gcred.RedirectURL,
+		// RedirectURL:  gcred.RedirectURL,
 		Scopes: []string{
 			// You have to select a scope from
 			// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
@@ -71,9 +72,18 @@ func randString() string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
-func loginURL(state string) string {
+func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
+
+	domain := domains.Matches(r.Host)
+	for i, v := range gcred.RedirectURLs {
+		log.Debugf("array value at [%d]=%v", i, v)
+		if strings.Contains(v, domain) {
+			oauthclient.RedirectURL = v
+			break
+		}
+	}
 
 	var url = oauthclient.AuthCodeURL(state, oauthopts)
 	// log.Debugf("loginUrl %s", url)
@@ -238,7 +248,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		renderIndex(w, "too many redirects for "+redirectURL+" - "+lassoError)
 	} else {
 		// bounce to google for login
-		var googleURL = loginURL(state)
+		var googleURL = loginURL(r, state)
 		log.Debugf("redirecting to Google %s", googleURL)
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
 		http.Redirect(w, r, googleURL, 302)
@@ -298,7 +308,7 @@ func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// make the "third leg" request back to google to exchange the tokent get the userinfo
+	// make the "third leg" request back to google to exchange the token for the userinfo
 	client := oauthclient.Client(oauth2.NoContext, gtoken)
 	userinfo, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {

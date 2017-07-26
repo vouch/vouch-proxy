@@ -20,9 +20,9 @@ type User struct {
 // GCredentials google credentials
 // loaded from yaml config
 type GCredentials struct {
-	ClientID     string `mapstructure:"client_id"`
-	ClientSecret string `mapstructure:"client_secret"`
-	RedirectURL  string `mapstructure:"callback_url"`
+	ClientID     string   `mapstructure:"client_id"`
+	ClientSecret string   `mapstructure:"client_secret"`
+	RedirectURLs []string `mapstructure:"callback_urls"`
 }
 
 // Team has members and provides acess to sites
