@@ -43,6 +43,20 @@ server {
 
 ```
 
+## if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header
+
+```{.nginxconf}
+server {
+    listen 80 default_server;
+    server_name lasso.yourdomain.com;
+    location / {
+       proxy_set_header Host lasso.yourdomain.com;
+       proxy_pass http://127.0.0.1:9090;
+    }
+}
+
+```
+
 ## Running from Docker
 
 * `./do.sh drun`
