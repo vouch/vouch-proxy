@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -8,8 +9,8 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
-	"net/url"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -348,17 +349,9 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerToken, err := oauthclient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-	if err != nil {
-		log.Errorf("no providerToken")
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	user := structs.User{}
-	// make the "third leg" request back to google to exchange the token for the userinfo
 
-	if err := getUserInfo(providerToken, &user); err != nil {
+	if err := getUserInfo(r, &user); err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -399,15 +392,25 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO: put all getUserInfo logic into its own pkg
 
-func getUserInfo(providerToken *oauth2.Token, user *structs.User) error {
-	client := oauthclient.Client(oauth2.NoContext, providerToken)
+func getUserInfo(r *http.Request, user *structs.User) error {
 
+	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
+	if genOauth.Provider == "indieauth" {
+		return getUserInfoFromIndieAuth(r, user)
+	}
+
+	providerToken, err := oauthclient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	if err != nil {
+		return err
+	}
+	// make the "third leg" request back to google to exchange the token for the userinfo
+	client := oauthclient.Client(oauth2.NoContext, providerToken)
 	if gcred.ClientID != "" {
 		return getUserInfoFromGoogle(client, user)
 	} else if genOauth.Provider == "github" {
 		return getUserInfoFromGithub(client, user, providerToken)
 	}
-	return getUserInfoFromIndieAuth(client, user, providerToken)
+	return nil
 }
 
 func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
@@ -429,6 +432,7 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 }
 
 func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
+
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get("https://api.github.com/user?access_token=" + ptoken.AccessToken)
 	if err != nil {
@@ -452,13 +456,45 @@ type indieResponse struct {
 	Email string `json:"me"`
 }
 
-func getUserInfoFromIndieAuth(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
-	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	v := url.Values{}
-	v.Set("code", ptoken.AccessToken)
-	v.Set("redirect_uri", genOauth.RedirectURL)
-	v.Set("client_id", genOauth.ClientID)
-	userinfo, err := client.PostForm(genOauth.UserInfoURL, v)
+func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
+
+	code := r.URL.Query().Get("code")
+	log.Errorf("ptoken.AccessToken: %s", code)
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	// v.Set("code", code)
+	fw, err := w.CreateFormField("code")
+	if err != nil {
+		return err
+	}
+	if _, err = fw.Write([]byte(code)); err != nil {
+		return err
+	}
+	// v.Set("redirect_uri", genOauth.RedirectURL)
+	fw, err = w.CreateFormField("redirect_uri")
+	if _, err = fw.Write([]byte(genOauth.RedirectURL)); err != nil {
+		return err
+	}
+	// v.Set("client_id", genOauth.ClientID)
+	fw, err = w.CreateFormField("client_id")
+	if _, err = fw.Write([]byte(genOauth.ClientID)); err != nil {
+		return err
+	}
+	w.Close()
+
+	req, err := http.NewRequest("POST", genOauth.AuthURL, &b)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Accept", "application/json")
+
+	// v := url.Values{}
+	// userinfo, err := client.PostForm(genOauth.UserInfoURL, v)
+
+	client := &http.Client{}
+	userinfo, err := client.Do(req)
+
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
@@ -467,7 +503,7 @@ func getUserInfoFromIndieAuth(client *http.Client, user *structs.User, ptoken *o
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("indieauth userinfo body: ", string(data))
 	ir := indieResponse{}
-	if err = json.Unmarshal(data, ir); err != nil {
+	if err := json.Unmarshal(data, &ir); err != nil {
 		log.Errorln(err)
 		return err
 	}
