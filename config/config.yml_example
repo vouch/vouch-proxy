@@ -39,11 +39,19 @@ lasso:
 
 # create new credentials at:
 # https://console.developers.google.com/apis/credentials
-google:
-  client_id: 
-  client_secret: 
-  # must be the /auth endpoint
-  callback_urls:
-    - http://lasso.yourdomain.com:9090/auth
-    - http://lasso.yourotherdomain.com:9090/auth
-  preferredDomain: yourdomain.com
+oauth:
+  google:
+    client_id: 
+    client_secret: 
+    # must be the /auth endpoint
+    callback_urls:
+      - http://lasso.yourdomain.com:9090/auth
+      - http://lasso.yourotherdomain.com:9090/auth
+    preferredDomain: yourdomain.com
+  generic:
+    provider: indieauth
+    client_id: http://yourdomain.com
+    auth_url: https://indieauth.com/auth
+    user_info_url: https://indieauth.com/auth
+    callback_url: http://lasso.yourdomain.com:9090/auth
+  
