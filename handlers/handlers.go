@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -27,7 +28,8 @@ import (
 
 // Index variables passed to index.tmpl
 type Index struct {
-	Msg string
+	Msg     string
+	TestURL string
 }
 
 // AuthError sets the values to return to nginx
@@ -38,6 +40,7 @@ type AuthError struct {
 
 var (
 	gcred       structs.GCredentials
+	genOauth    structs.GenericOauth
 	oauthclient *oauth2.Config
 	oauthopts   oauth2.AuthCodeOption
 
@@ -49,21 +52,40 @@ var (
 
 func init() {
 	log.Debug("init handlers")
-	cfg.UnmarshalKey("google", &gcred)
 
-	oauthclient = &oauth2.Config{
-		ClientID:     gcred.ClientID,
-		ClientSecret: gcred.ClientSecret,
-		// RedirectURL:  gcred.RedirectURL,
-		Scopes: []string{
-			// You have to select a scope from
-			// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-			"https://www.googleapis.com/auth/userinfo.email",
-		},
-		Endpoint: google.Endpoint,
+	// if grcred exist
+	err := cfg.UnmarshalKey("oauth.google", &gcred)
+	if err == nil && gcred.ClientID != "" {
+		log.Info("configuring google oauth")
+		oauthclient = &oauth2.Config{
+			ClientID:     gcred.ClientID,
+			ClientSecret: gcred.ClientSecret,
+			// RedirectURL:  gcred.RedirectURL,
+			Scopes: []string{
+				// You have to select a scope from
+				// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
+				"https://www.googleapis.com/auth/userinfo.email",
+			},
+			Endpoint: google.Endpoint,
+		}
+		log.Infof("setting google oauth prefered login domain param 'hd' to %s", gcred.PreferredDomain)
+		oauthopts = oauth2.SetAuthURLParam("hd", gcred.PreferredDomain)
+		return
 	}
-	log.Infof("setting oauth prefered login domain param 'hd' to %s", cfg.Cfg.PreferredDomain)
-	oauthopts = oauth2.SetAuthURLParam("hd", cfg.Cfg.PreferredDomain)
+	err = cfg.UnmarshalKey("oauth.generic", &genOauth)
+	if err == nil {
+		log.Info("configuring generic oauth")
+		oauthclient = &oauth2.Config{
+			ClientID:     genOauth.ClientID,
+			ClientSecret: genOauth.ClientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  genOauth.AuthURL,
+				TokenURL: genOauth.TokenURL,
+			},
+			RedirectURL: genOauth.RedirectURL,
+			Scopes:      genOauth.Scopes,
+		}
+	}
 }
 
 func randString() string {
@@ -75,17 +97,21 @@ func randString() string {
 func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-
-	domain := domains.Matches(r.Host)
-	for i, v := range gcred.RedirectURLs {
-		log.Debugf("array value at [%d]=%v", i, v)
-		if strings.Contains(v, domain) {
-			oauthclient.RedirectURL = v
-			break
+	var url = ""
+	if gcred.ClientID != "" {
+		domain := domains.Matches(r.Host)
+		for i, v := range gcred.RedirectURLs {
+			log.Debugf("array value at [%d]=%v", i, v)
+			if strings.Contains(v, domain) {
+				oauthclient.RedirectURL = v
+				break
+			}
 		}
+		url = oauthclient.AuthCodeURL(state, oauthopts)
+	} else {
+		url = oauthclient.AuthCodeURL(state)
 	}
 
-	var url = oauthclient.AuthCodeURL(state, oauthopts)
 	// log.Debugf("loginUrl %s", url)
 	return url
 }
@@ -204,6 +230,23 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// LogoutHandler /logout
+// currently performs a 302 redirect to Google
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("/logout")
+	cookie.ClearCookie(w, r)
+
+	log.Debug("saving session")
+	sessstore.MaxAge(-1)
+	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
+	if err != nil {
+		log.Error(err)
+	}
+	session.Save(r, w)
+	sessstore.MaxAge(300)
+	renderIndex(w, "you have been logged out")
+}
+
 // LoginHandler /login
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -247,43 +290,46 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		var lassoError = r.URL.Query().Get("error")
 		renderIndex(w, "too many redirects for "+redirectURL+" - "+lassoError)
 	} else {
-		// bounce to google for login
-		var googleURL = loginURL(r, state)
-		log.Debugf("redirecting to Google %s", googleURL)
+		// bounce to oauth provider for login
+		var lURL = loginURL(r, state)
+		log.Debugf("redirecting to oauthURL %s", lURL)
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, googleURL, 302)
-		// c.Writer.Write([]byte("<html><title>Golang Google</title> <body> <a href='" + url + "'><button>Login with Google!</button> </a> </body></html>"))
+		http.Redirect(w, r, lURL, 302)
 	}
-
 }
 
 func renderIndex(w http.ResponseWriter, msg string) {
-	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
+	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURL: cfg.Cfg.TestURL}); err != nil {
 		log.Error(err)
 	}
 }
 
 // VerifyUser validates that the domains match for the user
-func VerifyUser(u structs.User) (ok bool, err error) {
+// func VerifyUser(u structs.User) (ok bool, err error) {
+func VerifyUser(u interface{}) (ok bool, err error) {
 	// (w http.ResponseWriter, req http.Request)
 	// is Hd google specific? probably yes
 	// TODO rewrite / abstract this validation
 	ok = false
-	if !domains.IsUnderManagement(u.Email) {
-		err = fmt.Errorf("Email %s is not within a lasso managed domain", u.Email)
-	} else if !domains.IsUnderManagement(u.HostDomain) {
-		err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
+
+	// TODO: how do we manage the user?
+	user := u.(structs.User)
+
+	if !domains.IsUnderManagement(user.Email) {
+		err = fmt.Errorf("Email %s is not within a lasso managed domain", user.Email)
+		// } else if !domains.IsUnderManagement(user.HostDomain) {
+		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
 	} else {
 		ok = true
 	}
 	return ok, err
 }
 
-// GCallbackHandler /auth
+// CallbackHandler /auth
 // - validate info from Google
 // - create user
 // - issue jwt in the form of a cookie
-func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
+func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
 	// Handle the exchange code to initiate a transport.
 
@@ -302,30 +348,22 @@ func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gtoken, err := oauthclient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	providerToken, err := oauthclient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 	if err != nil {
+		log.Errorf("no providerToken")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// make the "third leg" request back to google to exchange the token for the userinfo
-	client := oauthclient.Client(oauth2.NoContext, gtoken)
-	userinfo, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer userinfo.Body.Close()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-
-	log.Println("userinfo body: ", string(data))
 	user := structs.User{}
-	if err = json.Unmarshal(data, &user); err != nil {
-		log.Errorln(err)
-		renderIndex(w, "Error marshalling response. Please try agian.")
-		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
+	// make the "third leg" request back to google to exchange the token for the userinfo
+
+	if err := getUserInfo(providerToken, &user); err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Debug(user)
 
 	if ok, err := VerifyUser(user); !ok {
 		log.Error(err)
@@ -357,4 +395,83 @@ func GCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// otherwise serve an html page
 	renderIndex(w, tokenstring)
+}
+
+// TODO: put all getUserInfo logic into its own pkg
+
+func getUserInfo(providerToken *oauth2.Token, user *structs.User) error {
+	client := oauthclient.Client(oauth2.NoContext, providerToken)
+
+	if gcred.ClientID != "" {
+		return getUserInfoFromGoogle(client, user)
+	} else if genOauth.Provider == "github" {
+		return getUserInfoFromGithub(client, user, providerToken)
+	}
+	return getUserInfoFromIndieAuth(client, user, providerToken)
+}
+
+func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
+	userinfo, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	defer userinfo.Body.Close()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Println("google userinfo body: ", string(data))
+	if err = json.Unmarshal(data, user); err != nil {
+		log.Errorln(err)
+		// renderIndex(w, "Error marshalling response. Please try agian.")
+		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
+		return err
+	}
+	return nil
+}
+
+func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
+	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
+	userinfo, err := client.Get("https://api.github.com/user?access_token=" + ptoken.AccessToken)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	defer userinfo.Body.Close()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Println("github userinfo body: ", string(data))
+	if err = json.Unmarshal(data, user); err != nil {
+		log.Errorln(err)
+		// renderIndex(w, "Error marshalling response. Please try agian.")
+		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
+		return err
+	}
+	log.Debug(user)
+	return nil
+}
+
+type indieResponse struct {
+	Email string `json:"me"`
+}
+
+func getUserInfoFromIndieAuth(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
+	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
+	v := url.Values{}
+	v.Set("code", ptoken.AccessToken)
+	v.Set("redirect_uri", genOauth.RedirectURL)
+	v.Set("client_id", genOauth.ClientID)
+	userinfo, err := client.PostForm(genOauth.UserInfoURL, v)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	defer userinfo.Body.Close()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Println("indieauth userinfo body: ", string(data))
+	ir := indieResponse{}
+	if err = json.Unmarshal(data, ir); err != nil {
+		log.Errorln(err)
+		return err
+	}
+	user.Email = ir.Email
+	log.Debug(user)
+	return nil
 }
