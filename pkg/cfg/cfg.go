@@ -11,12 +11,11 @@ import (
 
 // CfgT lasso jwt cookie configuration
 type CfgT struct {
-	LogLevel        string   `mapstructure:"logLevel"`
-	Listen          string   `mapstructure:"listen"`
-	Port            int      `mapstructure:"port"`
-	Domains         []string `mapstructure:"domains"`
-	PreferredDomain string   `mapstructre:"preferredDomain"`
-	JWT             struct {
+	LogLevel string   `mapstructure:"logLevel"`
+	Listen   string   `mapstructure:"listen"`
+	Port     int      `mapstructure:"port"`
+	Domains  []string `mapstructure:"domains"`
+	JWT      struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
@@ -37,6 +36,7 @@ type CfgT struct {
 	Session struct {
 		Name string `mapstructure:"name"`
 	}
+	TestURL string `mapstructure:"test_url"`
 }
 
 // Cfg the main exported config variable

@@ -1,27 +1,19 @@
 
 # lasso config
 
-# create new credentials at:
-# https://console.developers.google.com/apis/credentials
-google:
-  client_id: 
-  client_secret: 
-  # must be the /auth endpoint
-  callback_urls:
-    - http://lasso.yourdomain.com:9090/auth
-    - http://lasso.yourotherdomain.com:9090/auth
 
 lasso:
   # logLevel: debug
   logLevel: info
   listen: 0.0.0.0
   port: 9090
+  # options for oauthProvider are "google", "generic"
+  oauthProvider
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
   domains:
   - yourdomain.com
   - yourotherdomain.com
   # gets sent to google as a primer
-  preferredDomain: yourdomain.com
   jwt:
     issuer: Lasso
     maxAge: 240
@@ -40,3 +32,18 @@ lasso:
     file: data/lasso_bolt.db
   session:
     name: lasso
+  test_url: http://my.testing.site.com
+#
+# OAuth Config
+#
+
+# create new credentials at:
+# https://console.developers.google.com/apis/credentials
+google:
+  client_id: 
+  client_secret: 
+  # must be the /auth endpoint
+  callback_urls:
+    - http://lasso.yourdomain.com:9090/auth
+    - http://lasso.yourotherdomain.com:9090/auth
+  preferredDomain: yourdomain.com
