@@ -29,8 +29,11 @@ func main() {
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	mux.HandleFunc("/login", timelog.TimeLog(loginH))
 
-	gcallH := http.HandlerFunc(handlers.GCallbackHandler)
-	mux.HandleFunc("/auth", timelog.TimeLog(gcallH))
+	logoutH := http.HandlerFunc(handlers.LogoutHandler)
+	mux.HandleFunc("/logout", timelog.TimeLog(logoutH))
+
+	callH := http.HandlerFunc(handlers.CallbackHandler)
+	mux.HandleFunc("/auth", timelog.TimeLog(callH))
 
 	// router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	mux.Handle("/static", http.FileServer(http.Dir("./static")))
