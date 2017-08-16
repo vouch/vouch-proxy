@@ -15,35 +15,42 @@ If lasso is running on the same host as the nginx reverse proxy the response tim
 server {
     listen 80 default_server;
     server_name dev.yourdomain.com;
-
     root /var/www/html/;
+
+    # send all requests to the `/validate` endpoint for authorization
     auth_request /validate;
+    # if validate returns `401 not authorized` then forward the request to the error401block 
     error_page 401 = @error401;
 
-    location @error401 {
-        return 302 https://lasso.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    location = /validate {
+      # lasso can run behind the same nginx-revproxy
+      # May need to add "internal", and comply to "upstream" server naming
+      proxy_pass http://lasso.yourdomain.com:9090;
+
+      # lasso only acts on the request headers
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+
+      # not currently
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
     }
 
-    location = /validate {
-       # can also run lasso behind the same nginx-revproxy  May need to add "internal", and comply to "upstream" server naming
-       proxy_pass http://lasso.yourdomain.com:9090;
-       proxy_pass_request_body     off;
-
-       proxy_set_header Content-Length "";
-       proxy_set_header X-Real-IP $remote_addr;
-       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-       proxy_set_header X-Forwarded-Proto $scheme;
-
-       # these return values are fed to the @error401 call
-       auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
-       auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
-       auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
+    location @error401 {
+        # redirect to lasso for login
+        return 302 https://lasso.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 }
 
 ```
 
-## if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header
+## if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
 ```{.nginxconf}
 server {
