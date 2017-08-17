@@ -7,9 +7,8 @@ lasso:
   logLevel: info
   listen: 0.0.0.0
   port: 9090
-  # options for oauthProvider are "google", "generic"
-  oauthProvider
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
+  # usually you'll just have one
   domains:
   - yourdomain.com
   - yourotherdomain.com
@@ -21,7 +20,6 @@ lasso:
     compress: true
   cookie: 
     # name of cookie to store the jwt
-    # cookiename must match the nginx config  
     name: Lasso
     secure: false
     httpOnly: true
@@ -33,14 +31,15 @@ lasso:
   session:
     name: lasso
   test_url: http://my.testing.site.com
+
 #
 # OAuth Config
 #
-
-# create new credentials at:
-# https://console.developers.google.com/apis/credentials
 oauth:
+  # configure one of the following
   google:
+    # create new credentials at:
+    # https://console.developers.google.com/apis/credentials
     client_id: 
     client_secret: 
     # must be the /auth endpoint
@@ -49,8 +48,30 @@ oauth:
       - http://lasso.yourotherdomain.com:9090/auth
     preferredDomain: yourdomain.com
   generic:
+    # create new credentials at:
+    # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
+    provider: github
+    client_id:
+    client_secret:
+    auth_url: https://github.com/login/oauth/authorize
+    token_url: https://github.com/login/oauth/access_token
+    # callback_url is configured at github.com when setting up the app
+    scopes:
+      - user
+    user_info_url: https://api.github.com/user?access_token=
+  generic:
+    # https://indieauth.com/developers
     provider: indieauth
     client_id: http://yourdomain.com
+    # must be the /auth endpoint
+    auth_url: https://indieauth.com/auth
+    user_info_url: https://indieauth.com/auth
+    callback_url: http://lasso.yourdomain.com:9090/auth
+  generic:
+    # https://indieauth.com/developers
+    provider: indieauth
+    client_id: http://yourdomain.com
+    # must be the /auth endpoint
     auth_url: https://indieauth.com/auth
     user_info_url: https://indieauth.com/auth
     callback_url: http://lasso.yourdomain.com:9090/auth

@@ -2,12 +2,14 @@
 
 an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
 
+lasso supports oauth for google apps, [github}(https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/) and [indieauth](https://indieauth.com/developers)
+
 If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
-* create oauth credentials for lasso at https://console.developers.google.com/apis/credentials
+* create oauth credentials for lasso at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure nginx...
 
@@ -50,7 +52,7 @@ server {
 
 ```
 
-## if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
+if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
 ```{.nginxconf}
 server {
@@ -69,6 +71,13 @@ server {
 * `./do.sh drun`
 
 And that's it!  Or if you can examine the docker command in `do.sh`
+
+## Running from source
+```
+  go get ./...
+  go build
+  ./lasso
+```
 
 ## the flow of login and authentication using Google Oauth
 

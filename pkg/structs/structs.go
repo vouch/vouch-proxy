@@ -45,7 +45,7 @@ type GenericOauth struct {
 	ClientSecret string   `mapstructure:"client_secret"`
 	AuthURL      string   `mapstructure:"auth_url"`
 	TokenURL     string   `mapstructure:"token_url"`
-	RedirectURL  string   `mapstructure:"callback_url"`
+	RedirectURL  string   `mapstructure:"callback_url  	"`
 	Scopes       []string `mapstructure:"scopes"`
 	UserInfoURL  string   `mapstructure:"user_info_url"`
 	Provider     string   `mapstructure:"provider"`
