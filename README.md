@@ -2,9 +2,11 @@
 
 an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
 
-lasso supports oauth for google apps, [github}(https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/) and [indieauth](https://indieauth.com/developers)
+lasso supports oauth for google apps, [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/) and [indieauth](https://indieauth.com/developers)
 
 If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
+
+For support please file tickets here or visit our IRC channel [#lasso](irc://freenode.net/#lasso) on freenode
 
 ## Installation
 
@@ -52,7 +54,7 @@ server {
 
 ```
 
-if lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
+If lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
 ```{.nginxconf}
 server {
@@ -71,6 +73,8 @@ server {
 * `./do.sh drun`
 
 And that's it!  Or if you can examine the docker command in `do.sh`
+
+The [bfoote/lasso](https://hub.docker.com/r/bfoote/lasso/) Docker image is an automated build on Docker Hub
 
 ## Running from source
 ```
