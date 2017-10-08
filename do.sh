@@ -85,6 +85,29 @@ test () {
   fi
 }
 
+graphviz () {
+#  FILE=$1; shift;
+  FILE=lasso_flow.dot;
+  CMD="docker run 
+        --rm 
+        -it 
+        -v $(pwd):/code
+        -w /code
+        --entrypoint dot
+        themarquee/graphviz
+          -T png
+          -o lasso_flow.png
+          $FILE
+"
+  echo $CMD
+  ${CMD}
+
+}
+
+DB=data/lasso_bolt.db
+browsebolt() {
+	~/go/bin/boltbrowser $DB
+}
 
 usage() {
    cat <<EOF
@@ -93,8 +116,12 @@ usage() {
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 revproxy               - run an nginx reverseproxy for naga.bnf.net
+     $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
+     $0 graphviz                - lasso_flow.dot --> lasso_flow.jpg
+
+  do is like make
 
 EOF
 
@@ -103,6 +130,10 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
+   'browsebolt')
+	 browsebolt
+   ;;
+
    'build')
    dbuild
    ;;
@@ -111,6 +142,9 @@ case "$ARG" in
    ;;
    'revproxy')
    revproxy $*
+   ;;
+   'graphviz')
+   graphviz $*
    ;;
    'test')
    test $*

@@ -1,0 +1,41 @@
+# graphviz diagram
+
+digraph Lasso {
+
+    compound=true;
+    ratio=fill; node[fontsize=24];
+    splines=line; 
+
+    browse_to_private_site -> nginx_receive_request;
+    nginx_receive_request -> validate;
+    validate -> evaluate_jwt;
+    evaluate_jwt -> NOT_AUTH;
+    NOT_AUTH -> redirect_to_login;
+    redirect_to_login -> redirected_to_login;
+    redirected_to_login -> login;
+    login -> redirect_to_google_oauth;
+    redirect_to_google_oauth -> redirected_to_google_oauth
+    redirected_to_google_oauth -> google_oauth;
+    google_oauth -> redirect_to_authorize;
+    redirect_to_authorize -> authorize;
+    authorize -> confirm_state;
+    confirm_state -> state_confirmed;
+    state_confirmed -> redirect_to_original_url;
+    redirect_to_original_url -> browse_to_private_site;
+
+    evaluate_jwt -> SUCCESS;    
+    SUCCESS -> set_cookie;
+    set_cookie -> homepage;
+
+    subgraph cluster_bob { label="Bob"; browse_to_private_site; set_cookie; redirected_to_login; redirected_to_google_oauth}
+    subgraph cluster_nginx { label="nginx"; nginx_receive_request; NOT_AUTH; SUCCESS; redirect_to_login;}
+    subgraph cluster_lasso { label="lasso - login.oursites.com"; validate; evaluate_jwt; login; redirect_to_google_oauth; authorize; state_confirmed;}
+    subgraph cluster_google { label="Google Login"; google_oauth; redirect_to_authorize; confirm_state;}
+    subgraph cluster_oursite { label="private.oursites.com"; homepage }
+
+    { rank = same; browse_to_private_site; nginx_receive_request; validate; }
+    { rank = same; evaluate_jwt; NOT_AUTH; redirect_to_login; redirected_to_login;}
+    { rank = same; login; redirect_to_google_oauth; redirected_to_google_oauth; google_oauth;}
+    { rank = same; SUCCESS; homepage;}
+
+}
