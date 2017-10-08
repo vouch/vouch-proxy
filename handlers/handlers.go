@@ -100,9 +100,11 @@ func loginURL(r *http.Request, state string) string {
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var url = ""
 	if gcred.ClientID != "" {
+		// If the provider is Google, find a matching redirect URL to use for the client
 		domain := domains.Matches(r.Host)
+		log.Debugf("looking for redirect URL matching  %v", domain)
 		for i, v := range gcred.RedirectURLs {
-			log.Debugf("array value at [%d]=%v", i, v)
+			log.Debugf("redirect value matched at [%d]=%v", i, v)
 			if strings.Contains(v, domain) {
 				oauthclient.RedirectURL = v
 				break
