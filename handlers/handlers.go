@@ -316,7 +316,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 	// TODO: how do we manage the user?
 	user := u.(structs.User)
 
-	if !domains.IsUnderManagement(user.Email) {
+	if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a lasso managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
@@ -431,6 +431,8 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 	return nil
 }
 
+// github
+// https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
 func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
@@ -452,6 +454,8 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	return nil
 }
 
+// indieauth
+// https://indieauth.com/developers
 type indieResponse struct {
 	Email string `json:"me"`
 }
