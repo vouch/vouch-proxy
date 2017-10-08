@@ -93,11 +93,11 @@ func (c *Client) readPump() {
 		// json.Unmarshal(message, &p)
 		// log.Infof("ws message: %s, %v", message, p)
 		if p.T == "getusers" {
-			c.getUsers()
+			c.shipUsers()
 		} else if p.T == "getsites" {
-			c.getSites()
+			c.shipSites()
 		} else if p.T == "getteams" {
-			c.getTeams()
+			c.shipTeams()
 		} else if p.T == "updateteam" {
 			c.updateTeam(p.D)
 		}
@@ -115,7 +115,7 @@ func (c *Client) updateTeam(data interface{}) {
 	// 	return
 	// }
 	model.PutTeam(t)
-	c.getTeams()
+	c.shipTeams()
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -164,21 +164,21 @@ func (c *Client) writePump() {
 	}
 }
 
-func (c *Client) getUsers() {
+func (c *Client) shipUsers() {
 	var users []structs.User
 	model.AllUsers(&users)
 	log.Debugf("shipping users %v", users)
 	c.shipping("users", users)
 }
 
-func (c *Client) getSites() {
+func (c *Client) shipSites() {
 	var sites []structs.Site
 	model.AllSites(&sites)
 	log.Debugf("shipping sites %v", sites)
 	c.shipping("sites", sites)
 }
 
-func (c *Client) getTeams() {
+func (c *Client) shipTeams() {
 	var teams []structs.Team
 	model.AllTeams(&teams)
 	log.Debugf("shipping teams %v", teams)
