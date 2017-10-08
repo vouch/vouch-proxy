@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/bnfinet/lasso/pkg/structs"
 	log "github.com/Sirupsen/logrus"
+	"github.com/bnfinet/lasso/pkg/structs"
 	"github.com/boltdb/bolt"
 )
 
@@ -29,6 +29,8 @@ func PutSite(s structs.Site) error {
 			log.Debugf("siteexists.. keeping time at %v", curs.CreatedOn)
 			s.CreatedOn = curs.CreatedOn
 		} else {
+			id, _ := b.NextSequence()
+			s.ID = int(id)
 			s.CreatedOn = s.LastUpdate
 		}
 

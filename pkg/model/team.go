@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bnfinet/lasso/pkg/structs"
 	log "github.com/Sirupsen/logrus"
+	"github.com/bnfinet/lasso/pkg/structs"
 	"github.com/boltdb/bolt"
 )
 
@@ -29,6 +29,8 @@ func PutTeam(t structs.Team) error {
 				log.Debugf("teamexists.. keeping time at %v", curt.CreatedOn)
 				t.CreatedOn = curt.CreatedOn
 			} else {
+				id, _ := b.NextSequence()
+				t.ID = int(id)
 				t.CreatedOn = t.LastUpdate
 			}
 

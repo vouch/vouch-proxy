@@ -6,6 +6,7 @@ type User struct {
 	Email      string `json:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
+	ID         int    `json:"id",mapstructure:"id"`
 	// jwt.StandardClaims
 }
 
@@ -58,7 +59,7 @@ type Team struct {
 	Sites      []string `json:"sites",mapstructure:"sites"`     // just the domains
 	CreatedOn  int64    `json:"createdon",mapstructure:"createdon"`
 	LastUpdate int64    `json:"lastupdate",mapstructure:"lastupdate"`
-	ID         uint64   `json:"id",mapstructure:"id"`
+	ID         int      `json:"id",mapstructure:"id"`
 }
 
 // Site is the basic unit of auth
@@ -66,4 +67,5 @@ type Site struct {
 	Domain     string `json:"domain"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
+	ID         int    `json:"id",mapstructure:"id"`
 }

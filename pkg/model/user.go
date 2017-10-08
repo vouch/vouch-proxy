@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bnfinet/lasso/pkg/structs"
 	log "github.com/Sirupsen/logrus"
+	"github.com/bnfinet/lasso/pkg/structs"
 	"github.com/boltdb/bolt"
 )
 
@@ -31,6 +31,8 @@ func PutUser(u structs.User) error {
 			u.CreatedOn = curu.CreatedOn
 		} else {
 			u.CreatedOn = u.LastUpdate
+			id, _ := b.NextSequence()
+			u.ID = int(id)
 			log.Debugf("new user.. setting created on to %v", u.CreatedOn)
 		}
 
