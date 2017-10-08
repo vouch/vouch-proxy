@@ -205,6 +205,8 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// renderIndex(w, "user found from email "+user.Email)
+	w.Header().Add("X-Lasso-User", claims.Email)
+	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
 	renderIndex(w, "user found in jwt "+claims.Email)
 
 	// TODO
