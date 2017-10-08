@@ -27,15 +27,13 @@ func TestPutUserGetUser(t *testing.T) {
 	Open(testdb)
 
 	u1 := structs.User{
-		Email:         "test@testing.com",
-		EmailVerified: true,
-		Name:          "Test Name",
+		Email: "test@testing.com",
+		Name:  "Test Name",
 	}
 	u2 := &structs.User{}
 	u3 := structs.User{
-		Email:         "testagain@testing.com",
-		EmailVerified: true,
-		Name:          "Test Again",
+		Email: "testagain@testing.com",
+		Name:  "Test Again",
 	}
 
 	if err := PutUser(u1); err != nil {
