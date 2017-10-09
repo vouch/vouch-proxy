@@ -21,6 +21,8 @@ lasso:
   cookie: 
     # name of cookie to store the jwt
     name: Lasso
+    # optionally force the domain of the cookie to set
+    # domain: yourdomain.com
     secure: false
     httpOnly: true
   headers:
