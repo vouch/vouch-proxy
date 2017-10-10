@@ -14,7 +14,7 @@ import (
 // TODO return all matches
 func Matches(s string) string {
 	for i, v := range cfg.Cfg.Domains {
-		log.Debugf("array value at [%d]=%v", i, v)
+		log.Debugf("domain matched array value at [%d]=%v", i, v)
 		if strings.Contains(s, v) {
 			return v
 		}
