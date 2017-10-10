@@ -35,10 +35,8 @@ server {
       proxy_pass_request_body off;
       proxy_set_header Content-Length "";
 
-      # not currently
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
+      # pass X-Lasso-User along with the request
+      auth_request_set $auth_resp_x_lasso_user $upstream_http_x_lasso_user;
 
       # these return values are used by the @error401 call
       auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
@@ -49,6 +47,13 @@ server {
     location @error401 {
         # redirect to lasso for login
         return 302 https://lasso.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    }
+
+    # proxy pass authorized requests to your service
+    location / {
+      proxy_pass http://dev.yourdomain.com:8080;
+      # set user header (usually an email)
+      proxy_set_header X-Lasso-User $auth_resp_x_lasso_user;
     }
 }
 
