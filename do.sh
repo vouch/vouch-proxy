@@ -14,6 +14,14 @@ NAME=lasso
 HTTPPORT=9090
 GODOC_PORT=5050
 
+run () {
+  go run main.go
+}
+
+build () {
+  go build .
+}
+
 gogo () {
   docker run --rm -i -t -v /var/run/docker.sock:/var/run/docker.sock -v ${SDIR}/go:/go --name gogo $GOIMAGE $*
 }
@@ -112,14 +120,16 @@ browsebolt() {
 usage() {
    cat <<EOF
    usage:
-     $0 build                  - build docker container
+     $0 run                    - go run main.go
+     $0 build                  - go build
+     $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 revproxy               - run an nginx reverseproxy for naga.bnf.net
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
-     $0 graphviz                - lasso_flow.dot --> lasso_flow.jpg
+     $0 graphviz               - lasso_flow.dot --> lasso_flow.jpg
 
   do is like make
 
@@ -130,40 +140,12 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
-   'browsebolt')
-	 browsebolt
-   ;;
-
-   'build')
-   dbuild
-   ;;
-   'drun')
-   drun $*
-   ;;
-   'revproxy')
-   revproxy $*
-   ;;
-   'graphviz')
-   graphviz $*
-   ;;
-   'test')
-   test $*
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'revproxy'|'graphviz'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   $ARG $*
    ;;
    'godoc')
    echo "godoc running at http://${GODOC_PORT}"
    godoc -http=:${GODOC_PORT}
-   ;;
-   'goget'|'get')
-   goget $*
-   ;;
-   'gogo')
-   gogo $*
-   ;;
-   'watch')
-   watch $*
-   ;;
-   'gobuildstatic')
-   gobuildstatic $*
    ;;
    'all')
    gobuildstatic
