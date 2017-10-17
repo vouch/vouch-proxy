@@ -23,6 +23,11 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		maxAge = defaultMaxAge
 	}
 	domain := domains.Matches(r.Host)
+	// Allow overriding the cookie domain in the config file
+	if cfg.Cfg.Cookie.Domain != "" {
+	  domain = cfg.Cfg.Cookie.Domain
+		log.Debugf("setting the cookie domain to %v", domain)
+	}
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
 	http.SetCookie(w, &http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
