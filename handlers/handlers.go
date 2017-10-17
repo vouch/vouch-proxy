@@ -201,9 +201,11 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Infof("email from jwt cookie: %s", claims.Email)
 
-	if !jwtmanager.SiteInClaims(r.Host, &claims) {
-		error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
-		return
+	if !cfg.Cfg.AllowAllUsers {
+		if !jwtmanager.SiteInClaims(r.Host, &claims) {
+			error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+			return
+		}
 	}
 
 	// renderIndex(w, "user found from email "+user.Email)
@@ -325,6 +327,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
 	} else {
+		log.Debugf("no domains configured")
 		ok = true
 	}
 	return ok, err
