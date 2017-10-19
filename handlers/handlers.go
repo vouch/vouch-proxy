@@ -184,7 +184,12 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	jwt := FindJWT(r)
 	// if jwt != "" {
 	if jwt == "" {
-		error401(w, r, AuthError{Error: "no jwt found"})
+		// If the module is configured to allow public access with no authentication, return 200 now
+		if !cfg.Cfg.PublicAccess {
+			error401(w, r, AuthError{Error: "no jwt found"})
+		} else {
+			w.Header().Add("X-Lasso-User", "");
+		}
 		return
 	}
 
