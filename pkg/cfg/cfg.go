@@ -15,7 +15,11 @@ type CfgT struct {
 	Listen   string   `mapstructure:"listen"`
 	Port     int      `mapstructure:"port"`
 	Domains  []string `mapstructure:"domains"`
+<<<<<<< HEAD
 	AllowAllUsers bool `mapstructure:"allowAllUsers"`
+=======
+	PublicAccess bool  `mapstructure:"publicAccess"`
+>>>>>>> de8e608275cddf7f25904a3565fc3df71bd8fa29
 	JWT      struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
