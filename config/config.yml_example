@@ -7,13 +7,10 @@ lasso:
   logLevel: info
   listen: 0.0.0.0
   port: 9090
-<<<<<<< HEAD
   # set allowAllUsers: true to use Lasso to just identify users rather than determine whether they are authorized
   allowAllUsers: false
-=======
   # Setting publicAccess: true will accept all requests, even without a cookie. If the user is logged in, the cookie will be validated and the user header will be set.
   publicAccess: false
->>>>>>> de8e608275cddf7f25904a3565fc3df71bd8fa29
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
   # usually you'll just have one
   domains:
