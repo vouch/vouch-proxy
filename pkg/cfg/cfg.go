@@ -24,6 +24,7 @@ type CfgT struct {
 	}
 	Cookie struct {
 		Name     string `mapstructure:"name"`
+		Domain   string `mapstructure:"domain"`
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
