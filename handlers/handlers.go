@@ -256,7 +256,13 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	session.Save(r, w)
 	sessstore.MaxAge(300)
-	renderIndex(w, "you have been logged out")
+
+	var redirectURL = r.URL.Query().Get("url")
+	if redirectURL != "" {
+		http.Redirect(w, r, redirectURL, 302);
+	} else {
+		renderIndex(w, "you have been logged out")
+	}
 }
 
 // LoginHandler /login
