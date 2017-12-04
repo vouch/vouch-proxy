@@ -170,16 +170,16 @@ func decodeAndDecompressTokenString(encgzipss string) string {
 	// gzipss, err := url.QueryUnescape(encgzipss)
 	gzipss, err := base64.URLEncoding.DecodeString(encgzipss)
 	if err != nil {
-		log.Fatal(err)
+		log.Debugf("Error in Base64decode: %v", err)
 	}
 
 	breader := bytes.NewReader(gzipss)
 	zr, err := gzip.NewReader(breader)
 	if err != nil {
-		log.Fatal(err)
+		log.Debugf("Error reading gzip data: %v", err)
 	}
 	if err := zr.Close(); err != nil {
-		log.Fatal(err)
+		log.Debugf("Error decoding token: %v", err)
 	}
 	ss, _ := ioutil.ReadAll(zr)
 	return string(ss)
