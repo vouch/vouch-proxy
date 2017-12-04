@@ -177,6 +177,7 @@ func decodeAndDecompressTokenString(encgzipss string) string {
 	zr, err := gzip.NewReader(breader)
 	if err != nil {
 		log.Debugf("Error reading gzip data: %v", err)
+		return ""
 	}
 	if err := zr.Close(); err != nil {
 		log.Debugf("Error decoding token: %v", err)
