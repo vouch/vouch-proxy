@@ -30,7 +30,8 @@ lasso:
     secure: false
     httpOnly: true
   headers:
-    sso: X-Lasso-Token
+    jwt: X-Lasso-Token
+    querystring: access_token
     redirect: X-Lasso-Requested-URI
   db: 
     file: data/lasso_bolt.db
