@@ -119,23 +119,34 @@ func loginURL(r *http.Request, state string) string {
 	return url
 }
 
-// FindJWT look for JWT in Cookie, Header and Query String in that order
+// FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth 2 Bearer Token)
+// and Query String in that order
 func FindJWT(r *http.Request) string {
 	jwt, err := cookie.Cookie(r)
-	if err != nil {
-		log.Error(err)
-		// return ""
+	if err == nil {
+		log.Debugf("jwt from cookie: %s", jwt)
+		return jwt
 	}
-	log.Debugf("jwtCookie from cookie: %s", jwt)
-	if jwt == "" {
-		jwt = r.Header.Get(cfg.Cfg.Headers.SSO)
-		log.Debugf("jwtCookie from header %s: %s", cfg.Cfg.Headers.SSO, jwt)
+	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
+	if jwt != "" {
+		log.Debugf("jwt from header %s: %s", cfg.Cfg.Headers.JWT, jwt)
+		return jwt
 	}
-	if jwt == "" {
-		jwt = r.URL.Query().Get(cfg.Cfg.Headers.SSO)
-		log.Debugf("jwtCookie from querystring %s: %s", cfg.Cfg.Headers.SSO, jwt)
+	auth := r.Header.Get("Authorization")
+	if auth != "" {
+		s := strings.SplitN(auth, " ", 2)
+		if len(s) == 2 {
+			jwt = s[1]
+			log.Debugf("jwt from authorization header: %s", jwt)
+			return jwt
+		}
 	}
-	return jwt
+	jwt = r.URL.Query().Get(cfg.Cfg.Headers.QueryString)
+	if jwt != "" {
+		log.Debugf("jwt from querystring %s: %s", cfg.Cfg.Headers.QueryString, jwt)
+		return jwt
+	}
+	return ""
 }
 
 // ClaimsFromJWT look everywhere for the JWT, then parse the jwt and return the claims
