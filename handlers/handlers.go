@@ -207,19 +207,31 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := ClaimsFromJWT(jwt)
 	if err != nil {
 		// no email in jwt
-		error401(w, r, AuthError{err.Error(), jwt})
+		if !cfg.Cfg.PublicAccess {
+			error401(w, r, AuthError{err.Error(), jwt})
+		} else {
+			w.Header().Add("X-Lasso-User", "");
+		}
 		return
 	}
 	if claims.Email == "" {
 		// no email in jwt
-		error401(w, r, AuthError{"no email found in jwt", jwt})
+		if !cfg.Cfg.PublicAccess {
+			error401(w, r, AuthError{"no email found in jwt", jwt})
+		} else {
+			w.Header().Add("X-Lasso-User", "");
+		}
 		return
 	}
 	log.Infof("email from jwt cookie: %s", claims.Email)
 
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
-			error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+			if !cfg.Cfg.PublicAccess {
+				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+			} else {
+				w.Header().Add("X-Lasso-User", "");
+			}
 			return
 		}
 	}
