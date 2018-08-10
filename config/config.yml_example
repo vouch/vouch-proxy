@@ -1,22 +1,21 @@
-
 # lasso config
-
-
 lasso:
   # logLevel: debug
   logLevel: info
   listen: 0.0.0.0
   port: 9090
-  # set allowAllUsers: true to use Lasso to just identify users rather than determine whether they are authorized
+  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
   allowAllUsers: false
-  # Setting publicAccess: true will accept all requests, even without a cookie. If the user is logged in, the cookie will be validated and the user header will be set.
+  # Setting publicAccess: true will accept all requests, even without a cookie. 
+  # If the user is logged in, the cookie will be validated and the user header will be set.
+  # You will need to direct people to the Lasso login page from your application.
   publicAccess: false
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
-  # usually you'll just have one
+  # usually you'll just have one.
+  # Comment this out if you set allowAllUser:true
   domains:
   - yourdomain.com
   - yourotherdomain.com
-  # gets sent to google as a primer
   jwt:
     issuer: Lasso
     maxAge: 240
@@ -24,10 +23,10 @@ lasso:
     compress: true
   cookie: 
     # name of cookie to store the jwt
-    name: Lasso
+    name: Lasso-cookie
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
-    secure: false
+    secure: true
     httpOnly: true
   headers:
     jwt: X-Lasso-Token
@@ -36,50 +35,56 @@ lasso:
   db: 
     file: data/lasso_bolt.db
   session:
-    name: lasso
-  test_url: http://my.testing.site.com
+    name: lasso-session
+  test_url: http://yourdomain.com
 
 #
-# OAuth Config
+# OAuth Provider Config
 #
 oauth:
-  # configure one of the following
-  google:
-    # create new credentials at:
-    # https://console.developers.google.com/apis/credentials
-    client_id: 
-    client_secret: 
-    # must be the /auth endpoint
-    callback_urls:
-      - http://lasso.yourdomain.com:9090/auth
-      - http://lasso.yourotherdomain.com:9090/auth
-    preferredDomain: yourdomain.com
-  generic:
-    # create new credentials at:
-    # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-    provider: github
-    client_id:
-    client_secret:
-    auth_url: https://github.com/login/oauth/authorize
-    token_url: https://github.com/login/oauth/access_token
-    # callback_url is configured at github.com when setting up the app
-    scopes:
-      - user
-    user_info_url: https://api.github.com/user?access_token=
-  generic:
-    # https://indieauth.com/developers
-    provider: indieauth
-    client_id: http://yourdomain.com
-    # must be the /auth endpoint
-    auth_url: https://indieauth.com/auth
-    user_info_url: https://indieauth.com/auth
-    callback_url: http://lasso.yourdomain.com:9090/auth
-  generic:
-    # https://indieauth.com/developers
-    provider: indieauth
-    client_id: http://yourdomain.com
-    # must be the /auth endpoint
-    auth_url: https://indieauth.com/auth
-    user_info_url: https://indieauth.com/auth
-    callback_url: http://lasso.yourdomain.com:9090/auth
+  # configure only one of the following
+
+  # Google
+  provider: google
+  # create new credentials at:
+  # https://console.developers.google.com/apis/credentials
+  client_id: 
+  client_secret: 
+  # must be the /auth endpoint
+  callback_urls:
+    - http://lasso.yourdomain.com:9090/auth
+    - http://lasso.yourotherdomain.com:9090/auth
+  preferredDomain: yourdomain.com
+
+  # GitHub
+  # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
+  provider: github
+  client_id:
+  client_secret:
+  auth_url: https://github.com/login/oauth/authorize
+  token_url: https://github.com/login/oauth/access_token
+  # callback_url is configured at github.com when setting up the app
+  scopes:
+    - user
+  user_info_url: https://api.github.com/user?access_token=
+
+  # Generic OpenID Connect
+  provider: oidc
+  client_id: 
+  client_secret: 
+  auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
+  token_url: https://{yourOktaDomain}/oauth2/default/v1/token
+  user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: http://lasso.yourdomain.com:9090/auth
+
+  # IndieAuth
+  # https://indielogin.com/api
+  provider: indieauth
+  client_id: http://yourdomain.com
+  auth_url: https://indielogin.com/auth
+  callback_url: http://lasso.yourdomain.com:9090/auth
   
