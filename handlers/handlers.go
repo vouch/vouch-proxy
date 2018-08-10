@@ -450,6 +450,28 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 		return getUserInfoFromGoogle(client, user)
 	} else if genOauth.Provider == "github" {
 		return getUserInfoFromGithub(client, user, providerToken)
+	} else if genOauth.Provider == "oidc" {
+		return getUserInfoFromOpenID(client, user, providerToken)
+	} else {
+		log.Error("we don't know how to look up the user info")
+	}
+	return nil
+}
+
+func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
+	userinfo, err := client.Get(genOauth.UserInfoURL)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	defer userinfo.Body.Close()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Println("OpenID userinfo body: ", string(data))
+	if err = json.Unmarshal(data, user); err != nil {
+		log.Errorln(err)
+		// renderIndex(w, "Error marshalling response. Please try agian.")
+		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
+		return err
 	}
 	return nil
 }
