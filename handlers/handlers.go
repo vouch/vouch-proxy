@@ -40,7 +40,6 @@ type AuthError struct {
 }
 
 var (
-	gcred       structs.GCredentials
 	genOauth    structs.GenericOauth
 	oauthclient *oauth2.Config
 	oauthopts   oauth2.AuthCodeOption
@@ -54,37 +53,34 @@ var (
 func init() {
 	log.Debug("init handlers")
 
-	// if grcred exist
-	err := cfg.UnmarshalKey("oauth.google", &gcred)
-	if err == nil && gcred.ClientID != "" {
-		log.Info("configuring google oauth")
-		oauthclient = &oauth2.Config{
-			ClientID:     gcred.ClientID,
-			ClientSecret: gcred.ClientSecret,
-			// RedirectURL:  gcred.RedirectURL,
-			Scopes: []string{
-				// You have to select a scope from
-				// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-				"https://www.googleapis.com/auth/userinfo.email",
-			},
-			Endpoint: google.Endpoint,
-		}
-		log.Infof("setting google oauth prefered login domain param 'hd' to %s", gcred.PreferredDomain)
-		oauthopts = oauth2.SetAuthURLParam("hd", gcred.PreferredDomain)
-		return
-	}
-	err = cfg.UnmarshalKey("oauth.generic", &genOauth)
+	err := cfg.UnmarshalKey("oauth", &genOauth)
 	if err == nil {
-		log.Info("configuring generic oauth")
-		oauthclient = &oauth2.Config{
-			ClientID:     genOauth.ClientID,
-			ClientSecret: genOauth.ClientSecret,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  genOauth.AuthURL,
-				TokenURL: genOauth.TokenURL,
-			},
-			RedirectURL: genOauth.RedirectURL,
-			Scopes:      genOauth.Scopes,
+		if genOauth.Provider == "google" {
+			log.Info("configuring google oauth")
+			oauthclient = &oauth2.Config{
+				ClientID:     genOauth.ClientID,
+				ClientSecret: genOauth.ClientSecret,
+				Scopes: []string{
+					// You have to select a scope from
+					// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
+					"https://www.googleapis.com/auth/userinfo.email",
+				},
+				Endpoint: google.Endpoint,
+			}
+			log.Infof("setting google oauth preferred login domain param 'hd' to %s", genOauth.PreferredDomain)
+			oauthopts = oauth2.SetAuthURLParam("hd", genOauth.PreferredDomain)
+		} else {
+			log.Info("configuring generic oauth")
+			oauthclient = &oauth2.Config{
+				ClientID:     genOauth.ClientID,
+				ClientSecret: genOauth.ClientSecret,
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  genOauth.AuthURL,
+					TokenURL: genOauth.TokenURL,
+				},
+				RedirectURL: genOauth.RedirectURL,
+				Scopes:      genOauth.Scopes,
+			}
 		}
 	}
 }
@@ -99,11 +95,11 @@ func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var url = ""
-	if gcred.ClientID != "" {
+	if genOauth.Provider == "google" {
 		// If the provider is Google, find a matching redirect URL to use for the client
 		domain := domains.Matches(r.Host)
 		log.Debugf("looking for redirect URL matching  %v", domain)
-		for i, v := range gcred.RedirectURLs {
+		for i, v := range genOauth.RedirectURLs {
 			log.Debugf("redirect value matched at [%d]=%v", i, v)
 			if strings.Contains(v, domain) {
 				oauthclient.RedirectURL = v
@@ -401,7 +397,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	if ok, err := VerifyUser(user); !ok {
 		log.Error(err)
-		renderIndex(w, fmt.Sprintf("User is not authorized. %s Please try agian.", err))
+		renderIndex(w, fmt.Sprintf("User is not authorized. %s Please try again.", err))
 		return
 	}
 
@@ -444,12 +440,35 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 	if err != nil {
 		return err
 	}
+
 	// make the "third leg" request back to google to exchange the token for the userinfo
 	client := oauthclient.Client(oauth2.NoContext, providerToken)
-	if gcred.ClientID != "" {
+	if genOauth.Provider == "google" {
 		return getUserInfoFromGoogle(client, user)
 	} else if genOauth.Provider == "github" {
 		return getUserInfoFromGithub(client, user, providerToken)
+	} else if genOauth.Provider == "oidc" {
+		return getUserInfoFromOpenID(client, user, providerToken)
+	} else {
+		log.Error("we don't know how to look up the user info")
+	}
+	return nil
+}
+
+func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
+	userinfo, err := client.Get(genOauth.UserInfoURL)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+	defer userinfo.Body.Close()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Println("OpenID userinfo body: ", string(data))
+	if err = json.Unmarshal(data, user); err != nil {
+		log.Errorln(err)
+		// renderIndex(w, "Error marshalling response. Please try agian.")
+		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
+		return err
 	}
 	return nil
 }
