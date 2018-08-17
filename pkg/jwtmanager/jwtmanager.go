@@ -11,8 +11,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/bnfinet/lasso/pkg/cfg"
-	"github.com/bnfinet/lasso/pkg/structs"
+	"github.com/LassoProject/lasso/pkg/cfg"
+	"github.com/LassoProject/lasso/pkg/structs"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
