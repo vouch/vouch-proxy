@@ -31,15 +31,6 @@ type GithubUser struct {
 	// jwt.StandardClaims
 }
 
-// GCredentials google credentials
-// loaded from yaml config
-type GCredentials struct {
-	ClientID        string   `mapstructure:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret"`
-	RedirectURLs    []string `mapstructure:"callback_urls"`
-	PreferredDomain string   `mapstructre:"preferredDomain"`
-}
-
 // GenericOauth provides endoint for access
 type GenericOauth struct {
 	ClientID     string   `mapstructure:"client_id"`
@@ -47,9 +38,11 @@ type GenericOauth struct {
 	AuthURL      string   `mapstructure:"auth_url"`
 	TokenURL     string   `mapstructure:"token_url"`
 	RedirectURL  string   `mapstructure:"callback_url"`
+	RedirectURLs    []string `mapstructure:"callback_urls"`
 	Scopes       []string `mapstructure:"scopes"`
 	UserInfoURL  string   `mapstructure:"user_info_url"`
 	Provider     string   `mapstructure:"provider"`
+	PreferredDomain string `mapstructre:"preferredDomain"`
 }
 
 // Team has members and provides acess to sites
