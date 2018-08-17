@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	lctx "github.com/bnfinet/lasso/pkg/context"
+	lctx "github.com/LassoProject/lasso/pkg/context"
 
 	log "github.com/Sirupsen/logrus"
 	// "github.com/mattn/go-isatty"

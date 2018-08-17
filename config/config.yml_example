@@ -4,23 +4,28 @@ lasso:
   logLevel: info
   listen: 0.0.0.0
   port: 9090
+
   # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
   allowAllUsers: false
+
   # Setting publicAccess: true will accept all requests, even without a cookie. 
   # If the user is logged in, the cookie will be validated and the user header will be set.
   # You will need to direct people to the Lasso login page from your application.
   publicAccess: false
+
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
   # usually you'll just have one.
   # Comment this out if you set allowAllUser:true
   domains:
   - yourdomain.com
   - yourotherdomain.com
+
   jwt:
     issuer: Lasso
     maxAge: 240
     secret: your_random_string
     compress: true
+
   cookie: 
     # name of cookie to store the jwt
     name: Lasso-cookie
@@ -28,14 +33,18 @@ lasso:
     # domain: yourdomain.com
     secure: true
     httpOnly: true
+
+  session:
+    name: lasso-session
+
   headers:
     jwt: X-Lasso-Token
     querystring: access_token
     redirect: X-Lasso-Requested-URI
+
   db: 
     file: data/lasso_bolt.db
-  session:
-    name: lasso-session
+
   test_url: http://yourdomain.com
 
 #
@@ -50,7 +59,6 @@ oauth:
   # https://console.developers.google.com/apis/credentials
   client_id: 
   client_secret: 
-  # must be the /auth endpoint
   callback_urls:
     - http://lasso.yourdomain.com:9090/auth
     - http://lasso.yourotherdomain.com:9090/auth
@@ -64,6 +72,7 @@ oauth:
   auth_url: https://github.com/login/oauth/authorize
   token_url: https://github.com/login/oauth/access_token
   # callback_url is configured at github.com when setting up the app
+  # set to e.g. https://lasso.yourdomain.com/auth
   scopes:
     - user
   user_info_url: https://api.github.com/user?access_token=
