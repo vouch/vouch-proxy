@@ -496,7 +496,11 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	userinfo, err := client.Get("https://api.github.com/user?access_token=" + ptoken.AccessToken)
+	userInfoUrl := "https://api.github.com/user?access_token="
+	if genOauth.UserInfoURL != "" {
+		userInfoUrl = genOauth.UserInfoURL
+	}
+	userinfo, err := client.Get(userInfoUrl + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
