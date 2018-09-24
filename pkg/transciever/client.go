@@ -100,6 +100,8 @@ func (c *Client) readPump() {
 			c.shipTeams()
 		} else if p.T == "updateteam" {
 			c.updateTeam(p.D)
+		} else if p.T == "deleteteam" {
+			c.deleteTeam(p.D)
 		}
 		// c.hub.broadcast <- []byte(p)
 	}
@@ -115,6 +117,21 @@ func (c *Client) updateTeam(data interface{}) {
 	// 	return
 	// }
 	model.PutTeam(t)
+	c.shipTeams()
+}
+
+func (c *Client) deleteTeam(data interface{}) {
+
+	t := structs.Team{}
+	mapstructure.Decode(data, &t)
+	log.Debugf("deleting team %v", t)
+	model.DeleteTeam(t)
+	testT := structs.Team{}
+	if err := model.Team([]byte(t.Name), &testT); err != nil {
+		log.Error(err)
+	}
+	log.Debugf("if deleted should be null: %s", testT.Name)
+
 	c.shipTeams()
 }
 

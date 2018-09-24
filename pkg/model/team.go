@@ -11,10 +11,10 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// PutTeam inna da db
+// PutTeam - create or update a team
 func PutTeam(t structs.Team) error {
 	teamexists := false
-	curt := &structs.Team{}
+	curt := &structs.Team{} // curt == current team
 	err := Team([]byte(t.Name), curt)
 	if err == nil {
 		teamexists = true
@@ -26,7 +26,7 @@ func PutTeam(t structs.Team) error {
 		if b := getBucket(tx, teamBucket); b != nil {
 			t.LastUpdate = time.Now().Unix()
 			if teamexists {
-				log.Debugf("teamexists.. keeping time at %v", curt.CreatedOn)
+				log.Debugf("teamexists.. keeping time at %v, members are %v", curt.CreatedOn, curt.Members)
 				t.CreatedOn = curt.CreatedOn
 			} else {
 				id, _ := b.NextSequence()
@@ -60,6 +60,20 @@ func Team(key []byte, t *structs.Team) error {
 			}
 			*t = *team
 			log.Debugf("retrieved %s from db", t.Name)
+			return nil
+		}
+		return fmt.Errorf("no bucket for %s", teamBucket)
+	})
+}
+
+// DeleteTeam from key
+func DeleteTeam(t structs.Team) error {
+	return Db.Update(func(tx *bolt.Tx) error {
+		if b := tx.Bucket(teamBucket); b != nil {
+			if err := b.Delete([]byte(t.Name)); err != nil {
+				return err
+			}
+			log.Debugf("deleted %s from db", t.Name)
 			return nil
 		}
 		return fmt.Errorf("no bucket for %s", teamBucket)
