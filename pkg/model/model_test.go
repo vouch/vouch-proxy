@@ -71,12 +71,13 @@ func TestPutSiteGetSite(t *testing.T) {
 	assert.Equal(t, s1.Domain, s2.Domain)
 }
 
-func TestPutTeamGetTeam(t *testing.T) {
+func TestPutTeamGetTeamDeleteTeam(t *testing.T) {
 	os.Remove(testdb)
 	Open(testdb)
 
 	t1 := structs.Team{Name: "testname"}
 	t2 := &structs.Team{}
+	t3 := &structs.Team{}
 
 	if err := PutTeam(t1); err != nil {
 		log.Error(err)
@@ -84,4 +85,12 @@ func TestPutTeamGetTeam(t *testing.T) {
 	Team([]byte(t1.Name), t2)
 	log.Debugf("team retrieved: %v", *t2)
 	assert.Equal(t, t1.Name, t2.Name)
+
+	if err := DeleteTeam(t1); err != nil {
+		log.Error(err)
+	}
+	// should fail
+	err := Team([]byte(t1.Name), t3)
+	assert.Error(t, err)
+
 }
