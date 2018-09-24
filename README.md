@@ -1,8 +1,8 @@
 # Lasso
 
-an SSO solution for an nginx reverse proxy using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
+an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module
 
-lasso supports oauth for google apps, [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/) and [indieauth](https://indieauth.com/developers)
+lasso supports OAuth login to google apps, [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/) and [indieauth](https://indieauth.com/developers)
 
 If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
@@ -82,7 +82,8 @@ And that's it!  Or if you can examine the docker command in `do.sh`
 The [bfoote/lasso](https://hub.docker.com/r/bfoote/lasso/) Docker image is an automated build on Docker Hub
 
 ## Running from source
-```
+
+```bash
   go get ./...
   go build
   ./lasso
@@ -106,7 +107,7 @@ The [bfoote/lasso](https://hub.docker.com/r/bfoote/lasso/) Docker image is an au
   * if the cookie is found, and the JWT is valid
     * returns 200 to nginx, which will allow access (bob notices nothing)
   * if the cookie is NOT found, or the JWT is NOT valid
-      * return 401 NotAuthorized to nginx (which forwards the request on to login)
+    * return 401 NotAuthorized to nginx (which forwards the request on to login)
 
 * Bob is first forwarded briefly to `https://lasso.oursites.com/login?url=https://private.oursites.com`
   * clears out the cookie named "oursitesSSO" if it exists
