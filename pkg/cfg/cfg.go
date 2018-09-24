@@ -30,7 +30,8 @@ type CfgT struct {
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
 	Headers struct {
-		SSO      string `mapstructure:"sso"`
+		JWT      string `mapstructure:"jwt"`
+		QueryString string `mapstructure:"querystring"`
 		Redirect string `mapstructure:"redirect"`
 	}
 	DB struct {

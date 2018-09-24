@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bnfinet/lasso/pkg/structs"
+	"github.com/LassoProject/lasso/pkg/structs"
 )
 
 var testdb = "/tmp/storage-test.db"
