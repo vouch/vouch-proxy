@@ -5,14 +5,42 @@
 
 ## TODO
 
+* aaronpk 2017-10-04
+ ‎[15:46] ‎<‎aaronpk‎>‎ so, immediate feature request is to be able to whitelist specific email addresses instead of doing domain matching for users
+
+
+* aaronpk
+  ‎[16:40] ‎<‎aaronpk‎>‎ sure! basically i want to redirect to https://indieauth.com instead of google auth
+  ‎[16:41] ‎<‎aaronpk‎>‎ and there's an endpoint there that the plugin can use to verify the auth code and get user info
+  ‎[16:44] ‎<‎aaronpk‎>‎ so being able to customize this URL or maybe even override some method to be ableto customize the handling of the verification https://github.com/bnfinet/lasso/blob/master/handlers/handlers.go#L313
+  ‎[16:49] ‎<‎aaronpk‎>‎ here's the docs i was walking you through https://indieauth.com/developers
+  ‎[16:53] ‎<‎bfoote‎>‎ oh that's looks pretty straight forward
+
+* add config for oauth Enpoint
+  https://github.com/golang/oauth2/blob/master/github/github.go
+  if endpoing is ~= google then allow 'hd' and accomodate getting User info
+  * is user info for Oauth a standard form?  Probably _no_.  Going to need some interpreters. 
+
 * create a special team for admins
 
 * look for the token in an "Authorization: bearer $TOKEN" header
+
+* include static assets in binary
+  https://github.com/shurcooL/vfsgen
 
 * restapi
   * `/api/validate` endpoint that *any* service can connect to that validates the `X-LASSO-TOKEN` header
 
 * add lastupdate to user, sites, team
+
+* handle multiple domains
+  * set the `Oauth2.config{RedirectURL}` Google callback URL dynamically based on the domain that was offered
+
+
+* iterate through a list of authorized domains
+  * 302 redirect to the next domain
+  * set a jwt cookie into each domain
+  * might slow down login
 
 * how to handle "not authorized for domain"?
   * can nginx pass a 302 back to /login with an argument in the querystring such as..
@@ -59,6 +87,9 @@
 * additional validations (like what?)
 
 ## DONE
+
+* set X-Lasso-User header passed through to the backend app
+  https://stackoverflow.com/questions/19366215/setting-headers-with-nginx-auth-request-proxy#19366411
 
 * replace gin.Cookie with gorilla.cookie
 
