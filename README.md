@@ -23,7 +23,7 @@ server {
 
     # send all requests to the `/validate` endpoint for authorization
     auth_request /validate;
-    # if validate returns `401 not authorized` then forward the request to the error401block 
+    # if validate returns `401 not authorized` then forward the request to the error401block
     error_page 401 = @error401;
 
     location = /validate {
