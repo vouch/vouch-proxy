@@ -195,7 +195,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{Error: "no jwt found"})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -206,7 +206,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{err.Error(), jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -215,7 +215,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{"no email found in jwt", jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -226,7 +226,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			if !cfg.Cfg.PublicAccess {
 				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
 			} else {
-				w.Header().Add("X-Lasso-User", "");
+				w.Header().Add("X-Lasso-User", "")
 			}
 			return
 		}
@@ -234,7 +234,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// renderIndex(w, "user found from email "+user.Email)
 	w.Header().Add("X-Lasso-User", claims.Email)
-	w.Header().Add("X-Lasso-Success", "true");
+	w.Header().Add("X-Lasso-Success", "true")
 	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
 	renderIndex(w, "user found in jwt "+claims.Email)
 
@@ -277,10 +277,9 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	sessstore.MaxAge(300)
 
-
 	var requestedURL = r.URL.Query().Get("url")
 	if requestedURL != "" {
-		http.Redirect(w, r, requestedURL, 302);
+		http.Redirect(w, r, requestedURL, 302)
 	} else {
 		renderIndex(w, "you have been logged out")
 	}
@@ -308,8 +307,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// requestedURL comes from nginx in the query string via a 302 redirect
 	// it sets the ultimate destination
 	// https://lasso.yoursite.com/login?url=
-	var requestedURL = r.URL.Query().Get("url");
-	if (requestedURL == "") {
+	var requestedURL = r.URL.Query().Get("url")
+	if requestedURL == "" {
 		renderIndex(w, "no destination URL requested")
 		log.Error("no destination URL requested")
 		return
@@ -359,7 +358,10 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 	// TODO: how do we manage the user?
 	user := u.(structs.User)
 
-	if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
+	if cfg.Cfg.AllowAllUsers {
+		ok = true
+		// if we're not allowing all users, and we have domains configured and this email isn't in one of those domains...
+	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a lasso managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
@@ -371,7 +373,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 }
 
 // CallbackHandler /auth
-// - validate info from Google
+// - validate info from oauth provider (Google, Github, OIDC, etc)
 // - create user
 // - issue jwt in the form of a cookie
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -514,12 +516,20 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("github userinfo body: ", string(data))
-	if err = json.Unmarshal(data, user); err != nil {
+	ghUser := &structs.GithubUser{}
+	if err = json.Unmarshal(data, ghUser); err != nil {
+		// if err = json.Unmarshal(data, user); err != nil {
 		log.Errorln(err)
 		// renderIndex(w, "Error marshalling response. Please try agian.")
 		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
+	ghUser.Email = ghUser.Login
+	if ghUser.Email == "" && ghUser.Login != "" {
+		log.Debug("no email returned from github, setting user email to login " + ghUser.Login)
+	}
+	user = &ghUser.User
+	log.Debug("getUserInfoFromGithub")
 	log.Debug(user)
 	return nil
 }
