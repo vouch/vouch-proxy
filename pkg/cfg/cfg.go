@@ -31,9 +31,9 @@ type CfgT struct {
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
 	Headers struct {
-		JWT      string `mapstructure:"jwt"`
+		JWT         string `mapstructure:"jwt"`
 		QueryString string `mapstructure:"querystring"`
-		Redirect string `mapstructure:"redirect"`
+		Redirect    string `mapstructure:"redirect"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
@@ -48,7 +48,7 @@ type CfgT struct {
 var Cfg CfgT
 
 // RequiredOptions must have these fields set for minimum viable config
-var RequiredOptions = []string{"lasso.port", "lasso.listen", "lasso.domains", "lasso.jwt.secret", "lasso.db.file", "oauth.provider", "oauth.client_id", "oauth.client_secret"}
+var RequiredOptions = []string{"lasso.port", "lasso.listen", "lasso.jwt.secret", "lasso.db.file", "oauth.provider", "oauth.client_id", "oauth.client_secret"}
 
 func init() {
 	ParseConfig()
@@ -101,7 +101,7 @@ func Get(key string) string {
 // BasicTest just a quick sanity check to see if the config is sound
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
-		if (!viper.IsSet(opt)) {
+		if !viper.IsSet(opt) {
 			return errors.New("configuration option " + opt + " is not set in config")
 		}
 	}
