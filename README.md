@@ -52,6 +52,9 @@ server {
     # proxy pass authorized requests to your service
     location / {
       proxy_pass http://dev.yourdomain.com:8080;
+      #  may need to set
+      #    auth_request_set $auth_resp_x_lasso_user $upstream_http_x_lasso_user
+      #  in this bock as per https://github.com/LassoProject/lasso/issues/26#issuecomment-425215810
       # set user header (usually an email)
       proxy_set_header X-Lasso-User $auth_resp_x_lasso_user;
     }
