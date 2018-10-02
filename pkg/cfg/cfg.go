@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	"errors"
 	"flag"
 	"os"
 
@@ -46,8 +47,8 @@ type CfgT struct {
 // Cfg the main exported config variable
 var Cfg CfgT
 
-// V viper object
-// var V viper
+// RequiredOptions must have these fields set for minimum viable config
+var RequiredOptions = []string{"lasso.port", "lasso.listen", "lasso.domains", "lasso.jwt.secret", "lasso.db.file", "oauth.provider", "oauth.client_id", "oauth.client_secret"}
 
 func init() {
 	ParseConfig()
@@ -72,6 +73,11 @@ func ParseConfig() {
 		panic(err)
 	}
 	UnmarshalKey("lasso", &Cfg)
+	errT := BasicTest()
+	if errT != nil {
+		// log.Fatalf(err.prob)
+		panic(errT)
+	}
 	// nested defaults is currently *broken*
 	// https://github.com/spf13/viper/issues/309
 	// viper.SetDefault("listen", "0.0.0.0")
@@ -90,4 +96,14 @@ func UnmarshalKey(key string, rawVal interface{}) error {
 // Get string value for key
 func Get(key string) string {
 	return viper.GetString(key)
+}
+
+// BasicTest just a quick sanity check to see if the config is sound
+func BasicTest() error {
+	for _, opt := range RequiredOptions {
+		if (!viper.IsSet(opt)) {
+			return errors.New("configuration option " + opt + " is not set in config")
+		}
+	}
+	return nil
 }
