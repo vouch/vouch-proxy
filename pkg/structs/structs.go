@@ -11,6 +11,7 @@ type User struct {
 }
 
 // GoogleUser is a retrieved and authentiacted user from Google.
+// unused!
 type GoogleUser struct {
 	User
 	Sub           string `json:"sub"`
@@ -27,22 +28,23 @@ type GoogleUser struct {
 // GithubUser is a retrieved and authentiacted user from Github.
 type GithubUser struct {
 	User
+	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
 	// jwt.StandardClaims
 }
 
 // GenericOauth provides endoint for access
 type GenericOauth struct {
-	ClientID     string   `mapstructure:"client_id"`
-	ClientSecret string   `mapstructure:"client_secret"`
-	AuthURL      string   `mapstructure:"auth_url"`
-	TokenURL     string   `mapstructure:"token_url"`
-	RedirectURL  string   `mapstructure:"callback_url"`
+	ClientID        string   `mapstructure:"client_id"`
+	ClientSecret    string   `mapstructure:"client_secret"`
+	AuthURL         string   `mapstructure:"auth_url"`
+	TokenURL        string   `mapstructure:"token_url"`
+	RedirectURL     string   `mapstructure:"callback_url"`
 	RedirectURLs    []string `mapstructure:"callback_urls"`
-	Scopes       []string `mapstructure:"scopes"`
-	UserInfoURL  string   `mapstructure:"user_info_url"`
-	Provider     string   `mapstructure:"provider"`
-	PreferredDomain string `mapstructre:"preferredDomain"`
+	Scopes          []string `mapstructure:"scopes"`
+	UserInfoURL     string   `mapstructure:"user_info_url"`
+	Provider        string   `mapstructure:"provider"`
+	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
 // Team has members and provides acess to sites
