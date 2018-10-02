@@ -277,9 +277,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	sessstore.MaxAge(300)
 
-	var redirectURL = r.URL.Query().Get("url")
-	if redirectURL != "" {
-		http.Redirect(w, r, redirectURL, 302);
+
+	var requestedURL = r.URL.Query().Get("url")
+	if requestedURL != "" {
+		http.Redirect(w, r, requestedURL, 302);
 	} else {
 		renderIndex(w, "you have been logged out")
 	}
@@ -297,36 +298,41 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
-	// set the state varialbe in the session
+	// set the state variable in the session
 	var state = randString()
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
 	// increment the failure counter for this domain
 
-	// redirectURL comes from nginx in the query string
-	var redirectURL = r.URL.Query().Get("url")
-	if redirectURL != "" {
-		// TODO store the originally requested URL so we can redirec on the roundtrip
-		session.Values["requestedURL"] = redirectURL
+	// requestedURL comes from nginx in the query string via a 302 redirect
+	// it sets the ultimate destination
+	// https://lasso.yoursite.com/login?url=
+	var requestedURL = r.URL.Query().Get("url");
+	if (requestedURL == "") {
+		renderIndex(w, "no destination URL requested")
+		log.Error("no destination URL requested")
+		return
+	} else {
+		session.Values["requestedURL"] = requestedURL
 		log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 	}
 
 	// stop them after three failures for this URL
 	var failcount = 0
-	if session.Values[redirectURL] != nil {
-		failcount = session.Values[redirectURL].(int)
-		log.Debugf("failcount for %s is %d", redirectURL, failcount)
+	if session.Values[requestedURL] != nil {
+		failcount = session.Values[requestedURL].(int)
+		log.Debugf("failcount for %s is %d", requestedURL, failcount)
 	}
 	failcount++
-	session.Values[redirectURL] = failcount
+	session.Values[requestedURL] = failcount
 
 	log.Debug("saving session")
 	session.Save(r, w)
 
 	if failcount > 2 {
 		var lassoError = r.URL.Query().Get("error")
-		renderIndex(w, "too many redirects for "+redirectURL+" - "+lassoError)
+		renderIndex(w, "too many redirects for "+requestedURL+" - "+lassoError)
 	} else {
 		// bounce to oauth provider for login
 		var lURL = loginURL(r, state)
@@ -412,16 +418,16 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	cookie.SetCookie(w, r, tokenstring)
 
 	// get the originally requested URL so we can send them on their way
-	redirectURL := session.Values["requestedURL"].(string)
-	if redirectURL != "" {
+	requestedURL := session.Values["requestedURL"].(string)
+	if requestedURL != "" {
 		// clear out the session value
 		session.Values["requestedURL"] = ""
-		session.Values[redirectURL] = 0
+		session.Values[requestedURL] = 0
 		session.Save(r, w)
 
 		// and redirect
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, redirectURL, 302)
+		http.Redirect(w, r, requestedURL, 302)
 		return
 	}
 	// otherwise serve an html page
