@@ -234,6 +234,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// renderIndex(w, "user found from email "+user.Email)
 	w.Header().Add("X-Lasso-User", claims.Email)
+	w.Header().Add("X-Lasso-Success", "true");
 	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
 	renderIndex(w, "user found in jwt "+claims.Email)
 
@@ -449,9 +450,8 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 		return getUserInfoFromGithub(client, user, providerToken)
 	} else if genOauth.Provider == "oidc" {
 		return getUserInfoFromOpenID(client, user, providerToken)
-	} else {
-		log.Error("we don't know how to look up the user info")
 	}
+	log.Error("we don't know how to look up the user info")
 	return nil
 }
 
@@ -496,11 +496,11 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	userInfoUrl := "https://api.github.com/user?access_token="
+	userInfoURL := "https://api.github.com/user?access_token="
 	if genOauth.UserInfoURL != "" {
-		userInfoUrl = genOauth.UserInfoURL
+		userInfoURL = genOauth.UserInfoURL
 	}
-	userinfo, err := client.Get(userInfoUrl + ptoken.AccessToken)
+	userinfo, err := client.Get(userInfoURL + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
