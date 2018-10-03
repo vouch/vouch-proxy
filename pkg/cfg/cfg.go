@@ -42,6 +42,7 @@ type CfgT struct {
 		Name string `mapstructure:"name"`
 	}
 	TestURL string `mapstructure:"test_url"`
+	Testing bool   `mapstructure:"testing"`
 }
 
 // Cfg the main exported config variable
