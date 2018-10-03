@@ -279,7 +279,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	var requestedURL = r.URL.Query().Get("url")
 	if requestedURL != "" {
-		http.Redirect(w, r, requestedURL, 302)
+		redirect302(w, r, requestedURL)
 	} else {
 		renderIndex(w, "you have been logged out")
 	}
@@ -337,7 +337,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		var lURL = loginURL(r, state)
 		log.Debugf("redirecting to oauthURL %s", lURL)
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, lURL, 302)
+		redirect302(w, r, lURL)
 	}
 }
 
@@ -429,7 +429,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 		// and redirect
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, requestedURL, 302)
+		redirect302(w, r, requestedURL)
 		return
 	}
 	// otherwise serve an html page
@@ -594,4 +594,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	user.Email = ir.Email
 	log.Debug(user)
 	return nil
+}
+
+func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
+	if cfg.Cfg.Testing {
+		cfg.Cfg.TestURL = rURL
+		renderIndex(w, "302 redirect to: "+cfg.Cfg.TestURL)
+		return
+	}
+	http.Redirect(w, r, rURL, 302)
 }
