@@ -195,7 +195,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{Error: "no jwt found"})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -206,7 +206,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{err.Error(), jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -215,7 +215,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{"no email found in jwt", jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "");
+			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
@@ -226,7 +226,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			if !cfg.Cfg.PublicAccess {
 				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
 			} else {
-				w.Header().Add("X-Lasso-User", "");
+				w.Header().Add("X-Lasso-User", "")
 			}
 			return
 		}
@@ -234,7 +234,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// renderIndex(w, "user found from email "+user.Email)
 	w.Header().Add("X-Lasso-User", claims.Email)
-	w.Header().Add("X-Lasso-Success", "true");
+	w.Header().Add("X-Lasso-Success", "true")
 	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
 	renderIndex(w, "user found in jwt "+claims.Email)
 
@@ -277,10 +277,9 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	sessstore.MaxAge(300)
 
-
 	var requestedURL = r.URL.Query().Get("url")
 	if requestedURL != "" {
-		http.Redirect(w, r, requestedURL, 302);
+		redirect302(w, r, requestedURL)
 	} else {
 		renderIndex(w, "you have been logged out")
 	}
@@ -308,8 +307,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// requestedURL comes from nginx in the query string via a 302 redirect
 	// it sets the ultimate destination
 	// https://lasso.yoursite.com/login?url=
-	var requestedURL = r.URL.Query().Get("url");
-	if (requestedURL == "") {
+	var requestedURL = r.URL.Query().Get("url")
+	if requestedURL == "" {
 		renderIndex(w, "no destination URL requested")
 		log.Error("no destination URL requested")
 		return
@@ -338,7 +337,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		var lURL = loginURL(r, state)
 		log.Debugf("redirecting to oauthURL %s", lURL)
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, lURL, 302)
+		redirect302(w, r, lURL)
 	}
 }
 
@@ -427,7 +426,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 		// and redirect
 		context.WithValue(r.Context(), lctx.StatusCode, 302)
-		http.Redirect(w, r, requestedURL, 302)
+		redirect302(w, r, requestedURL)
 		return
 	}
 	// otherwise serve an html page
@@ -584,4 +583,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	user.Email = ir.Email
 	log.Debug(user)
 	return nil
+}
+
+func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
+	if cfg.Cfg.Testing {
+		cfg.Cfg.TestURL = rURL
+		renderIndex(w, "302 redirect to: "+cfg.Cfg.TestURL)
+		return
+	}
+	http.Redirect(w, r, rURL, 302)
 }
