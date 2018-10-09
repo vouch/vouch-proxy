@@ -55,6 +55,15 @@ func (u *GithubUser) PrepareUserData() {
 	u.Username = u.Login
 }
 
+type IndieAuthUser struct {
+	User
+	URL   string `json:"me"`
+}
+
+func (u *IndieAuthUser) PrepareUserData() {
+	u.Username = u.URL
+}
+
 // GenericOauth provides endoint for access
 type GenericOauth struct {
 	ClientID        string   `mapstructure:"client_id"`
