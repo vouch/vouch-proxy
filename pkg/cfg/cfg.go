@@ -49,7 +49,7 @@ type CfgT struct {
 var Cfg CfgT
 
 // RequiredOptions must have these fields set for minimum viable config
-var RequiredOptions = []string{"lasso.port", "lasso.listen", "lasso.jwt.secret", "lasso.db.file", "oauth.provider", "oauth.client_id", "oauth.client_secret"}
+var RequiredOptions = []string{"lasso.port", "lasso.listen", "lasso.jwt.secret", "lasso.db.file", "oauth.provider", "oauth.client_id"}
 
 func init() {
 	ParseConfig()
