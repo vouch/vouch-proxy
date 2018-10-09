@@ -107,6 +107,8 @@ func loginURL(r *http.Request, state string) string {
 			}
 		}
 		url = oauthclient.AuthCodeURL(state, oauthopts)
+	} else if genOauth.Provider == "indieauth" {
+		url = oauthclient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
 		url = oauthclient.AuthCodeURL(state)
 	}
