@@ -603,6 +603,7 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 		return err
 	}
 	user.Email = ir.Email
+	user.PrepareUserData()
 	log.Debug(user)
 	return nil
 }
