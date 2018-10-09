@@ -7,11 +7,11 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
+	Username   string `json:"username",mapstructure:"username"`
 	Name       string `json:"name"`
 	Email      string `json:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	Username   string `json:"username",mapstructure:"username"`
 	ID         int    `json:"id",mapstructure:"id"`
 	// jwt.StandardClaims
 }
@@ -53,6 +53,15 @@ type GithubUser struct {
 func (u *GithubUser) PrepareUserData() {
 	// always use the u.Login as the u.Username
 	u.Username = u.Login
+}
+
+type IndieAuthUser struct {
+	User
+	URL   string `json:"me"`
+}
+
+func (u *IndieAuthUser) PrepareUserData() {
+	u.Username = u.URL
 }
 
 // GenericOauth provides endoint for access
