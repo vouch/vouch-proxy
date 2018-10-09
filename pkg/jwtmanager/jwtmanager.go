@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/LassoProject/lasso/pkg/cfg"
 	"github.com/LassoProject/lasso/pkg/structs"
+	log "github.com/Sirupsen/logrus"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -21,8 +21,8 @@ import (
 
 // LassoClaims jwt Claims specific to lasso
 type LassoClaims struct {
-	Email string   `json:"email"`
-	Sites []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	Username string   `json:"username"`
+	Sites    []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	jwt.StandardClaims
 }
 
@@ -46,8 +46,9 @@ func init() {
 // CreateUserTokenString converts user to signed jwt
 func CreateUserTokenString(u structs.User) string {
 	// User`token`
+	// u.PrepareUserData()
 	claims := LassoClaims{
-		u.Email,
+		u.Username,
 		Sites,
 		StandardClaims,
 	}
@@ -135,8 +136,8 @@ func SiteInClaims(site string, claims *LassoClaims) bool {
 	return false
 }
 
-// TODO HERE there's something wrong with claims parsing, probably related to LassoClaims not being a pointer
 // PTokenClaims get all the claims
+// TODO HERE there's something wrong with claims parsing, probably related to LassoClaims not being a pointer
 func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
 	// func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
 	// return ptoken.Claims, nil
@@ -151,9 +152,9 @@ func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
 	return *ptokenClaims, nil
 }
 
-// PTokenToEmail returns the Email in the validated ptoken
-func PTokenToEmail(ptoken *jwt.Token) (string, error) {
-	return ptoken.Claims.(*LassoClaims).Email, nil
+// PTokenToUsername returns the Username in the validated ptoken
+func PTokenToUsername(ptoken *jwt.Token) (string, error) {
+	return ptoken.Claims.(*LassoClaims).Username, nil
 
 	// var ptokenClaims LassoClaims
 	// ptokenClaims, err := PTokenClaims(ptoken)
@@ -161,7 +162,7 @@ func PTokenToEmail(ptoken *jwt.Token) (string, error) {
 	// 	log.Error(err)
 	// 	return "", err
 	// }
-	// return ptokenClaims.Email, nil
+	// return ptokenClaims.Username, nil
 }
 
 func decodeAndDecompressTokenString(encgzipss string) string {

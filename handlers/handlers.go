@@ -210,16 +210,16 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if claims.Email == "" {
+	if claims.Username == "" {
 		// no email in jwt
 		if !cfg.Cfg.PublicAccess {
-			error401(w, r, AuthError{"no email found in jwt", jwt})
+			error401(w, r, AuthError{"no Username found in jwt", jwt})
 		} else {
 			w.Header().Add("X-Lasso-User", "")
 		}
 		return
 	}
-	log.Infof("email from jwt cookie: %s", claims.Email)
+	log.Infof("email from jwt cookie: %s", claims.Username)
 
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
@@ -233,10 +233,10 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// renderIndex(w, "user found from email "+user.Email)
-	w.Header().Add("X-Lasso-User", claims.Email)
+	w.Header().Add("X-Lasso-User", claims.Username)
 	w.Header().Add("X-Lasso-Success", "true")
 	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
-	renderIndex(w, "user found in jwt "+claims.Email)
+	renderIndex(w, "/validate user found in jwt "+claims.Username)
 
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
@@ -281,7 +281,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if requestedURL != "" {
 		redirect302(w, r, requestedURL)
 	} else {
-		renderIndex(w, "you have been logged out")
+		renderIndex(w, "/logout you have been logged out")
 	}
 }
 
@@ -309,13 +309,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// https://lasso.yoursite.com/login?url=
 	var requestedURL = r.URL.Query().Get("url")
 	if requestedURL == "" {
-		renderIndex(w, "no destination URL requested")
+		renderIndex(w, "/login no destination URL requested")
 		log.Error("no destination URL requested")
 		return
-	} else {
-		session.Values["requestedURL"] = requestedURL
-		log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 	}
+
+	// set session variable for eventual 302 redirecton to orginal request
+	session.Values["requestedURL"] = requestedURL
+	log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 
 	// stop them after three failures for this URL
 	var failcount = 0
@@ -331,7 +332,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if failcount > 2 {
 		var lassoError = r.URL.Query().Get("error")
-		renderIndex(w, "too many redirects for "+requestedURL+" - "+lassoError)
+		renderIndex(w, "/login too many redirects for "+requestedURL+" - "+lassoError)
 	} else {
 		// bounce to oauth provider for login
 		var lURL = loginURL(r, state)
@@ -360,14 +361,15 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 
 	if cfg.Cfg.AllowAllUsers {
 		ok = true
+		log.Debugf("skipping verify user since cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
 		// if we're not allowing all users, and we have domains configured and this email isn't in one of those domains...
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a lasso managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
 	} else {
-		log.Debugf("no domains configured")
 		ok = true
+		log.Debug("no domains configured")
 	}
 	return ok, err
 }
@@ -391,22 +393,22 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	queryState := r.URL.Query().Get("state")
 	if session.Values["state"] != queryState {
 		log.Errorf("Invalid session state: stored %s, returned %s", session.Values["state"], queryState)
-		renderIndex(w, "Invalid session state.")
+		renderIndex(w, "/auth Invalid session state.")
 		return
 	}
 
 	user := structs.User{}
-
 	if err := getUserInfo(r, &user); err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Debug("CallbackHandler")
 	log.Debug(user)
 
 	if ok, err := VerifyUser(user); !ok {
 		log.Error(err)
-		renderIndex(w, fmt.Sprintf("User is not authorized. %s Please try again.", err))
+		renderIndex(w, fmt.Sprintf("/auth User is not authorized. %s Please try again.", err))
 		return
 	}
 
@@ -433,7 +435,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// otherwise serve an html page
-	renderIndex(w, tokenstring)
+	renderIndex(w, "/auth "+tokenstring)
 }
 
 // TODO: put all getUserInfo logic into its own pkg
@@ -478,6 +480,7 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
+	user.PrepareUserData()
 	return nil
 }
 
@@ -496,6 +499,8 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
+	user.PrepareUserData()
+
 	return nil
 }
 
@@ -503,11 +508,13 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
 func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
 
-	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
+	// TODO: move to cfg package
 	userInfoURL := "https://api.github.com/user?access_token="
 	if genOauth.UserInfoURL != "" {
 		userInfoURL = genOauth.UserInfoURL
 	}
+
+	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(userInfoURL + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
@@ -516,19 +523,23 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("github userinfo body: ", string(data))
-	ghUser := &structs.GithubUser{}
-	if err = json.Unmarshal(data, ghUser); err != nil {
-		// if err = json.Unmarshal(data, user); err != nil {
+	ghUser := structs.GithubUser{}
+	if err = json.Unmarshal(data, &ghUser); err != nil {
 		log.Errorln(err)
-		// renderIndex(w, "Error marshalling response. Please try agian.")
-		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
-	ghUser.Email = ghUser.Login
-	if ghUser.Email == "" && ghUser.Login != "" {
-		log.Debug("no email returned from github, setting user email to login " + ghUser.Login)
-	}
-	user = &ghUser.User
+	log.Debug("getUserInfoFromGithub ghUser")
+	log.Debug(ghUser)
+	log.Debug("getUserInfoFromGithub user")
+	log.Debug(user)
+
+	ghUser.PrepareUserData()
+	user.Email = ghUser.Email
+	user.Name = ghUser.Name
+	user.Username = ghUser.Username
+	user.ID = ghUser.ID
+	// user = &ghUser.User
+
 	log.Debug("getUserInfoFromGithub")
 	log.Debug(user)
 	return nil
@@ -598,8 +609,10 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 
 func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	if cfg.Cfg.Testing {
+		var tmp = cfg.Cfg.TestURL
 		cfg.Cfg.TestURL = rURL
 		renderIndex(w, "302 redirect to: "+cfg.Cfg.TestURL)
+		cfg.Cfg.TestURL = tmp
 		return
 	}
 	http.Redirect(w, r, rURL, 302)

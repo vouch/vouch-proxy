@@ -1,13 +1,24 @@
 package structs
 
+// UserI each *User struct must prepare the data for being placed in the JWT
+type UserI interface {
+	PrepareUserData()
+}
+
 // User is inherited.
 type User struct {
 	Name       string `json:"name"`
 	Email      string `json:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
+	Username   string `json:"username",mapstructure:"username"`
 	ID         int    `json:"id",mapstructure:"id"`
 	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *User) PrepareUserData() {
+	u.Username = u.Email
 }
 
 // GoogleUser is a retrieved and authentiacted user from Google.
@@ -25,12 +36,23 @@ type GoogleUser struct {
 	// jwt.StandardClaims
 }
 
+// PrepareUserData implement PersonalData interface
+func (u *GoogleUser) PrepareUserData() {
+	u.Username = u.Email
+}
+
 // GithubUser is a retrieved and authentiacted user from Github.
 type GithubUser struct {
 	User
 	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
 	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *GithubUser) PrepareUserData() {
+	// always use the u.Login as the u.Username
+	u.Username = u.Login
 }
 
 // GenericOauth provides endoint for access
