@@ -545,12 +545,6 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	return nil
 }
 
-// indieauth
-// https://indieauth.com/developers
-type indieResponse struct {
-	Email string `json:"me"`
-}
-
 func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 
 	code := r.URL.Query().Get("code")
@@ -597,13 +591,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("indieauth userinfo body: ", string(data))
-	ir := indieResponse{}
-	if err := json.Unmarshal(data, &ir); err != nil {
+	iaUser := structs.IndieAuthUser{}
+	if err = json.Unmarshal(data, &iaUser); err != nil {
 		log.Errorln(err)
 		return err
 	}
-	user.Email = ir.Email
-	user.PrepareUserData()
+	iaUser.PrepareUserData()
+	user.Username = iaUser.Username
 	log.Debug(user)
 	return nil
 }
