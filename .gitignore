@@ -5,3 +5,7 @@ main
 config/google_config.json
 .vscode/*
 lasso
+config/config.yml_google
+config/config.yml_github
+config/secret
+config/config.yml_orig
