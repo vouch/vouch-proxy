@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/LassoProject/lasso/pkg/structs"
+	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
 
@@ -15,7 +15,7 @@ import (
 func PutUser(u structs.User) error {
 	userexists := false
 	curu := &structs.User{}
-	err := User([]byte(u.Email), curu)
+	err := User([]byte(u.Username), curu)
 	if err == nil {
 		userexists = true
 	} else {
@@ -42,7 +42,7 @@ func PutUser(u structs.User) error {
 			return err
 		}
 
-		err = b.Put([]byte(u.Email), eU)
+		err = b.Put([]byte(u.Username), eU)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -63,7 +63,7 @@ func User(key []byte, u *structs.User) error {
 				return err
 			}
 			*u = *user
-			log.Debugf("retrieved %s from db", u.Email)
+			log.Debugf("retrieved %s from db", u.Username)
 			return nil
 		}
 		return fmt.Errorf("no bucket for %s", userBucket)
