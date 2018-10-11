@@ -1,0 +1,24 @@
+
+# lasso config
+# bare minimum to get lasso running with IndieAuth
+
+lasso:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+
+  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
+  allowAllUsers: true
+
+  # Setting publicAccess: true will accept all requests, even without a cookie. 
+  publicAccess: true
+
+oauth:
+  # IndieAuth
+  # https://indielogin.com/api
+  provider: indieauth
+  client_id: http://yourdomain.com
+  auth_url: https://indielogin.com/auth
+  callback_url: http://lasso.yourdomain.com:9090/auth
