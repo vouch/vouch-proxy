@@ -43,7 +43,8 @@ func TimeLog(nextHandler http.Handler) http.HandlerFunc {
 		// var statusCode int
 		// var statusColor string
 		statusCode := ctx.Value(lctx.StatusCode)
-		log.Debugf("statuscode: %v", statusCode)
+		// TODO: this just doesn't seem to work, how can we get the statusCode from the context?
+		// log.Debugf("statuscode: %v", statusCode)
 		if statusCode == nil {
 			statusCode = 200
 		}
