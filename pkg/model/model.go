@@ -25,6 +25,8 @@ var (
 	//Db holds the db
 	Db *bolt.DB
 
+	dbpath string
+
 	userBucket = []byte("users")
 	teamBucket = []byte("teams")
 	siteBucket = []byte("sites")
@@ -32,11 +34,12 @@ var (
 
 // may want to use encode/gob to store the user record
 func init() {
-	Db, _ = Open(os.Getenv("LASSO_ROOT") + cfg.Cfg.DB.File)
+	dbpath = os.Getenv("LASSO_ROOT") + cfg.Cfg.DB.File
+	Db, _ = OpenDB(dbpath)
 }
 
-// Open the boltdb
-func Open(dbfile string) (*bolt.DB, error) {
+// OpenDB the boltdb
+func OpenDB(dbfile string) (*bolt.DB, error) {
 
 	opts := &bolt.Options{
 		Timeout: 50 * time.Millisecond,
@@ -54,7 +57,9 @@ func Open(dbfile string) (*bolt.DB, error) {
 func getBucket(tx *bolt.Tx, key []byte) *bolt.Bucket {
 	b, err := tx.CreateBucketIfNotExists(key)
 	if err != nil {
-		log.Errorf("could not create bucket %s", err)
+		log.Errorf("could not create bucket in db %s", err)
+		log.Errorf("check the dbfile permissions at %s", dbpath)
+		log.Errorf("if there's really something wrong with the data ./do.sh includes a utility to browse the dbfile")
 		return nil
 	}
 	return b

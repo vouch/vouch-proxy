@@ -24,10 +24,10 @@ import (
 	"github.com/LassoProject/lasso/pkg/structs"
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 // Index variables passed to index.tmpl
+// TODO: turn TestURL into an array of URLs to display
 type Index struct {
 	Msg     string
 	TestURL string
@@ -40,50 +40,16 @@ type AuthError struct {
 }
 
 var (
-	genOauth    structs.GenericOauth
-	oauthclient *oauth2.Config
-	oauthopts   oauth2.AuthCodeOption
+	//oauthclient = cfg.OAuthClient*oauth2.Config TODO: remove
 
 	// Templates with functions available to them
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
-
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Name))
+	sessstore     = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Name))
 )
 
-func init() {
-	log.Debug("init handlers")
-
-	err := cfg.UnmarshalKey("oauth", &genOauth)
-	if err == nil {
-		if genOauth.Provider == "google" {
-			log.Info("configuring google oauth")
-			oauthclient = &oauth2.Config{
-				ClientID:     genOauth.ClientID,
-				ClientSecret: genOauth.ClientSecret,
-				Scopes: []string{
-					// You have to select a scope from
-					// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-					"https://www.googleapis.com/auth/userinfo.email",
-				},
-				Endpoint: google.Endpoint,
-			}
-			log.Infof("setting google oauth preferred login domain param 'hd' to %s", genOauth.PreferredDomain)
-			oauthopts = oauth2.SetAuthURLParam("hd", genOauth.PreferredDomain)
-		} else {
-			log.Info("configuring generic oauth")
-			oauthclient = &oauth2.Config{
-				ClientID:     genOauth.ClientID,
-				ClientSecret: genOauth.ClientSecret,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  genOauth.AuthURL,
-					TokenURL: genOauth.TokenURL,
-				},
-				RedirectURL: genOauth.RedirectURL,
-				Scopes:      genOauth.Scopes,
-			}
-		}
-	}
-}
+// func init() {
+// 	log.Debug("handlers ")
+// }
 
 func randString() string {
 	b := make([]byte, 32)
@@ -95,29 +61,29 @@ func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var url = ""
-	if genOauth.Provider == "google" {
+	if cfg.GenOAuth.Provider == cfg.Providers.Google {
 		// If the provider is Google, find a matching redirect URL to use for the client
 		domain := domains.Matches(r.Host)
 		log.Debugf("looking for redirect URL matching  %v", domain)
-		for i, v := range genOauth.RedirectURLs {
-			log.Debugf("redirect value matched at [%d]=%v", i, v)
+		for i, v := range cfg.GenOAuth.RedirectURLs {
 			if strings.Contains(v, domain) {
-				oauthclient.RedirectURL = v
+				log.Debugf("redirect value matched at [%d]=%v", i, v)
+				cfg.OAuthClient.RedirectURL = v
 				break
 			}
 		}
-		url = oauthclient.AuthCodeURL(state, oauthopts)
-	} else if genOauth.Provider == "indieauth" {
-		url = oauthclient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+		url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
+		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
-		url = oauthclient.AuthCodeURL(state)
+		url = cfg.OAuthClient.AuthCodeURL(state)
 	}
 
 	// log.Debugf("loginUrl %s", url)
 	return url
 }
 
-// FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth 2 Bearer Token)
+// FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
 // and Query String in that order
 func FindJWT(r *http.Request) string {
 	jwt, err := cookie.Cookie(r)
@@ -195,9 +161,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if jwt == "" {
 		// If the module is configured to allow public access with no authentication, return 200 now
 		if !cfg.Cfg.PublicAccess {
-			error401(w, r, AuthError{Error: "no jwt found"})
+			error401(w, r, AuthError{Error: "no jwt found in request for "})
 		} else {
-			w.Header().Add("X-Lasso-User", "")
+			w.Header().Add(cfg.Cfg.Headers.User, "")
 		}
 		return
 	}
@@ -208,7 +174,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{err.Error(), jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "")
+			w.Header().Add(cfg.Cfg.Headers.User, "")
 		}
 		return
 	}
@@ -217,27 +183,27 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		if !cfg.Cfg.PublicAccess {
 			error401(w, r, AuthError{"no Username found in jwt", jwt})
 		} else {
-			w.Header().Add("X-Lasso-User", "")
+			w.Header().Add(cfg.Cfg.Headers.User, "")
 		}
 		return
 	}
-	log.Infof("email from jwt cookie: %s", claims.Username)
+	log.Infof("username from jwt cookie: %s", claims.Username)
 
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
 			if !cfg.Cfg.PublicAccess {
 				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
 			} else {
-				w.Header().Add("X-Lasso-User", "")
+				w.Header().Add(cfg.Cfg.Headers.User, "")
 			}
 			return
 		}
 	}
 
 	// renderIndex(w, "user found from email "+user.Email)
-	w.Header().Add("X-Lasso-User", claims.Username)
-	w.Header().Add("X-Lasso-Success", "true")
-	log.Debugf("X-Lasso-User response headers %s", w.Header().Get("X-Lasso-User"))
+	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
+	w.Header().Add(cfg.Cfg.Headers.Success, "true")
+	log.Debugf("response header "+cfg.Cfg.Headers.User+": %s", w.Header().Get(cfg.Cfg.Headers.User))
 	renderIndex(w, "/validate user found in jwt "+claims.Username)
 
 	// TODO
@@ -377,7 +343,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 }
 
 // CallbackHandler /auth
-// - validate info from oauth provider (Google, Github, OIDC, etc)
+// - validate info from oauth provider (Google, GitHub, OIDC, etc)
 // - create user
 // - issue jwt in the form of a cookie
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -445,22 +411,22 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 func getUserInfo(r *http.Request, user *structs.User) error {
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
-	if genOauth.Provider == "indieauth" {
+	if cfg.GenOAuth.Provider == "indieauth" {
 		return getUserInfoFromIndieAuth(r, user)
 	}
 
-	providerToken, err := oauthclient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	providerToken, err := cfg.OAuthClient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 	if err != nil {
 		return err
 	}
 
 	// make the "third leg" request back to google to exchange the token for the userinfo
-	client := oauthclient.Client(oauth2.NoContext, providerToken)
-	if genOauth.Provider == "google" {
+	client := cfg.OAuthClient.Client(oauth2.NoContext, providerToken)
+	if cfg.GenOAuth.Provider == cfg.Providers.Google {
 		return getUserInfoFromGoogle(client, user)
-	} else if genOauth.Provider == "github" {
-		return getUserInfoFromGithub(client, user, providerToken)
-	} else if genOauth.Provider == "oidc" {
+	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
+		return getUserInfoFromGitHub(client, user, providerToken)
+	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
 		return getUserInfoFromOpenID(client, user, providerToken)
 	}
 	log.Error("we don't know how to look up the user info")
@@ -468,9 +434,8 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 }
 
 func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
-	userinfo, err := client.Get(genOauth.UserInfoURL)
+	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 	defer userinfo.Body.Close()
@@ -478,8 +443,6 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 	log.Println("OpenID userinfo body: ", string(data))
 	if err = json.Unmarshal(data, user); err != nil {
 		log.Errorln(err)
-		// renderIndex(w, "Error marshalling response. Please try agian.")
-		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
 	user.PrepareUserData()
@@ -487,9 +450,8 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 }
 
 func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
-	userinfo, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 	defer userinfo.Body.Close()
@@ -497,8 +459,6 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 	log.Println("google userinfo body: ", string(data))
 	if err = json.Unmarshal(data, user); err != nil {
 		log.Errorln(err)
-		// renderIndex(w, "Error marshalling response. Please try agian.")
-		// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": })
 		return err
 	}
 	user.PrepareUserData()
@@ -508,16 +468,10 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 
 // github
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
-
-	// TODO: move to cfg package
-	userInfoURL := "https://api.github.com/user?access_token="
-	if genOauth.UserInfoURL != "" {
-		userInfoURL = genOauth.UserInfoURL
-	}
+func getUserInfoFromGitHub(client *http.Client, user *structs.User, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	userinfo, err := client.Get(userInfoURL + ptoken.AccessToken)
+	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
@@ -525,14 +479,14 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("github userinfo body: ", string(data))
-	ghUser := structs.GithubUser{}
+	ghUser := structs.GitHubUser{}
 	if err = json.Unmarshal(data, &ghUser); err != nil {
 		log.Errorln(err)
 		return err
 	}
-	log.Debug("getUserInfoFromGithub ghUser")
+	log.Debug("getUserInfoFromGitHub ghUser")
 	log.Debug(ghUser)
-	log.Debug("getUserInfoFromGithub user")
+	log.Debug("getUserInfoFromGitHub user")
 	log.Debug(user)
 
 	ghUser.PrepareUserData()
@@ -542,7 +496,7 @@ func getUserInfoFromGithub(client *http.Client, user *structs.User, ptoken *oaut
 	user.ID = ghUser.ID
 	// user = &ghUser.User
 
-	log.Debug("getUserInfoFromGithub")
+	log.Debug("getUserInfoFromGitHub")
 	log.Debug(user)
 	return nil
 }
@@ -561,19 +515,19 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	if _, err = fw.Write([]byte(code)); err != nil {
 		return err
 	}
-	// v.Set("redirect_uri", genOauth.RedirectURL)
+	// v.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
 	fw, err = w.CreateFormField("redirect_uri")
-	if _, err = fw.Write([]byte(genOauth.RedirectURL)); err != nil {
+	if _, err = fw.Write([]byte(cfg.GenOAuth.RedirectURL)); err != nil {
 		return err
 	}
-	// v.Set("client_id", genOauth.ClientID)
+	// v.Set("client_id", cfg.GenOAuth.ClientID)
 	fw, err = w.CreateFormField("client_id")
-	if _, err = fw.Write([]byte(genOauth.ClientID)); err != nil {
+	if _, err = fw.Write([]byte(cfg.GenOAuth.ClientID)); err != nil {
 		return err
 	}
 	w.Close()
 
-	req, err := http.NewRequest("POST", genOauth.AuthURL, &b)
+	req, err := http.NewRequest("POST", cfg.GenOAuth.AuthURL, &b)
 	if err != nil {
 		return err
 	}
@@ -581,7 +535,7 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	req.Header.Set("Accept", "application/json")
 
 	// v := url.Values{}
-	// userinfo, err := client.PostForm(genOauth.UserInfoURL, v)
+	// userinfo, err := client.PostForm(cfg.GenOAuth.UserInfoURL, v)
 
 	client := &http.Client{}
 	userinfo, err := client.Do(req)
