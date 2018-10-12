@@ -16,12 +16,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CfgT lasso jwt cookie configuration
-type CfgT struct {
+// config lasso jwt cookie configuration
+type config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
 	Domains       []string `mapstructure:"domains"`
+	WhiteList     []string `mapstructure:"whitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
@@ -78,7 +79,7 @@ type OAuthProviders struct {
 
 var (
 	// Cfg the main exported config variable
-	Cfg CfgT
+	Cfg config
 
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
