@@ -21,6 +21,10 @@ lasso:
   # You will need to direct people to the Lasso login page from your application.
   publicAccess: false
 
+  TODO:
+  whiteList:
+  - 
+
   jwt:
     # secret: a random 18 character string used to cryptographically sign the jwt
     # if the secret is not set here then..

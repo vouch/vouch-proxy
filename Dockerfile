@@ -1,4 +1,4 @@
-# bfoote/lasso
+# lassoproject/lasso
 # https://github.com/LassoProject/lasso
 FROM golang:1.8
 
