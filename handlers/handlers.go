@@ -27,8 +27,8 @@ import (
 // Index variables passed to index.tmpl
 // TODO: turn TestURL into an array of URLs to display
 type Index struct {
-	Msg     string
-	TestURL string
+	Msg      string
+	TestURLs []string
 }
 
 // AuthError sets the values to return to nginx
@@ -297,7 +297,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderIndex(w http.ResponseWriter, msg string) {
-	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURL: cfg.Cfg.TestURL}); err != nil {
+	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURLs: cfg.Cfg.TestURLs}); err != nil {
 		log.Error(err)
 	}
 }
@@ -567,11 +567,8 @@ func error401na(w http.ResponseWriter, r *http.Request) {
 
 func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	if cfg.Cfg.Testing {
-		var tmp = cfg.Cfg.TestURL
-		cfg.Cfg.TestURL = rURL
-		// TODO: allow template to take an array of URLs and just push to those
-		renderIndex(w, "302 redirect to: "+cfg.Cfg.TestURL)
-		cfg.Cfg.TestURL = tmp
+		cfg.Cfg.TestURLs = append(cfg.Cfg.TestURLs, rURL)
+		renderIndex(w, "302 redirect to: "+rURL)
 		return
 	}
 	http.Redirect(w, r, rURL, http.StatusFound)

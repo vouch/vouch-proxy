@@ -13,7 +13,11 @@
   <li><a href="/login">login</a></li>
   <li><a href="/logout">logout</a></li>
   <li><a href="/validate">validate</a></li>
-  <li><a href="{{ .TestURL }}">{{ .TestURL }}</a></li>
+{{ if .TestURLs }}
+  {{ range $url := .TestURLs}}
+  <li><a href="{{ $url }}">{{ $url }}</a></li>
+  {{ end }}
+{{ end }}
 </ul>
 
 For support, please contact your network administrator or whomever setup nginx to use Lasso.
