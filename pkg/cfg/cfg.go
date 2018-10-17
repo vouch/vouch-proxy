@@ -50,9 +50,10 @@ type config struct {
 	Session struct {
 		Name string `mapstructure:"name"`
 	}
-	TestURL string `mapstructure:"test_url"`
-	Testing bool   `mapstructure:"testing"`
-	WebApp  bool   `mapstructure:"webapp"`
+	TestURL  string   `mapstructure:"test_url"`
+	TestURLs []string `mapstructure:"test_urls"`
+	Testing  bool     `mapstructure:"testing"`
+	WebApp   bool     `mapstructure:"webapp"`
 }
 
 // oauth config items endoint for access
@@ -246,8 +247,8 @@ func setDefaults() {
 	if !viper.IsSet("lasso.testing") {
 		Cfg.Testing = false
 	}
-	if !viper.IsSet("lasso.test_url") {
-		Cfg.TestURL = ""
+	if viper.IsSet("lasso.test_url") {
+		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
 	// TODO: proably change this name, maybe set the domain/port the webapp runs on
 	if !viper.IsSet("lasso.webapp") {
@@ -282,8 +283,12 @@ func setDefaultsGoogle() {
 		},
 		Endpoint: google.Endpoint,
 	}
-	log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
-	OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
+	if GenOAuth.PreferredDomain != "" {
+		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
+		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
+	} else {
+		OAuthopts = oauth2.SetAuthURLParam("hd", "")
+	}
 }
 
 func setDefaultsGitHub() {
