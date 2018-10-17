@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -16,7 +15,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/LassoProject/lasso/pkg/cfg"
-	lctx "github.com/LassoProject/lasso/pkg/context"
 	"github.com/LassoProject/lasso/pkg/cookie"
 	"github.com/LassoProject/lasso/pkg/domains"
 	"github.com/LassoProject/lasso/pkg/jwtmanager"
@@ -135,33 +133,19 @@ func ClaimsFromJWT(jwt string) (jwtmanager.LassoClaims, error) {
 	return claims, nil
 }
 
-// the standard error
-// this is captured by nginx, which converts the 401 into 302 to the login page
-func error401(w http.ResponseWriter, r *http.Request, ae AuthError) {
-	log.Error(ae.Error)
-	cookie.ClearCookie(w, r)
-	context.WithValue(r.Context(), lctx.StatusCode, http.StatusUnauthorized)
-	// w.Header().Set("X-Lasso-Error", ae.Error)
-	http.Error(w, ae.Error, http.StatusUnauthorized)
-	// TODO put this back in place if multiple auth mechanism are available
-	// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": errStr})
-}
-
-func error401na(w http.ResponseWriter, r *http.Request) {
-	error401(w, r, AuthError{Error: "not authorized"})
-}
-
 // ValidateRequestHandler /validate
 // TODO this should use the handler interface
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/validate")
 
+	// TODO: collapse all of the `if !cfg.Cfg.PublicAccess` calls
+	// perhaps using an `ok=false` pattern
 	jwt := FindJWT(r)
 	// if jwt != "" {
 	if jwt == "" {
 		// If the module is configured to allow public access with no authentication, return 200 now
 		if !cfg.Cfg.PublicAccess {
-			error401(w, r, AuthError{Error: "no jwt found in request for "})
+			error401(w, r, AuthError{Error: "no jwt found in request"})
 		} else {
 			w.Header().Add(cfg.Cfg.Headers.User, "")
 		}
@@ -178,6 +162,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	if claims.Username == "" {
 		// no email in jwt
 		if !cfg.Cfg.PublicAccess {
@@ -204,7 +189,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.Debugf("response header "+cfg.Cfg.Headers.User+": %s", w.Header().Get(cfg.Cfg.Headers.User))
-	renderIndex(w, "/validate user found in jwt "+claims.Username)
+
+	// good to go!!
+	ok200(w, r)
 
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
@@ -305,7 +292,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		// bounce to oauth provider for login
 		var lURL = loginURL(r, state)
 		log.Debugf("redirecting to oauthURL %s", lURL)
-		context.WithValue(r.Context(), lctx.StatusCode, 302)
 		redirect302(w, r, lURL)
 	}
 }
@@ -405,8 +391,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		session.Values[requestedURL] = 0
 		session.Save(r, w)
 
-		// and redirect
-		context.WithValue(r.Context(), lctx.StatusCode, 302)
 		redirect302(w, r, requestedURL)
 		return
 	}
@@ -566,13 +550,38 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	return nil
 }
 
+// the standard error
+// this is captured by nginx, which converts the 401 into 302 to the login page
+func error401(w http.ResponseWriter, r *http.Request, ae AuthError) {
+	log.Error(ae.Error)
+	cookie.ClearCookie(w, r)
+	// w.Header().Set("X-Lasso-Error", ae.Error)
+	http.Error(w, ae.Error, http.StatusUnauthorized)
+	// TODO put this back in place if multiple auth mechanism are available
+	// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": errStr})
+}
+
+func error401na(w http.ResponseWriter, r *http.Request) {
+	error401(w, r, AuthError{Error: "not authorized"})
+}
+
 func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	if cfg.Cfg.Testing {
 		var tmp = cfg.Cfg.TestURL
 		cfg.Cfg.TestURL = rURL
+		// TODO: allow template to take an array of URLs and just push to those
 		renderIndex(w, "302 redirect to: "+cfg.Cfg.TestURL)
 		cfg.Cfg.TestURL = tmp
 		return
 	}
-	http.Redirect(w, r, rURL, 302)
+	http.Redirect(w, r, rURL, http.StatusFound)
+}
+
+func ok200(w http.ResponseWriter, r *http.Request) {
+
+	n, err := w.Write(nil)
+	if err != nil {
+		log.Error(err)
+	}
+	log.Debugf("ok200 with empty body (bytes %d)", n)
 }
