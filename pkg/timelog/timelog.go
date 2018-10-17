@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	lctx "github.com/LassoProject/lasso/pkg/context"
+	"github.com/LassoProject/lasso/pkg/response"
 
 	log "github.com/Sirupsen/logrus"
 	// "github.com/mattn/go-isatty"
@@ -22,37 +22,32 @@ var (
 	reset   = string([]byte{27, 91, 48, 109})
 )
 
-// HERE you left off trying to figure out how to implement middleware in gorilla mux
-func TimeLog(nextHandler http.Handler) http.HandlerFunc {
+// TimeLog records how long it takes to process the http request and produce the response (latency)
+func TimeLog(nextHandler http.Handler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("Request received : %v\n", r)
+		log.Debugf("Request received : %v", r)
 		start := time.Now()
 
 		// make the call
+		v := response.CaptureWriter{w, 0}
 		ctx := context.Background()
-		nextHandler.ServeHTTP(w, r.WithContext(ctx))
+		nextHandler.ServeHTTP(&v, r.WithContext(ctx))
 
 		// Stop timer
 		end := time.Now()
-		log.Debug("Request handled successfully")
 
 		latency := end.Sub(start)
-		clientIP := r.RemoteAddr
-		method := r.Method
 
-		// var statusCode int
-		// var statusColor string
-		statusCode := ctx.Value(lctx.StatusCode)
-		// TODO: this just doesn't seem to work, how can we get the statusCode from the context?
-		// log.Debugf("statuscode: %v", statusCode)
-		if statusCode == nil {
-			statusCode = 200
-		}
-		statusColor := colorForStatus(statusCode.(int))
+		log.Debugf("Request handled successfully: %v", v.GetStatusCode())
+		var statusCode = v.GetStatusCode()
+		statusColor := colorForStatus(statusCode)
 
 		path := r.URL.Path
 		host := r.Host
 		referer := r.Header.Get("Referer")
+
+		clientIP := r.RemoteAddr
+		method := r.Method
 
 		log.Infof("|%s %3d %s| %13v | %s | %s %s %s | %s",
 			statusColor, statusCode, reset,
