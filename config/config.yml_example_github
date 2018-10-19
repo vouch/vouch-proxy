@@ -21,11 +21,4 @@ oauth:
   provider: github
   client_id: xxxxxxxxxxxxxxxxxxxx
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-  # these GitHub OAuth defaults are set for you..
-  # from https://godoc.org/golang.org/x/oauth2/github
-  # auth_url: https://github.com/login/oauth/authorize
-  # token_url: https://github.com/login/oauth/access_token
-  # scopes:
-  #   - user
-  # user_info_url: https://api.github.com/user?access_token=
+  # endpoints set from https://godoc.org/golang.org/x/oauth2/github
