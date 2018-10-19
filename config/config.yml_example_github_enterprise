@@ -24,8 +24,7 @@ oauth:
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   auth_url: https://githubenterprise.yoursite.com/login/oauth/authorize
   token_url: https://githubenterprise.yoursite.com/login/oauth/access_token
-  user_info_url: https://githubenterprise.yoursite.com/user?access_token=
-
+  user_info_url: https://githubenterprise.yoursite.com/api/v3/user?access_token=
   # these GitHub OAuth defaults are set for you..
   # scopes:
   #   - user

@@ -404,7 +404,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 func getUserInfo(r *http.Request, user *structs.User) error {
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
-	if cfg.GenOAuth.Provider == "indieauth" {
+	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		return getUserInfoFromIndieAuth(r, user)
 	}
 
