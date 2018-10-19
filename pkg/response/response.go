@@ -16,22 +16,20 @@ type CaptureWriter struct {
 func (w *CaptureWriter) Write(b []byte) (int, error) {
 	if w.StatusCode == 0 {
 		w.StatusCode = 200
-		log.Debugf("set w.StatusCode %d", w.StatusCode)
+		log.Debugf("CaptureWriter.Write set w.StatusCode %d", w.StatusCode)
 	}
-	log.Debugf("CaptureWriter.Write code %d", w.StatusCode)
 	return w.ResponseWriter.Write(b)
 }
 
 // Header calls http.Writer.Header()
 func (w *CaptureWriter) Header() http.Header {
-	log.Debugf("CaptureWriter.Header code %d", w.StatusCode)
 	return w.ResponseWriter.Header()
 }
 
 // WriteHeader calls http.Writer.WriteHeader(code)
 func (w *CaptureWriter) WriteHeader(code int) {
 	w.StatusCode = code
-	log.Debugf("CaptureWriter.WriteHeader code %d", w.StatusCode)
+	log.Debugf("CaptureWriter.WriteHeader set w.StatusCode %d", w.StatusCode)
 	w.ResponseWriter.WriteHeader(code)
 }
 

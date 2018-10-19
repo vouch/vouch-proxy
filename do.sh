@@ -26,15 +26,14 @@ gogo () {
   docker run --rm -i -t -v /var/run/docker.sock:/var/run/docker.sock -v ${SDIR}/go:/go --name gogo $GOIMAGE $*
 }
 
-revproxy () {
-  /home/bfoote/files/docker/bnfinet/dockerfiles/bnfnet/lasso-nginx-test/run_docker.sh $*
-}
-
 dbuild () {
   docker build -f Dockerfile -t $IMAGE .
 }
 
 gobuildstatic () {
+  # TODO: this doesn't include the templates
+  # https://github.com/shurcooL/vfsgen
+
   CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 }
 
@@ -84,6 +83,7 @@ goget () {
   # install all the things
   go get -v ./...
 }
+
 test () {
   # test all the things
   if [ -n "$*" ]; then
@@ -93,28 +93,9 @@ test () {
   fi
 }
 
-graphviz () {
-#  FILE=$1; shift;
-  FILE=lasso_flow.dot;
-  CMD="docker run 
-        --rm 
-        -it 
-        -v $(pwd):/code
-        -w /code
-        --entrypoint dot
-        themarquee/graphviz
-          -T png
-          -o lasso_flow.png
-          $FILE
-"
-  echo $CMD
-  ${CMD}
-
-}
-
 DB=data/lasso_bolt.db
 browsebolt() {
-	~/go/bin/boltbrowser $DB
+	${GOPATH}/bin/boltbrowser $DB
 }
 
 usage() {
@@ -122,14 +103,13 @@ usage() {
    usage:
      $0 run                    - go run main.go
      $0 build                  - go build
+     $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
-     $0 revproxy               - run an nginx reverseproxy for naga.bnf.net
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
-     $0 graphviz               - lasso_flow.dot --> lasso_flow.jpg
 
   do is like make
 
@@ -140,7 +120,7 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'revproxy'|'graphviz'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
    $ARG $*
    ;;
    'godoc')

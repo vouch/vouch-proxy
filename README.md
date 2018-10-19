@@ -2,7 +2,7 @@
 
 an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
-lasso supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers.
+lasso supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
 
 If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
@@ -11,7 +11,7 @@ For support please file tickets here or visit our IRC channel [#lasso](irc://fre
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
-* create oauth credentials for lasso at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
+* create OAuth credentials for lasso at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure nginx...
 
@@ -78,11 +78,16 @@ server {
 
 ## Running from Docker
 
-* `./do.sh drun`
+```bash
+docker run -d \
+    -p 9090:9090 \
+    --name lasso \
+    -v ${PWD}/config:/config \
+    -v ${PWD}/data:/data \
+    lassoproject/lasso
+```
 
-And that's it!  Or if you can examine the docker command in `do.sh`
-
-The [bfoote/lasso](https://hub.docker.com/r/bfoote/lasso/) Docker image is an automated build on Docker Hub
+The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker image is an automated build on Docker Hub
 
 ## Running from source
 
@@ -134,4 +139,4 @@ Note that outside of some innocuos redirection, Bob only ever sees `https://priv
 
 Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://lasso.oursites.com/validate` from the `auth_request` nginx module.
 
-The next time Bob is forwarded to google for login, since he has already authorized the site it immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.
+The next time Bob is forwarded to google for login, since he has already authorized the lasso OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.
