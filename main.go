@@ -19,12 +19,9 @@ import (
 func main() {
 	log.Info("starting lasso")
 	mux := http.NewServeMux()
-	// router := mux.NewRouter()
-	// router.HandleFunc("/", handlers.IndexHandler)
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
 	mux.HandleFunc("/validate", timelog.TimeLog(authH))
-	// mux.HandleFunc("/validate", handlers.ValidateRequestHandler)
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	mux.HandleFunc("/login", timelog.TimeLog(loginH))
@@ -35,7 +32,7 @@ func main() {
 	callH := http.HandlerFunc(handlers.CallbackHandler)
 	mux.HandleFunc("/auth", timelog.TimeLog(callH))
 
-	// router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	// serve static files from /static
 	mux.Handle("/static", http.FileServer(http.Dir("./static")))
 
 	if cfg.Cfg.WebApp {
@@ -57,6 +54,9 @@ func main() {
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		/// logrus has an example of using ErrorLog but it doesn't apply to this MUX implimentation
+		// https://github.com/sirupsen/logrus#logger-as-an-iowriter
+		// ErrorLog:     log.New(w, "", 0),
 	}
 
 	log.Fatal(srv.ListenAndServe())

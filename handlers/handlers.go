@@ -25,7 +25,6 @@ import (
 )
 
 // Index variables passed to index.tmpl
-// TODO: turn TestURL into an array of URLs to display
 type Index struct {
 	Msg      string
 	TestURLs []string
@@ -172,7 +171,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	log.Infof("username from jwt cookie: %s", claims.Username)
+	log.WithFields(log.Fields{
+		"username": claims.Username,
+	}).Info("jwt cookie")
 
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
@@ -188,7 +189,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// renderIndex(w, "user found from email "+user.Email)
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
-	log.Debugf("response header "+cfg.Cfg.Headers.User+": %s", w.Header().Get(cfg.Cfg.Headers.User))
+	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
 
 	// good to go!!
 	ok200(w, r)
