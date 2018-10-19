@@ -17,14 +17,15 @@ For support please file tickets here or visit our IRC channel [#lasso](irc://fre
 
 ```{.nginxconf}
 server {
-    listen 80 default_server;
+    listen 443 ssl http2;
     server_name dev.yourdomain.com;
     root /var/www/html/;
 
+    ssl_certificate /etc/letsencrypt/live/dev.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dev.yourdomain.com/privkey.pem;
+
     # send all requests to the `/validate` endpoint for authorization
     auth_request /validate;
-    # if validate returns `401 not authorized` then forward the request to the error401block
-    error_page 401 = @error401;
 
     location = /validate {
       # lasso can run behind the same nginx-revproxy
@@ -43,6 +44,9 @@ server {
       auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
       auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
     }
+
+    # if validate returns `401 not authorized` then forward the request to the error401block
+    error_page 401 = @error401;
 
     location @error401 {
         # redirect to lasso for login
