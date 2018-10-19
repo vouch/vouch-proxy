@@ -186,13 +186,16 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// renderIndex(w, "user found from email "+user.Email)
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
 
 	// good to go!!
-	ok200(w, r)
+	if cfg.Cfg.Testing {
+		renderIndex(w, "user authorized "+claims.Username)
+	} else {
+		ok200(w, r)
+	}
 
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
