@@ -331,6 +331,14 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 		ok = true
 		log.Debugf("skipping verify user since cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
 		// if we're not allowing all users, and we have domains configured and this email isn't in one of those domains...
+	} else if len(cfg.Cfg.WhiteList) != 0 {
+		for _, wl := range cfg.Cfg.WhiteList {
+			if user.Username == wl {
+				log.Debugf("found user.Username in WhiteList: %s", user.Username)
+				ok = true
+				break
+			}
+		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a lasso managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	cfg CfgT
+	cfg config
 )
 
 func init() {
