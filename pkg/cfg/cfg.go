@@ -138,7 +138,8 @@ func ParseConfig() {
 		// log.Fatalf(err.prob)
 		panic(errT)
 	}
-	log.Debugf("secret: %s", string(Cfg.JWT.Secret))
+	// don't log the secret!
+	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }
 
 // UnmarshalKey populate struct from contents of cfg tree at key
@@ -336,7 +337,7 @@ func getOrGenerateJWTSecret() string {
 		// then generate a new secret and store it in the file
 		log.Debug(err)
 		log.Info("jwt.secret not found in " + secretFile)
-		log.Warn("generating new jwt.secret and storing it in " + secretFile)
+		log.Warn("generating random jwt.secret and storing it in " + secretFile)
 
 		rand.Seed(time.Now().UnixNano())
 		b := make([]byte, secretLen)
