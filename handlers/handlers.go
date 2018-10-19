@@ -579,10 +579,8 @@ func redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 }
 
 func ok200(w http.ResponseWriter, r *http.Request) {
-
-	n, err := w.Write(nil)
+	_, err := w.Write([]byte("200 OK\n"))
 	if err != nil {
 		log.Error(err)
 	}
-	log.Debugf("ok200 with empty body (bytes %d)", n)
 }
