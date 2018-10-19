@@ -5,14 +5,6 @@ lasso:
   listen: 0.0.0.0
   port: 9090
 
-  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
-  allowAllUsers: false
-
-  # Setting publicAccess: true will accept all requests, even without a cookie. 
-  # If the user is logged in, the cookie will be validated and the user header will be set.
-  # You will need to direct people to the Lasso login page from your application.
-  publicAccess: false
-
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
   # usually you'll just have one.
@@ -21,22 +13,39 @@ lasso:
   - yourdomain.com
   - yourotherdomain.com
 
+  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
+  allowAllUsers: false
+
+  # Setting publicAccess: true will accept all requests, even without a cookie. 
+  # If the user is logged in, the cookie will be validated and the user header will be set.
+  # You will need to direct people to the Lasso login page from your application.
+  publicAccess: false
+
   jwt:
-    issuer: Lasso
-    maxAge: 240
+    # secret: a random 18 character string used to cryptographically sign the jwt
+    # if the secret is not set here then..
+    # look for the secret in `./config/secret`
+    # if `./config/secret` doesn't exist then randomly generate a secret and store it there
+    # in order to run multiple instances of lasso on multiple servers (perhaps purely for validating the jwt),
+    # you'll want them all to have the same secret
     secret: your_random_string
+    issuer: Lasso
+    # number of seconds until jwt expires
+    maxAge: 240
+    # compress the jwt
     compress: true
 
   cookie: 
     # name of cookie to store the jwt
-    name: Lasso-cookie
+    name: LassoCookie
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
     secure: true
     httpOnly: true
 
   session:
-    name: lasso-session
+    # just the name of session variable stored locally
+    name: lassoSession
 
   headers:
     jwt: X-Lasso-Token
@@ -46,13 +55,18 @@ lasso:
   db: 
     file: data/lasso_bolt.db
 
+  # testing: force all 302 redirects to be rendered as a webpage with a link
+  testing: true
+  # test_url: add this URL to the page which lasso displays
   test_url: http://yourdomain.com
+  # webapp: WIP for web interface to lasso (mostly logs)
+  webapp: true
 
 #
-# OAuth Provider Config
+# OAuth Provider
+# configure ONLY ONE of the following oauth providers
 #
 oauth:
-  # configure only one of the following
 
   # Google
   provider: google
@@ -70,13 +84,14 @@ oauth:
   provider: github
   client_id:
   client_secret:
-  auth_url: https://github.com/login/oauth/authorize
-  token_url: https://github.com/login/oauth/access_token
   # callback_url is configured at github.com when setting up the app
   # set to e.g. https://lasso.yourdomain.com/auth
-  scopes:
-    - user
-  user_info_url: https://api.github.com/user?access_token=
+  # defaults (uncomment and change these if you are using github enterprise on-prem)
+  # auth_url: https://github.com/login/oauth/authorize
+  # token_url: https://github.com/login/oauth/access_token
+  # user_info_url: https://api.github.com/user?access_token=
+  # scopes:
+    # - user
 
   # Generic OpenID Connect
   provider: oidc

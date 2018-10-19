@@ -5,6 +5,7 @@ import (
 
 	"github.com/LassoProject/lasso/pkg/cfg"
 	"github.com/LassoProject/lasso/pkg/structs"
+
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ import (
 
 var (
 	u1 = structs.User{
-		Email:         "test@testing.com",
+		Username:      "test@testing.com",
 		EmailVerified: true,
 		Name:          "Test Name",
 	}
@@ -24,13 +25,13 @@ func init() {
 	// log.SetLevel(log.DebugLevel)
 
 	lc = LassoClaims{
-		u1.Email,
+		u1.Username,
 		Sites,
 		StandardClaims,
 	}
 }
 
-func TestCreateUserTokenStringAndParseToEmail(t *testing.T) {
+func TestCreateUserTokenStringAndParseToUsername(t *testing.T) {
 
 	uts := CreateUserTokenString(u1)
 	assert.NotEmpty(t, uts)
@@ -40,8 +41,8 @@ func TestCreateUserTokenStringAndParseToEmail(t *testing.T) {
 		t.Error(err)
 	} else {
 		log.Debugf("test parsed token string %v", utsParsed)
-		ptemail, _ := PTokenToEmail(utsParsed)
-		assert.Equal(t, u1.Email, ptemail)
+		ptUsername, _ := PTokenToUsername(utsParsed)
+		assert.Equal(t, u1.Username, ptUsername)
 	}
 
 }

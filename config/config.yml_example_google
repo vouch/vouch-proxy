@@ -1,0 +1,20 @@
+
+# lasso config
+# bare minimum to get lasso running with google
+
+lasso:
+  domains:
+  - yourdomain.com
+  - yourotherdomain.com
+  
+oauth:
+  provider: google
+  # get credentials from...
+  # https://console.developers.google.com/apis/credentials
+  client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  callback_urls: 
+    - http://yourdomain.com:9090/auth
+    - http://yourotherdomain.com:9090/auth
+  preferredDomain: yourdomain.com
+  # endpoints set from https://godoc.org/golang.org/x/oauth2/google
