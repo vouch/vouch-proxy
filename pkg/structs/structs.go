@@ -7,9 +7,12 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
+	// TODO: set Provider here so that we can pass it to db
+	// populated by db (via mapstructure) or from provider (via json)
+	// Provider   string `json:"provider",mapstructure:"provider"`
 	Username   string `json:"username",mapstructure:"username"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
+	Name       string `json:"name",mapstructure:"name"`
+	Email      string `json:"email",mapstructure:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
 	ID         int    `json:"id",mapstructure:"id"`
@@ -23,6 +26,9 @@ func (u *User) PrepareUserData() {
 
 // GoogleUser is a retrieved and authentiacted user from Google.
 // unused!
+
+// TODO: see if these should be pointers to the *User object as per
+// https://golang.org/doc/effective_go.html#embedding
 type GoogleUser struct {
 	User
 	Sub           string `json:"sub"`
@@ -41,8 +47,8 @@ func (u *GoogleUser) PrepareUserData() {
 	u.Username = u.Email
 }
 
-// GithubUser is a retrieved and authentiacted user from Github.
-type GithubUser struct {
+// GitHubUser is a retrieved and authentiacted user from GitHub.
+type GitHubUser struct {
 	User
 	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
@@ -50,32 +56,18 @@ type GithubUser struct {
 }
 
 // PrepareUserData implement PersonalData interface
-func (u *GithubUser) PrepareUserData() {
+func (u *GitHubUser) PrepareUserData() {
 	// always use the u.Login as the u.Username
 	u.Username = u.Login
 }
 
 type IndieAuthUser struct {
 	User
-	URL   string `json:"me"`
+	URL string `json:"me"`
 }
 
 func (u *IndieAuthUser) PrepareUserData() {
 	u.Username = u.URL
-}
-
-// GenericOauth provides endoint for access
-type GenericOauth struct {
-	ClientID        string   `mapstructure:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret"`
-	AuthURL         string   `mapstructure:"auth_url"`
-	TokenURL        string   `mapstructure:"token_url"`
-	RedirectURL     string   `mapstructure:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"`
-	Scopes          []string `mapstructure:"scopes"`
-	UserInfoURL     string   `mapstructure:"user_info_url"`
-	Provider        string   `mapstructure:"provider"`
-	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
 // Team has members and provides acess to sites

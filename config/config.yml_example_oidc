@@ -1,0 +1,31 @@
+
+# lasso config
+# bare minimum to get lasso running with OpenID Connect (such as okta)
+
+lasso:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+  - yourotherdomain.com
+
+  # - OR -
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
+  # allowAllUsers: true
+
+oauth:
+  # Generic OpenID Connect
+  # including okta
+  provider: oidc
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
+  token_url: https://{yourOktaDomain}/oauth2/default/v1/token
+  user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: http://lasso.yourdomain.com:9090/auth

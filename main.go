@@ -38,7 +38,11 @@ func main() {
 	// router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	mux.Handle("/static", http.FileServer(http.Dir("./static")))
 
-	mux.Handle("/ws", tran.WS)
+	if cfg.Cfg.WebApp {
+		log.Info("enabling websocket")
+		tran.ExplicitInit()
+		mux.Handle("/ws", tran.WS)
+	}
 
 	// socketio := tran.NewServer()
 	// mux.Handle("/socket.io/", cors.AllowAll(socketio))

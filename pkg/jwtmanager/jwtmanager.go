@@ -38,6 +38,9 @@ func init() {
 	}
 	Sites = make([]string, 0)
 
+	// TODO: the Sites that end up in the JWT come from here
+	// if we add fine grain ability (ACL?) to the equation
+	// then we're going to have to add something fancier here
 	for i := 0; i < len(cfg.Cfg.Domains); i++ {
 		Sites = append(Sites, cfg.Cfg.Domains[i])
 	}
@@ -129,7 +132,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 func SiteInClaims(site string, claims *LassoClaims) bool {
 	for _, s := range claims.Sites {
 		if strings.Contains(site, s) {
-			log.Debugf("evaluating %s contains %s", site, s)
+			log.Debugf("site %s is found for claims.Site %s", site, s)
 			return true
 		}
 	}

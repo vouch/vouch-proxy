@@ -17,14 +17,14 @@ import (
 var testdb = "/tmp/storage-test.db"
 
 func init() {
-	Db, _ = Open(testdb)
+	Db, _ = OpenDB(testdb)
 
 	log.SetLevel(log.DebugLevel)
 }
 
 func TestPutUserGetUser(t *testing.T) {
 	os.Remove(testdb)
-	Open(testdb)
+	OpenDB(testdb)
 
 	u1 := structs.User{
 		Email: "test@testing.com",
@@ -58,7 +58,7 @@ func TestPutUserGetUser(t *testing.T) {
 
 func TestPutSiteGetSite(t *testing.T) {
 	os.Remove(testdb)
-	Open(testdb)
+	OpenDB(testdb)
 
 	s1 := structs.Site{Domain: "test.bnf.net"}
 	s2 := &structs.Site{}
@@ -73,7 +73,7 @@ func TestPutSiteGetSite(t *testing.T) {
 
 func TestPutTeamGetTeamDeleteTeam(t *testing.T) {
 	os.Remove(testdb)
-	Open(testdb)
+	OpenDB(testdb)
 
 	t1 := structs.Team{Name: "testname"}
 	t2 := &structs.Team{}
