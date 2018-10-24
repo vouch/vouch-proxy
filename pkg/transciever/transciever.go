@@ -27,7 +27,7 @@ func ExplicitInit() {
 }
 
 func (WS WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Infof("ws endpoint")
+	log.Info("ws endpoint")
 	// jwt := handlers.FindJWT(r)
 	// if jwt == "" {
 	// 	http.Error(w, "your mother", http.StatusUnauthorized)
@@ -42,6 +42,6 @@ func (WS WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 	http.Error(w, "your mother", http.StatusUnauthorized)
 	// 	return
 	// }
-	log.Info("hub %v", hh.Hub)
+	log.Infof("hub %v", hh.Hub)
 	serveWs(hh.Hub, w, r)
 }
