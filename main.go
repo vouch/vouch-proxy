@@ -18,11 +18,30 @@ import (
 
 // version ang semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
-var version = "undefined"
-var semver = "undefined"
+
+var (
+	version = "undefined"
+	builddt = "undefined"
+	host    = "undefined"
+	semver  = "undefined"
+	branch  = "undefined"
+)
+
+func init() {
+	// var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+}
 
 func main() {
-	log.Info("starting lasso")
+	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+	log.WithFields(log.Fields{
+		// "semver":    semver,
+		"version":   version,
+		"buildtime": builddt,
+		"buildhost": host,
+		"branch":    branch,
+		"semver":    semver,
+		"listen":    listen}).Info("starting " + cfg.Branding)
+
 	mux := http.NewServeMux()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
@@ -49,12 +68,6 @@ func main() {
 	// socketio := tran.NewServer()
 	// mux.Handle("/socket.io/", cors.AllowAll(socketio))
 	// http.Handle("/socket.io/", tran.Server)
-
-	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
-	log.WithFields(log.Fields{
-		"semver":  semver,
-		"version": version,
-		"listen":  listen}).Info("running lasso")
 
 	srv := &http.Server{
 		Handler: mux,

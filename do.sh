@@ -9,7 +9,7 @@ cd $SDIR
 export LASSO_ROOT=${GOPATH}/src/github.com/LassoProject/lasso/
 
 IMAGE=lassoproject/lasso
-GOIMAGE=golang:1.8
+GOIMAGE=golang:1.10
 NAME=lasso
 HTTPPORT=9090
 GODOC_PORT=5050
@@ -19,7 +19,16 @@ run () {
 }
 
 build () {
-  go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)" .
+  local VERSION=$(git describe --always --long)
+  local DT=$(date --rfc-3339=seconds --universal| sed 's/ /T/')
+  local FQDN=$(hostname --fqdn)
+  local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
+  local BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  go build -i -v -ldflags=" -X main.version=${VERSION} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
+}
+
+install () {
+  cp ./lasso ${GOPATH}/bin/lasso
 }
 
 gogo () {
@@ -103,6 +112,7 @@ usage() {
    usage:
      $0 run                    - go run main.go
      $0 build                  - go build
+     $0 install                - move binary to ${GOPATH}/bin/lasso
      $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
@@ -120,7 +130,7 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
    $ARG $*
    ;;
    'godoc')
