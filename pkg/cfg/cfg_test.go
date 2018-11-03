@@ -18,7 +18,7 @@ func init() {
 
 func TestConfigParsing(t *testing.T) {
 
-	UnmarshalKey("lasso", &cfg)
+	UnmarshalKey(Branding.LCName, &cfg)
 	log.Debugf("cfgPort %d", cfg.Port)
 	log.Debugf("cfgDomains %s", cfg.Domains[0])
 

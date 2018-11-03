@@ -5,7 +5,9 @@ import (
 	"flag"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"os"
+	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -78,7 +80,16 @@ type OAuthProviders struct {
 	OIDC      string
 }
 
+type branding struct {
+	LCName string // lower case
+	UCName string // upper case
+	CcName string // camel case
+}
+
 var (
+	// Branding that's our name
+	Branding = branding{"lasso", "LASSO", "Lasso"}
+
 	// Cfg the main exported config variable
 	Cfg config
 
@@ -118,6 +129,18 @@ func init() {
 	}
 
 	setDefaults()
+
+	errT := BasicTest()
+	if errT != nil {
+		// log.Fatalf(errT.Error())
+		panic(errT)
+	}
+
+	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
+	if !isTCPPortAvailable(listen) {
+		log.Fatal(errors.New("check the port availability (is " + Branding.CcName + " already running?)"))
+	}
+
 	log.Debug(viper.AllSettings())
 }
 
@@ -126,18 +149,13 @@ func ParseConfig() {
 	log.Debug("opening config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(os.Getenv("LASSO_ROOT") + "config")
+	viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		panic(err)
 	}
-	UnmarshalKey("lasso", &Cfg)
-	errT := BasicTest()
-	if errT != nil {
-		// log.Fatalf(err.prob)
-		panic(errT)
-	}
+	UnmarshalKey(Branding.LCName, &Cfg)
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }
@@ -170,89 +188,89 @@ func setDefaults() {
 	// https://github.com/spf13/viper/issues/309
 	// viper.SetDefault("listen", "0.0.0.0")
 	// viper.SetDefault(Cfg.Port, 9090)
-	// viper.SetDefault("Headers.SSO", "X-Lasso-Token")
-	// viper.SetDefault("Headers.Redirect", "X-Lasso-Requested-URI")
+	// viper.SetDefault("Headers.SSO", "X-"+Branding.CcName+"-Token")
+	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
 	// viper.SetDefault("Cookie.Name", "Lasso")
 
 	// logging
-	if !viper.IsSet("lasso.logLevel") {
+	if !viper.IsSet(Branding.LCName + ".logLevel") {
 		Cfg.LogLevel = "info"
 	}
 	// network defaults
-	if !viper.IsSet("lasso.listen") {
+	if !viper.IsSet(Branding.LCName + ".listen") {
 		Cfg.Listen = "0.0.0.0"
 	}
-	if !viper.IsSet("lasso.port") {
+	if !viper.IsSet(Branding.LCName + ".port") {
 		Cfg.Port = 9090
 	}
-	if !viper.IsSet("lasso.allowAllUsers") {
+	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
 		Cfg.AllowAllUsers = false
 	}
-	if !viper.IsSet("lasso.publicAccess") {
+	if !viper.IsSet(Branding.LCName + ".publicAccess") {
 		Cfg.PublicAccess = false
 	}
 
 	// jwt defaults
-	if !viper.IsSet("lasso.jwt.secret") {
+	if !viper.IsSet(Branding.LCName + ".jwt.secret") {
 		Cfg.JWT.Secret = getOrGenerateJWTSecret()
 	}
-	if !viper.IsSet("lasso.jwt.issuer") {
-		Cfg.JWT.Issuer = "Lasso"
+	if !viper.IsSet(Branding.LCName + ".jwt.issuer") {
+		Cfg.JWT.Issuer = Branding.CcName
 	}
-	if !viper.IsSet("lasso.jwt.maxAge") {
+	if !viper.IsSet(Branding.LCName + ".jwt.maxAge") {
 		Cfg.JWT.MaxAge = 240
 	}
-	if !viper.IsSet("lasso.jwt.compress") {
+	if !viper.IsSet(Branding.LCName + ".jwt.compress") {
 		Cfg.JWT.Compress = true
 	}
 
 	// cookie defaults
-	if !viper.IsSet("lasso.cookie.name") {
+	if !viper.IsSet(Branding.LCName + ".cookie.name") {
 		Cfg.Cookie.Name = "LassoCookie"
 	}
-	if !viper.IsSet("lasso.cookie.secure") {
+	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
 		Cfg.Cookie.Secure = false
 	}
-	if !viper.IsSet("lasso.cookie.httpOnly") {
+	if !viper.IsSet(Branding.LCName + ".cookie.httpOnly") {
 		Cfg.Cookie.HTTPOnly = true
 	}
 
 	// headers defaults
-	if !viper.IsSet("lasso.headers.jwt") {
-		Cfg.Headers.JWT = "X-Lasso-Token"
+	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
+		Cfg.Headers.JWT = "X-" + Branding.CcName + "-Token"
 	}
-	if !viper.IsSet("lasso.headers.querystring") {
+	if !viper.IsSet(Branding.LCName + ".headers.querystring") {
 		Cfg.Headers.QueryString = "access_token"
 	}
-	if !viper.IsSet("lasso.headers.redirect") {
-		Cfg.Headers.Redirect = "X-Lasso-Requested-URI"
+	if !viper.IsSet(Branding.LCName + ".headers.redirect") {
+		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
 	}
-	if !viper.IsSet("lasso.headers.user") {
-		Cfg.Headers.User = "X-Lasso-User"
+	if !viper.IsSet(Branding.LCName + ".headers.user") {
+		Cfg.Headers.User = "X-" + Branding.CcName + "-User"
 	}
-	if !viper.IsSet("lasso.headers.success") {
-		Cfg.Headers.Success = "X-Lasso-Success"
+	if !viper.IsSet(Branding.LCName + ".headers.success") {
+		Cfg.Headers.Success = "X-" + Branding.CcName + "-Success"
 	}
 
 	// db defaults
-	if !viper.IsSet("lasso.db.file") {
-		Cfg.DB.File = "data/lasso_bolt.db"
+	if !viper.IsSet(Branding.LCName + ".db.file") {
+		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
 	}
 
 	// session HERE
-	if !viper.IsSet("lasso.session.name") {
-		Cfg.Session.Name = "lassoSession"
+	if !viper.IsSet(Branding.LCName + ".session.name") {
+		Cfg.Session.Name = Branding.LCName + "Session"
 	}
 
 	// testing convenience variable
-	if !viper.IsSet("lasso.testing") {
+	if !viper.IsSet(Branding.LCName + ".testing") {
 		Cfg.Testing = false
 	}
-	if viper.IsSet("lasso.test_url") {
+	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
 	// TODO: proably change this name, maybe set the domain/port the webapp runs on
-	if !viper.IsSet("lasso.webapp") {
+	if !viper.IsSet(Branding.LCName + ".webapp") {
 		Cfg.WebApp = false
 	}
 
@@ -350,4 +368,15 @@ func getOrGenerateJWTSecret() string {
 		}
 	}
 	return string(b)
+}
+
+func isTCPPortAvailable(listen string) bool {
+	log.Debug("checking availability of tcp port: " + listen)
+	conn, err := net.Listen("tcp", listen)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	conn.Close()
+	return true
 }
