@@ -16,6 +16,11 @@ import (
 	tran "github.com/LassoProject/lasso/pkg/transciever"
 )
 
+// version ang semver get overwritten by build with
+// go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
+var version = "undefined"
+var semver = "undefined"
+
 func main() {
 	log.Info("starting lasso")
 	mux := http.NewServeMux()
@@ -46,7 +51,10 @@ func main() {
 	// http.Handle("/socket.io/", tran.Server)
 
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
-	log.Infof("running lasso on %s", listen)
+	log.WithFields(log.Fields{
+		"semver":  semver,
+		"version": version,
+		"listen":  listen}).Info("running lasso")
 
 	srv := &http.Server{
 		Handler: mux,

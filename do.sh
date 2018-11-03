@@ -8,7 +8,7 @@ cd $SDIR
 
 export LASSO_ROOT=${GOPATH}/src/github.com/LassoProject/lasso/
 
-IMAGE=bfoote/lasso
+IMAGE=lassoproject/lasso
 GOIMAGE=golang:1.8
 NAME=lasso
 HTTPPORT=9090
@@ -19,7 +19,7 @@ run () {
 }
 
 build () {
-  go build .
+  go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)" .
 }
 
 gogo () {
