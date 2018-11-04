@@ -20,7 +20,7 @@ run () {
 
 build () {
   local VERSION=$(git describe --always --long)
-  local DT=$(date --rfc-3339=seconds --universal| sed 's/ /T/')
+  local DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # ISO-8601
   local FQDN=$(hostname --fqdn)
   local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
   local BRANCH=$(git rev-parse --abbrev-ref HEAD)
