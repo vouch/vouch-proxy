@@ -6,7 +6,10 @@
     <title>Lasso: {{ .Msg }}.</title>
   </head>
   <body>
-
+{{ if .Testing }}
+<h2>-- test mode --</h2>
+config file includes <code>testing: true</code>
+{{ end }}
     <h1>{{ .Msg }}.</h1>
 
 <ul>

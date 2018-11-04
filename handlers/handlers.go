@@ -28,6 +28,7 @@ import (
 type Index struct {
 	Msg      string
 	TestURLs []string
+	Testing  bool
 }
 
 // AuthError sets the values to return to nginx
@@ -301,7 +302,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderIndex(w http.ResponseWriter, msg string) {
-	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURLs: cfg.Cfg.TestURLs}); err != nil {
+	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURLs: cfg.Cfg.TestURLs, Testing: cfg.Cfg.Testing}); err != nil {
 		log.Error(err)
 	}
 }
