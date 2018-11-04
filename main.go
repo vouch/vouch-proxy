@@ -40,7 +40,7 @@ func main() {
 		"buildhost": host,
 		"branch":    branch,
 		"semver":    semver,
-		"listen":    listen}).Info("starting " + cfg.Branding)
+		"listen":    listen}).Info("starting " + cfg.Branding.CcName)
 
 	mux := http.NewServeMux()
 

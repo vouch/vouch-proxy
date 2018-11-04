@@ -330,7 +330,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 			}
 		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
-		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.+" managed domain", user.Email)
+		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
 	} else {
