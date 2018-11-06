@@ -34,7 +34,7 @@ lasso:
     # you'll want them all to have the same secret
     secret: your_random_string
     issuer: Lasso
-    # number of seconds until jwt expires
+    # number of minutes until jwt expires
     maxAge: 240
     # compress the jwt
     compress: true
