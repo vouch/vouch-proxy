@@ -111,10 +111,8 @@ func FindJWT(r *http.Request) string {
 	return ""
 }
 
-// ClaimsFromJWT look everywhere for the JWT, then parse the jwt and return the claims
+// ClaimsFromJWT parse the jwt and return the claims
 func ClaimsFromJWT(jwt string) (jwtmanager.LassoClaims, error) {
-	// get jwt from cookie.name
-	// parse the jwt
 	var claims jwtmanager.LassoClaims
 
 	jwtParsed, err := jwtmanager.ParseTokenString(jwt)

@@ -5,6 +5,7 @@ lasso:
   listen: 0.0.0.0
   port: 9090
 
+  # domains
   # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
   # usually you'll just have one.
@@ -21,9 +22,12 @@ lasso:
   # You will need to direct people to the Lasso login page from your application.
   publicAccess: false
 
-  TODO:
+  # whiteList allows only the listed usernames
+  # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
   whiteList:
-  - 
+  - bob@yourdomain.com
+  - alice@yourdomain.com
+  - joe@yourdomain.com
 
   jwt:
     # secret: a random 18 character string used to cryptographically sign the jwt
