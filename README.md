@@ -93,6 +93,8 @@ docker run -d \
 
 The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker image is an automated build on Docker Hub
 
+[![docker-build status](https://img.shields.io/docker/build/lassoproject/lasso.svg)](https://hub.docker.com/r/lassoproject/lasso/builds/)
+
 ## Running from source
 
 ```bash
