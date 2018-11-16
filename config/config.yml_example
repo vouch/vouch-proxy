@@ -22,7 +22,7 @@ lasso:
   # You will need to direct people to the Lasso login page from your application.
   publicAccess: false
 
-  # whiteList allows only the listed usernames
+  # whiteList (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
   whiteList:
   - bob@yourdomain.com
