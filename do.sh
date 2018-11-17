@@ -6,11 +6,11 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export LASSO_ROOT=${GOPATH}/src/github.com/LassoProject/lasso/
+export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch/
 
-IMAGE=lassoproject/lasso
+IMAGE=voucher/vouch
 GOIMAGE=golang:1.10
-NAME=lasso
+NAME=vouch
 HTTPPORT=9090
 GODOC_PORT=5050
 
@@ -28,7 +28,7 @@ build () {
 }
 
 install () {
-  cp ./lasso ${GOPATH}/bin/lasso
+  cp ./vouch ${GOPATH}/bin/vouch
 }
 
 gogo () {
@@ -102,7 +102,7 @@ test () {
   fi
 }
 
-DB=data/lasso_bolt.db
+DB=data/vouch_bolt.db
 browsebolt() {
 	${GOPATH}/bin/boltbrowser $DB
 }
@@ -112,7 +112,7 @@ usage() {
    usage:
      $0 run                    - go run main.go
      $0 build                  - go build
-     $0 install                - move binary to ${GOPATH}/bin/lasso
+     $0 install                - move binary to ${GOPATH}/bin/vouch
      $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container

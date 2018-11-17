@@ -10,17 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/structs"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vouch/vouch/pkg/cfg"
+	"github.com/vouch/vouch/pkg/structs"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // const numSites = 2
 
-// LassoClaims jwt Claims specific to lasso
-type LassoClaims struct {
+// VouchClaims jwt Claims specific to vouch
+type VouchClaims struct {
 	Username string   `json:"username"`
 	Sites    []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	jwt.StandardClaims
@@ -50,7 +50,7 @@ func init() {
 func CreateUserTokenString(u structs.User) string {
 	// User`token`
 	// u.PrepareUserData()
-	claims := LassoClaims{
+	claims := VouchClaims{
 		u.Username,
 		Sites,
 		StandardClaims,
@@ -99,7 +99,7 @@ func TokenIsValid(token *jwt.Token, err error) bool {
 
 // SiteInToken searches does the token contain the site?
 func SiteInToken(site string, token *jwt.Token) bool {
-	if claims, ok := token.Claims.(*LassoClaims); ok {
+	if claims, ok := token.Claims.(*VouchClaims); ok {
 		log.Debugf("site %s claim %v", site, claims)
 		if SiteInClaims(site, claims) {
 			return true
@@ -117,8 +117,8 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		log.Debugf("decompressed tokenString %s", tokenString)
 	}
 
-	return jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// return jwt.ParseWithClaims(tokenString, &LassoClaims{}, func(token *jwt.Token) (interface{}, error) {
+	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.GetSigningMethod("HS256") {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -129,7 +129,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 }
 
 // SiteInClaims does the claim contain the value?
-func SiteInClaims(site string, claims *LassoClaims) bool {
+func SiteInClaims(site string, claims *VouchClaims) bool {
 	for _, s := range claims.Sites {
 		if strings.Contains(site, s) {
 			log.Debugf("site %s is found for claims.Site %s", site, s)
@@ -140,13 +140,13 @@ func SiteInClaims(site string, claims *LassoClaims) bool {
 }
 
 // PTokenClaims get all the claims
-// TODO HERE there's something wrong with claims parsing, probably related to LassoClaims not being a pointer
-func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
-	// func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
+// TODO HERE there's something wrong with claims parsing, probably related to VouchClaims not being a pointer
+func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
+	// func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
 	// return ptoken.Claims, nil
 
-	// return ptoken.Claims.(*LassoClaims), nil
-	ptokenClaims, ok := ptoken.Claims.(*LassoClaims)
+	// return ptoken.Claims.(*VouchClaims), nil
+	ptokenClaims, ok := ptoken.Claims.(*VouchClaims)
 	if !ok {
 		log.Debugf("failed claims: %v %v", ptokenClaims, ptoken.Claims)
 		return *ptokenClaims, errors.New("cannot parse claims")
@@ -157,9 +157,9 @@ func PTokenClaims(ptoken *jwt.Token) (LassoClaims, error) {
 
 // PTokenToUsername returns the Username in the validated ptoken
 func PTokenToUsername(ptoken *jwt.Token) (string, error) {
-	return ptoken.Claims.(*LassoClaims).Username, nil
+	return ptoken.Claims.(*VouchClaims).Username, nil
 
-	// var ptokenClaims LassoClaims
+	// var ptokenClaims VouchClaims
 	// ptokenClaims, err := PTokenClaims(ptoken)
 	// if err != nil {
 	// 	log.Error(err)

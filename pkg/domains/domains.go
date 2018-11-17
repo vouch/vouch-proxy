@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vouch/vouch/pkg/cfg"
 )
 
 var domains = cfg.Cfg.Domains
@@ -27,7 +27,7 @@ func Matches(s string) string {
 	return ""
 }
 
-// IsUnderManagement check if string contains a lasso managed domain
+// IsUnderManagement check if string contains a vouch managed domain
 func IsUnderManagement(s string) bool {
 	match := Matches(s)
 	if match != "" {

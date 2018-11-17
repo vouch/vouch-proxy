@@ -1,17 +1,17 @@
-# Lasso
+# Vouch
 
 an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
-lasso supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
+vouch supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
 
-If lasso is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
+If vouch is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
-For support please file tickets here or visit our IRC channel [#lasso](irc://freenode.net/#lasso) on freenode
+For support please file tickets here or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
-* create OAuth credentials for lasso at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
+* create OAuth credentials for vouch at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure nginx...
 
@@ -28,52 +28,52 @@ server {
     auth_request /validate;
 
     location = /validate {
-      # lasso can run behind the same nginx-revproxy
+      # vouch can run behind the same nginx-revproxy
       # May need to add "internal", and comply to "upstream" server naming
-      proxy_pass http://lasso.yourdomain.com:9090;
+      proxy_pass http://vouch.yourdomain.com:9090;
 
-      # lasso only acts on the request headers
+      # vouch only acts on the request headers
       proxy_pass_request_body off;
       proxy_set_header Content-Length "";
 
-      # pass X-Lasso-User along with the request
-      auth_request_set $auth_resp_x_lasso_user $upstream_http_x_lasso_user;
+      # pass X-Vouch-User along with the request
+      auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
 
       # these return values are used by the @error401 call
-      auth_request_set $auth_resp_jwt $upstream_http_x_lasso_jwt;
-      auth_request_set $auth_resp_err $upstream_http_x_lasso_err;
-      auth_request_set $auth_resp_failcount $upstream_http_x_lasso_failcount;
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
     }
 
     # if validate returns `401 not authorized` then forward the request to the error401block
     error_page 401 = @error401;
 
     location @error401 {
-        # redirect to lasso for login
-        return 302 https://lasso.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+        # redirect to vouch for login
+        return 302 https://vouch.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 
     # proxy pass authorized requests to your service
     location / {
       proxy_pass http://dev.yourdomain.com:8080;
       #  may need to set
-      #    auth_request_set $auth_resp_x_lasso_user $upstream_http_x_lasso_user
-      #  in this bock as per https://github.com/LassoProject/lasso/issues/26#issuecomment-425215810
+      #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
+      #  in this bock as per https://github.com/vouch/vouch/issues/26#issuecomment-425215810
       # set user header (usually an email)
-      proxy_set_header X-Lasso-User $auth_resp_x_lasso_user;
+      proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
     }
 }
 
 ```
 
-If lasso is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
+If vouch is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
 ```{.nginxconf}
 server {
     listen 80 default_server;
-    server_name lasso.yourdomain.com;
+    server_name vouch.yourdomain.com;
     location / {
-       proxy_set_header Host lasso.yourdomain.com;
+       proxy_set_header Host vouch.yourdomain.com;
        proxy_pass http://127.0.0.1:9090;
     }
 }
@@ -85,22 +85,22 @@ server {
 ```bash
 docker run -d \
     -p 9090:9090 \
-    --name lasso \
+    --name vouch \
     -v ${PWD}/config:/config \
     -v ${PWD}/data:/data \
-    lassoproject/lasso
+    voucher/vouch
 ```
 
-The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker image is an automated build on Docker Hub
+The [voucher/vouch](https://hub.docker.com/r/voucher/vouch/) Docker image is an automated build on Docker Hub
 
-[![docker-build status](https://img.shields.io/docker/build/lassoproject/lasso.svg)](https://hub.docker.com/r/lassoproject/lasso/builds/)
+[![docker-build status](https://img.shields.io/docker/build/voucher/vouch.svg)](https://hub.docker.com/r/voucher/vouch/builds/)
 
 ## Running from source
 
 ```bash
   go get ./...
   go build
-  ./lasso
+  ./vouch
 ```
 
 ## the flow of login and authentication using Google Oauth
@@ -109,13 +109,13 @@ The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker im
 * the nginx reverse proxy...
   * recieves the request for private.oursites.com from Bob
   * uses the `auth_request` module configured for the `/validate` path
-  * `/validate` is configured to `proxy_pass` requests to the authentication service at `https://lasso.oursites.com/validate`
+  * `/validate` is configured to `proxy_pass` requests to the authentication service at `https://vouch.oursites.com/validate`
     * if `/validate` returns...
       * 200 OK then SUCCESS allow Bob through
       * 401 NotAuthorized then
-        * respond to Bob with a 302 redirect to `https://lasso.oursites.com/login?url=https://private.oursites.com`
+        * respond to Bob with a 302 redirect to `https://vouch.oursites.com/login?url=https://private.oursites.com`
 
-* lasso `https://lasso.oursites.com/validate`
+* vouch `https://vouch.oursites.com/validate`
   * recieves the request for private.oursites.com from Bob via nginx `proxy_pass`
   * it looks for a cookie named "oursitesSSO" that contains a JWT
   * if the cookie is found, and the JWT is valid
@@ -123,7 +123,7 @@ The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker im
   * if the cookie is NOT found, or the JWT is NOT valid
     * return 401 NotAuthorized to nginx (which forwards the request on to login)
 
-* Bob is first forwarded briefly to `https://lasso.oursites.com/login?url=https://private.oursites.com`
+* Bob is first forwarded briefly to `https://vouch.oursites.com/login?url=https://private.oursites.com`
   * clears out the cookie named "oursitesSSO" if it exists
   * generates a nonce and stores it in session variable $STATE
   * stores the url `https://private.oursites.com` from the query string in session variable $requestedURL
@@ -131,9 +131,9 @@ The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker im
 
 * Bob logs into his Google account using Oauth
   * after successful login
-  * Google responds to Bob with a 302 redirect to `https://lasso.oursites.com/auth?state=$STATE`
+  * Google responds to Bob with a 302 redirect to `https://vouch.oursites.com/auth?state=$STATE`
 
-* Bob is forwarded to `https://lasso.oursites.com/auth?state=$STATE`
+* Bob is forwarded to `https://vouch.oursites.com/auth?state=$STATE`
   * if the $STATE nonce from the url matches the session variable "state"
   * make a "third leg" request of google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
   * if the email address matches the domain oursites.com (it does)
@@ -141,8 +141,8 @@ The [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) Docker im
     * issue bob a JWT in the form of a cookie named "oursitesSSO"
     * retrieve the session variable $requestedURL and 302 redirect bob back to $requestedURL
 
-Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser.  While Lasso does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
+Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser.  While Vouch does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
 
-Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://lasso.oursites.com/validate` from the `auth_request` nginx module.
+Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://vouch.oursites.com/validate` from the `auth_request` nginx module.
 
-The next time Bob is forwarded to google for login, since he has already authorized the lasso OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via lasso.
+The next time Bob is forwarded to google for login, since he has already authorized the vouch OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via vouch.

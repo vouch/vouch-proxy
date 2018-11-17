@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	"github.com/vouch/vouch/pkg/cfg"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 
 // may want to use encode/gob to store the user record
 func init() {
-	dbpath = os.Getenv("LASSO_ROOT") + cfg.Cfg.DB.File
+	dbpath = os.Getenv("VOUCH_ROOT") + cfg.Cfg.DB.File
 	Db, _ = OpenDB(dbpath)
 }
 
