@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// config lasso jwt cookie configuration
+// config vouch jwt cookie configuration
 type config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
@@ -88,7 +88,7 @@ type branding struct {
 
 var (
 	// Branding that's our name
-	Branding = branding{"lasso", "LASSO", "Lasso"}
+	Branding = branding{"vouch", "VOUCH", "Vouch"}
 
 	// Cfg the main exported config variable
 	Cfg config
@@ -190,7 +190,7 @@ func setDefaults() {
 	// viper.SetDefault(Cfg.Port, 9090)
 	// viper.SetDefault("Headers.SSO", "X-"+Branding.CcName+"-Token")
 	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
-	// viper.SetDefault("Cookie.Name", "Lasso")
+	// viper.SetDefault("Cookie.Name", "Vouch")
 
 	// logging
 	if !viper.IsSet(Branding.LCName + ".logLevel") {
@@ -226,7 +226,7 @@ func setDefaults() {
 
 	// cookie defaults
 	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = "LassoCookie"
+		Cfg.Cookie.Name = "VouchCookie"
 	}
 	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
 		Cfg.Cookie.Secure = false
@@ -340,7 +340,7 @@ func configureOAuthClient() {
 	}
 }
 
-var secretFile = os.Getenv("LASSO_ROOT") + "config/secret"
+var secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
 
 // a-z A-Z 0-9 except no l, o, O
 const charRunes = "abcdefghijkmnpqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ012346789"

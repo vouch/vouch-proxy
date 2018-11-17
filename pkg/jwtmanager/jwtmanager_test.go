@@ -3,8 +3,8 @@ package jwtmanager
 import (
 	"testing"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/structs"
+	"github.com/vouch/vouch/pkg/cfg"
+	"github.com/vouch/vouch/pkg/structs"
 
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
@@ -18,13 +18,13 @@ var (
 		Name:          "Test Name",
 	}
 
-	lc LassoClaims
+	lc VouchClaims
 )
 
 func init() {
 	// log.SetLevel(log.DebugLevel)
 
-	lc = LassoClaims{
+	lc = VouchClaims{
 		u1.Username,
 		Sites,
 		StandardClaims,

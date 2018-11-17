@@ -1,7 +1,7 @@
 package main
 
-// lasso
-// github.com/LassoProject/lasso
+// vouch
+// github.com/vouch/vouch
 
 import (
 	"net/http"
@@ -10,10 +10,10 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/LassoProject/lasso/handlers"
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/timelog"
-	tran "github.com/LassoProject/lasso/pkg/transciever"
+	"github.com/vouch/vouch/handlers"
+	"github.com/vouch/vouch/pkg/cfg"
+	"github.com/vouch/vouch/pkg/timelog"
+	tran "github.com/vouch/vouch/pkg/transciever"
 )
 
 // version ang semver get overwritten by build with

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	// "github.com/LassoProject/lasso/pkg/structs"
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/domains"
+	// "github.com/vouch/vouch/pkg/structs"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vouch/vouch/pkg/cfg"
+	"github.com/vouch/vouch/pkg/domains"
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
@@ -40,7 +40,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	})
 }
 
-// Cookie get the lasso jwt cookie
+// Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie(cfg.Cfg.Cookie.Name)
 	if err != nil {
