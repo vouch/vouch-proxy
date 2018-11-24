@@ -93,6 +93,11 @@ goget () {
   go get -v ./...
 }
 
+coverage() {
+  go test -coverprofile coverage.out
+  go tool cover -html=coverage.out -o coverage.html
+}
+
 test () {
   # test all the things
   if [ -n "$*" ]; then
@@ -116,6 +121,7 @@ usage() {
      $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
+     $0 coverage               - code coverage report
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
@@ -130,7 +136,7 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'coverage'|'goget'|'gogo'|'watch'|'gobuildstatic')
    $ARG $*
    ;;
    'godoc')
