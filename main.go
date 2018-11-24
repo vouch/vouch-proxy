@@ -16,7 +16,7 @@ import (
 	tran "github.com/vouch/vouch/pkg/transciever"
 )
 
-// version ang semver get overwritten by build with
+// version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 
 var (
