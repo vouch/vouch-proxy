@@ -1,3 +1,11 @@
+# Renaming project to **Vouch** in January 2019
+
+In the new year we will move the project to [vouch/vouch](https://github.com/vouch/vouch).  This is to [avoid a naming conflict](https://github.com/LassoProject/lasso/issues/35) with another project.
+
+Other namespaces will be changed at the same time including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which will become [voucher/vouch](https://hub.docker.com/r/voucher/vouch)
+
+Sorry for the inconvenience but we wanted to make this change at this relatively early stage of the project.
+
 # Lasso
 
 an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
