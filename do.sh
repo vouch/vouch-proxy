@@ -90,7 +90,7 @@ watch () {
 
 goget () {
   # install all the things
-  go get -v ./...
+  go get -v -race ./...
 }
 
 test () {
