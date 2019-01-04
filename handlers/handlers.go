@@ -362,6 +362,15 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	errorState := r.URL.Query().Get("error")
+	if errorState != "" {
+		errorDescription := r.URL.Query().Get("error_description")
+		log.Warning("Error state: ", errorState, ", Error description: ", errorDescription)
+		w.WriteHeader(http.StatusForbidden)
+		renderIndex(w, "FORBIDDEN: " + errorDescription)
+		return
+	}
+
 	user := structs.User{}
 	if err := getUserInfo(r, &user); err != nil {
 		log.Error(err)
