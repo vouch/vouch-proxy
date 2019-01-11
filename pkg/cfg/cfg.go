@@ -122,7 +122,18 @@ func init() {
 
 	// can pass loglevel on the command line
 	var ll = flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	var port = flag.Int("port", -1, "port")
+	var help = flag.Bool("help", false, "show usage")
 	flag.Parse()
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if *port != -1 {
+		Cfg.Port = *port
+	}
+
 	if *ll == "debug" {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("logLevel set to debug")
