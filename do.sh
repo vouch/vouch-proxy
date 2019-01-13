@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # change dir to where this script is running
 CURDIR=${PWD}
