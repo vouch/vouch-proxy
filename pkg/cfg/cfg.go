@@ -130,16 +130,16 @@ func init() {
 		os.Exit(1)
 	}
 
-	if *port != -1 {
-		Cfg.Port = *port
-	}
-
 	if *ll == "debug" {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("logLevel set to debug")
 	}
 
 	setDefaults()
+
+	if *port != -1 {
+		Cfg.Port = *port
+	}
 
 	errT := BasicTest()
 	if errT != nil {
