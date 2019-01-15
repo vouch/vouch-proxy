@@ -305,8 +305,6 @@ func setDefaultsGoogle() {
 	if GenOAuth.PreferredDomain != "" {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
-	} else {
-		OAuthopts = oauth2.SetAuthURLParam("hd", "")
 	}
 }
 
