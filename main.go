@@ -11,6 +11,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/gorilla/mux"
+
 	"github.com/vouch/vouch-proxy/handlers"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
@@ -44,10 +46,11 @@ func main() {
 		"semver":    semver,
 		"listen":    listen}).Info("starting " + cfg.Branding.CcName)
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
 	mux.HandleFunc("/validate", timelog.TimeLog(authH))
+	mux.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	mux.HandleFunc("/login", timelog.TimeLog(loginH))
