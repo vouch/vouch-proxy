@@ -244,6 +244,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"ok\": true }")
 }
 
