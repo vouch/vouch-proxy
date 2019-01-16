@@ -147,9 +147,14 @@ func init() {
 // ParseConfig parse the config file
 func ParseConfig() {
 	log.Debug("opening config")
+	if os.Getenv(Branding.UCName+"_CONFIG") != "" {
+		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
+		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
+	} else {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())

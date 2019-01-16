@@ -94,6 +94,9 @@ goget () {
 }
 
 test () {
+  if [ -n LASSO_CONFIG ]; then
+    export LASSO_CONFIG=${GOPATH}/src/github.com/LassoProject/lasso/config/test_config.yml
+  fi
   # test all the things
   if [ -n "$*" ]; then
     go test -v $*
