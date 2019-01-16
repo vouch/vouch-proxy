@@ -104,6 +104,14 @@ test () {
     go test -v ./...
   fi
 }
+coverage () {
+  go test -coverprofile cover.out -cover ./... 
+  go tool cover -html=cover.out
+}
+
+loc () {
+  find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
+}
 
 DB=data/lasso_bolt.db
 browsebolt() {
@@ -120,8 +128,10 @@ usage() {
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
+     $0 coverage               - coverage report
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
+     $0 loc                    - lines of code in project
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
 
   do is like make
@@ -133,7 +143,7 @@ EOF
 ARG=$1; shift;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc')
    $ARG $*
    ;;
    'godoc')
