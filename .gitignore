@@ -1,4 +1,5 @@
 config/config.yml
+config/*config.yml
 data/lasso_bolt.db
 pkg/model/storage-test.db
 main
