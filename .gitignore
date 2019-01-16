@@ -9,3 +9,5 @@ config/config.yml_google
 config/config.yml_github
 config/secret
 config/config.yml_orig
+data/vouch_bolt.db
+data/test_lasso_bolt.db
