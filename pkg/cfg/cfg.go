@@ -3,11 +3,13 @@ package cfg
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -138,7 +140,7 @@ func init() {
 
 	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
 	if !isTCPPortAvailable(listen) {
-		log.Fatal(errors.New("check the port availability (is " + Branding.CcName + " already running?)"))
+		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
 	log.Debug(viper.AllSettings())
@@ -151,9 +153,9 @@ func ParseConfig() {
 		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
 		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
 	} else {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
 	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
@@ -179,8 +181,46 @@ func Get(key string) string {
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
 		if !viper.IsSet(opt) {
-			return errors.New("configuration option " + opt + " is not set in config")
+			return errors.New("configuration error: required configuration option " + opt + " is not set")
 		}
+	}
+	// Domains is required _unless_ Cfg.AllowAllUsers is set
+	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
+		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	}
+
+	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
+		if GenOAuth.RedirectURL != "" {
+			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
+				return err
+			}
+		}
+		if len(GenOAuth.RedirectURLs) > 0 {
+			for _, cb := range GenOAuth.RedirectURLs {
+				if err := checkCallbackConfig(cb); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func checkCallbackConfig(url string) error {
+	inDomain := false
+	for _, d := range Cfg.Domains {
+		if strings.Contains(url, d) {
+			inDomain = true
+			break
+		}
+	}
+	if !inDomain {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
+	}
+
+	if !strings.Contains(url, "/auth") {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must contain '/auth'", OAuthClient.RedirectURL)
 	}
 	return nil
 }
@@ -231,7 +271,7 @@ func setDefaults() {
 
 	// cookie defaults
 	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = "LassoCookie"
+		Cfg.Cookie.Name = Branding.CcName + "Cookie"
 	}
 	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
 		Cfg.Cookie.Secure = false
@@ -264,7 +304,7 @@ func setDefaults() {
 
 	// session HERE
 	if !viper.IsSet(Branding.LCName + ".session.name") {
-		Cfg.Session.Name = Branding.LCName + "Session"
+		Cfg.Session.Name = Branding.CcName + "Session"
 	}
 
 	// testing convenience variable
