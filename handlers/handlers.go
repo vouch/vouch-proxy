@@ -70,7 +70,11 @@ func loginURL(r *http.Request, state string) string {
 				break
 			}
 		}
-		url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		if cfg.OAuthopts != nil {
+			url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		} else {
+			url = cfg.OAuthClient.AuthCodeURL(state)
+		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
