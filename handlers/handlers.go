@@ -70,7 +70,11 @@ func loginURL(r *http.Request, state string) string {
 				break
 			}
 		}
-		url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		if cfg.OAuthopts != nil {
+			url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		} else {
+			url = cfg.OAuthClient.AuthCodeURL(state)
+		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
@@ -243,6 +247,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "{ \"ok\": true }")
+}
+
 // LoginHandler /login
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -359,6 +368,15 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Values["state"] != queryState {
 		log.Errorf("Invalid session state: stored %s, returned %s", session.Values["state"], queryState)
 		renderIndex(w, "/auth Invalid session state.")
+		return
+	}
+
+	errorState := r.URL.Query().Get("error")
+	if errorState != "" {
+		errorDescription := r.URL.Query().Get("error_description")
+		log.Warning("Error state: ", errorState, ", Error description: ", errorDescription)
+		w.WriteHeader(http.StatusForbidden)
+		renderIndex(w, "FORBIDDEN: " + errorDescription)
 		return
 	}
 
