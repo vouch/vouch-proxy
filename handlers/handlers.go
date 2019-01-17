@@ -243,6 +243,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "{ \"ok\": true }")
+}
+
 // LoginHandler /login
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
