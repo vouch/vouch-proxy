@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # change dir to where this script is running
 CURDIR=${PWD}
@@ -40,10 +41,9 @@ dbuild () {
 }
 
 gobuildstatic () {
-  # TODO: this doesn't include the templates
-  # https://github.com/shurcooL/vfsgen
-
-  CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+  export CGO_ENABLED=0
+  export GOOS=linux
+  build
 }
 
 drun () {
