@@ -56,6 +56,9 @@ func main() {
 	callH := http.HandlerFunc(handlers.CallbackHandler)
 	mux.HandleFunc("/auth", timelog.TimeLog(callH))
 
+	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
+	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
+
 	// serve static files from /static
 	mux.Handle("/static", http.FileServer(http.Dir("./static")))
 
