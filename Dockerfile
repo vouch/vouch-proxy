@@ -1,11 +1,11 @@
-# voucher/vouch
-# https://github.com/vouch/vouch
-FROM golang:1.10
+# voucher/vouch-proxy
+# https://github.com/vouch/vouch-proxy
+FROM golang:1.10 AS builder
 
 LABEL maintainer="vouch@bnf.net"
 
-RUN mkdir -p ${GOPATH}/src/github.com/vouch/vouch
-WORKDIR ${GOPATH}/src/github.com/vouch/vouch
+RUN mkdir -p ${GOPATH}/src/github.com/vouch/vouch-proxy
+WORKDIR ${GOPATH}/src/github.com/vouch/vouch-proxy
     
 COPY . .
 
@@ -13,13 +13,14 @@ COPY . .
 # RUN ./do.sh build    # see `do.sh` for vouch build details
 # RUN go-wrapper install # "go install -v ./..."
 
-RUN go get -d -v ./...
-RUN ./do.sh build    # see `do.sh` for vouch build details
+RUN ./do.sh goget
+RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
 RUN ./do.sh install
 
-RUN rm -rf ./config ./data \
-    && ln -s /config ./config \
-    && ln -s /data ./data 
-
+FROM scratch
+LABEL maintainer="vouch@bnf.net"
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY templates/ templates/
+COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 EXPOSE 9090
-CMD ["/go/bin/vouch"] 
+ENTRYPOINT ["/vouch-proxy"]
