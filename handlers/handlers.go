@@ -15,12 +15,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/gorilla/sessions"
-	"github.com/vouch/vouch/pkg/cfg"
-	"github.com/vouch/vouch/pkg/cookie"
-	"github.com/vouch/vouch/pkg/domains"
-	"github.com/vouch/vouch/pkg/jwtmanager"
-	"github.com/vouch/vouch/pkg/model"
-	"github.com/vouch/vouch/pkg/structs"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/model"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 )
 

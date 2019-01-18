@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	// "github.com/vouch/vouch/pkg/structs"
+	// "github.com/vouch/vouch-proxy/pkg/structs"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch/pkg/cfg"
-	"github.com/vouch/vouch/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60

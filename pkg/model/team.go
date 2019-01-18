@@ -7,8 +7,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch/pkg/structs"
 	"github.com/boltdb/bolt"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 // PutTeam - create or update a team
