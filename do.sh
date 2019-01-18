@@ -7,11 +7,11 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch/
+export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 
-IMAGE=voucher/vouch
+IMAGE=voucher/vouch-proxy
 GOIMAGE=golang:1.10
-NAME=vouch
+NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
 
@@ -29,7 +29,7 @@ build () {
 }
 
 install () {
-  cp ./vouch ${GOPATH}/bin/vouch
+  cp ./vouch-proxy ${GOPATH}/bin/vouch-proxy
 }
 
 gogo () {
@@ -65,27 +65,16 @@ drun () {
 
 
 watch () {
-    CMD=$@;
-    if [ -z "$CMD" ]; then
-	     CMD="go run main.go"
-    fi
-    clear
-    echo -e "starting watcher for:\n\t$CMD"
-    $CMD &
-    WATCH_PID=$!
-    echo WATCH_PID $WATCH_PID
-    # FIRST_TIME=1
-    while inotifywait -q --exclude *.db --exclude './.git/FETCH_HEAD' --exclude do.sh -e modify -r .; do
-      if [ -n "$WATCH_PID" ]; then
-        echo "killing $WATCH_PID and restarting $CMD"
-        kill $WATCH_PID
-        sleep 3
-      fi
-     echo -e "\n---restart---\n"
-	   $CMD &
-     WATCH_PID=$!
-     echo WATCH_PID $WATCH_PID
-   done;
+  CMD=$@;
+  if [ -z "$CMD" ]; then
+      CMD="go run main.go"
+  fi
+  clear
+  echo -e "starting watcher for:\n\t$CMD"
+
+  # TODO: add *.tmpl and *.css
+  # find . -type f -name '*.css' | entr -cr $CMD
+  find . -name '*.go' | entr -cr $CMD
 }
 
 goget () {
