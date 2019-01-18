@@ -3,15 +3,33 @@
 
 In January the project was renamed to [vouch/vouch-proxy](https://github.com/vouch/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/vouch/vouch-proxy/issues/35) with another project.
 
-Other namespaces will be changed at the same time including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which will become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
+Other namespaces have been changed including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which has become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
+
+
+## you should change your config to the new name as of `v0.4.0`
+
+Existing configs for both nginx and Vouch Proxy (lasso) should work fine.  However it would be prudent to make these minor adjustments:
+
+in `config/config.yml`
+
+* change "lasso:" to "vouch:"
+
+and in your nginx config
+
+* change variable names "http_x_lasso_" to "http_x_vouch_"
+* change the headers "X-Lasso-" to "X-Vouch-"
+
+The examples below have been updated accordingly
 
 Sorry for the inconvenience but we wanted to make this change at this relatively early stage of the project.
+
+This notice will remain in the README through June 2019
 
 # Vouch Proxy
 
 an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
-Vouch supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
+Vouch Proxy supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
 
 If Vouch is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
 
@@ -20,7 +38,7 @@ For support please file tickets here or visit our IRC channel [#vouch](irc://fre
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
-* create OAuth credentials for Vouch at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
+* create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure nginx...
 
@@ -37,11 +55,11 @@ server {
     auth_request /validate;
 
     location = /validate {
-      # Vouch can run behind the same nginx-revproxy
+      # Vouch Proxy can run behind the same nginx-revproxy
       # May need to add "internal", and comply to "upstream" server naming
       proxy_pass http://vouch.yourdomain.com:9090;
 
-      # Vouch only acts on the request headers
+      # Vouch Proxy only acts on the request headers
       proxy_pass_request_body off;
       proxy_set_header Content-Length "";
 
@@ -58,7 +76,7 @@ server {
     error_page 401 = @error401;
 
     location @error401 {
-        # redirect to Vouch for login
+        # redirect to Vouch Proxy for login
         return 302 https://vouch.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 
