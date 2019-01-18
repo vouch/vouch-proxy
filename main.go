@@ -20,11 +20,7 @@ import (
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 
 var (
-	version = "undefined"
-	builddt = "undefined"
-	host    = "undefined"
-	semver  = "undefined"
-	branch  = "undefined"
+	staticDir = "/static/"
 )
 
 func init() {
@@ -59,8 +55,15 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
-	// serve static files from /static
-	mux.Handle("/static", http.FileServer(http.Dir("./static")))
+	// serve static files from /static if present (probably in a docker container), otherwise from ./static
+	_, err := os.Stat(staticDir)
+	staticFiles := staticDir
+	if err != nil {
+		staticFiles = "." + staticDir
+	}
+	log.Debugf("serving static files from %s", staticFiles)
+	// https://golangcode.com/serve-static-assets-using-the-mux-router/
+	mux.Handle(staticDir, http.StripPrefix(staticDir, (http.FileServer(http.Dir(staticFiles)))))
 
 	if cfg.Cfg.WebApp {
 		log.Info("enabling websocket")

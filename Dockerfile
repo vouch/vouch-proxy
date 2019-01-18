@@ -21,6 +21,8 @@ FROM scratch
 LABEL maintainer="vouch@bnf.net"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY templates/ templates/
+# see note for /static in main.go
+COPY static /static
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
