@@ -133,10 +133,11 @@ EOF
 
 }
 
-ARG=$1; shift;
+ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'coverage'|'goget'|'gogo'|'watch'|'gobuildstatic')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'coverage'|'goget'|'gogo'|'watch'|'gobuildstatic'|'usage')
+   shift
    $ARG $*
    ;;
    'godoc')
@@ -144,6 +145,7 @@ case "$ARG" in
    godoc -http=:${GODOC_PORT}
    ;;
    'all')
+   shift
    gobuildstatic
    dbuild
    drun $*
