@@ -13,7 +13,7 @@ vouch:
 
   # - OR -
   # instead of setting specific domains you may prefer to allow all users...
-  # set allowAllUsers: true to use Vouch to just accept anyone who can authenticate at the configured provider
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   # allowAllUsers: true
 
 oauth:

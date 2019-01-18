@@ -12,7 +12,7 @@ vouch:
   domains:
   - yourothersite.io
 
-  # set allowAllUsers: true to use Vouch to just accept anyone who can authenticate at GitHub
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
   # allowAllUsers: true
 
 oauth:
