@@ -125,7 +125,7 @@ The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker 
 If you are using [nginx-ingress](https://github.com/kubernetes/ingress-nginx) inside of kubernetes, you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
 
 ```
-    nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err"
+    nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
     nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com
     nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
     nginx.ingress.kubernetes.io/auth-snippet: |
