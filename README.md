@@ -122,6 +122,19 @@ The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker 
 
 [![docker-build status](https://img.shields.io/docker/build/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
 
+If you are using [nginx-ingress](https://github.com/kubernetes/ingress-nginx) inside of kubernetes, you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
+
+```
+    nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+    nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+```
+
 ## Running from source
 
 ```bash
