@@ -9,7 +9,7 @@ vouch:
   domains:
   - yourdomain.com
 
-  # set allowAllUsers: true to use Vouch to just accept anyone who can authenticate at the configured provider
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   allowAllUsers: true
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 

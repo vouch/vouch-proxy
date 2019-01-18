@@ -14,12 +14,12 @@ vouch:
   - yourdomain.com
   - yourotherdomain.com
 
-  # set allowAllUsers: true to use Vouch to just accept anyone who can authenticate at the configured provider
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   allowAllUsers: false
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 
   # If the user is logged in, the cookie will be validated and the user header will be set.
-  # You will need to direct people to the Vouch login page from your application.
+  # You will need to direct people to the Vouch Proxy login page from your application.
   publicAccess: false
 
   # whiteList (optional) allows only the listed usernames
