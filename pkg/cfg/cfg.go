@@ -81,14 +81,16 @@ type OAuthProviders struct {
 }
 
 type branding struct {
-	LCName string // lower case
-	UCName string // upper case
-	CcName string // camel case
+	LCName    string // lower case
+	UCName    string // upper case
+	CcName    string // camel case
+	OldLCName string // lasso
+	URL       string // https://github.com/vouch/vouch-proxy
 }
 
 var (
 	// Branding that's our name
-	Branding = branding{"vouch", "VOUCH", "Vouch"}
+	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// Cfg the main exported config variable
 	Cfg config
@@ -167,6 +169,21 @@ func ParseConfig() {
 		panic(err)
 	}
 	UnmarshalKey(Branding.LCName, &Cfg)
+	if len(Cfg.Domains) == 0 {
+		// then lets check for "lasso"
+		var oldConfig config
+		UnmarshalKey(Branding.OldLCName, &oldConfig)
+		if len(oldConfig.Domains) != 0 {
+			log.Errorf(`						
+
+IMPORTANT!
+
+please update your config file to change '%s:' to '%s:' as per %s
+			`, Branding.OldLCName, Branding.LCName, Branding.URL)
+			Cfg = oldConfig
+		}
+	}
+
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }

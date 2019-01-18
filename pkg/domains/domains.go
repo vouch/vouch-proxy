@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 var domains = cfg.Cfg.Domains

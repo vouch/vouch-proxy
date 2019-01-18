@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vouch/vouch/pkg/structs"
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 // PutUser inna da db

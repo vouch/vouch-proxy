@@ -1,25 +1,31 @@
 package main
 
 // vouch
-// github.com/vouch/vouch
+// github.com/vouch/vouch-proxy
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/vouch/vouch/handlers"
-	"github.com/vouch/vouch/pkg/cfg"
-	"github.com/vouch/vouch/pkg/timelog"
-	tran "github.com/vouch/vouch/pkg/transciever"
+	"github.com/vouch/vouch-proxy/handlers"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/timelog"
+	tran "github.com/vouch/vouch-proxy/pkg/transciever"
 )
 
 // version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 
 var (
+	version   = "undefined"
+	builddt   = "undefined"
+	host      = "undefined"
+	semver    = "undefined"
+	branch    = "undefined"
 	staticDir = "/static/"
 )
 
