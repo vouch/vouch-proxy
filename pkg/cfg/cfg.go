@@ -4,11 +4,9 @@ import (
 	"errors"
 	"flag"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"os"
 	"strconv"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -16,6 +14,7 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
+	securerandom "github.com/theckman/go-securerandom"
 )
 
 // config vouch jwt cookie configuration
@@ -113,10 +112,18 @@ var (
 		IndieAuth: "indieauth",
 		OIDC:      "oidc",
 	}
+
+	// RequiredOptions must have these fields set for minimum viable config
+	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
+
+	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
 )
 
-// RequiredOptions must have these fields set for minimum viable config
-var RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
+const (
+	// for a Base64 string we need 44 characters to get 32bytes (6 bits per char)
+	minBase64Length = 44
+	base64Bytes     = 32
+)
 
 func init() {
 	// from config file
@@ -204,6 +211,12 @@ func BasicTest() error {
 		if !viper.IsSet(opt) {
 			return errors.New("configuration option " + opt + " is not set in config")
 		}
+	}
+
+	// issue a warning if the secret is too small
+	log.Debugf("secret is %d characters long", len(Cfg.JWT.Secret))
+	if len(Cfg.JWT.Secret) < minBase64Length {
+		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting the current secret to automatically generate a secret of %d characters", len(Cfg.JWT.Secret), minBase64Length)
 	}
 	return nil
 }
@@ -366,13 +379,6 @@ func configureOAuthClient() {
 	}
 }
 
-var secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
-
-// a-z A-Z 0-9 except no l, o, O
-const charRunes = "abcdefghijkmnpqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ012346789"
-
-const secretLen = 18
-
 func getOrGenerateJWTSecret() string {
 	b, err := ioutil.ReadFile(secretFile)
 	if err == nil {
@@ -383,12 +389,14 @@ func getOrGenerateJWTSecret() string {
 		log.Info("jwt.secret not found in " + secretFile)
 		log.Warn("generating random jwt.secret and storing it in " + secretFile)
 
-		rand.Seed(time.Now().UnixNano())
-		b := make([]byte, secretLen)
-		for i := range b {
-			b[i] = charRunes[rand.Intn(len(charRunes))]
+		// make sure to create 256 bits for the secret
+		// see https://github.com/vouch/vouch-proxy/issues/54
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Error(err)
 		}
-		err := ioutil.WriteFile(secretFile, b, 0600)
+		b = []byte(rstr)
+		err = ioutil.WriteFile(secretFile, b, 0600)
 		if err != nil {
 			log.Debug(err)
 		}

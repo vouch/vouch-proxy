@@ -30,7 +30,8 @@ vouch:
   - joe@yourdomain.com
 
   jwt:
-    # secret: a random 18 character string used to cryptographically sign the jwt
+    # secret: a random string used to cryptographically sign the jwt
+    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then..
     # look for the secret in `./config/secret`
     # if `./config/secret` doesn't exist then randomly generate a secret and store it there
