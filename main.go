@@ -72,7 +72,7 @@ func main() {
 	}
 	log.Debugf("serving static files from %s", staticFiles)
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	mux.Handle(staticDir, http.StripPrefix(staticDir, (http.FileServer(http.Dir(staticFiles)))))
+	mux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, (http.FileServer(http.Dir(staticFiles)))))
 
 	if cfg.Cfg.WebApp {
 		log.Info("enabling websocket")
