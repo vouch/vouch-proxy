@@ -5,7 +5,7 @@ package main
 
 import (
 	"net/http"
-	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -64,15 +64,15 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
-	// serve static files from /static if present (probably in a docker container), otherwise from ./static
-	_, err := os.Stat(staticDir)
-	staticFiles := staticDir
-	if err != nil {
-		staticFiles = "." + staticDir
+	if log.GetLevel() == log.DebugLevel {
+		path, err := filepath.Abs(staticDir)
+		if err != nil {
+			log.Errorf("couldn't find static assets at %s", path)
+		}
+		log.Debugf("serving static files from %s", path)
 	}
-	log.Debugf("serving static files from %s", staticFiles)
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	mux.Handle(staticDir, http.StripPrefix(staticDir, (http.FileServer(http.Dir(staticFiles)))))
+	mux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, (http.FileServer(http.Dir("." + staticDir)))))
 
 	if cfg.Cfg.WebApp {
 		log.Info("enabling websocket")
