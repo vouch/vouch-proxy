@@ -1,0 +1,31 @@
+language: go
+
+sudo: false
+
+services:
+  - docker
+
+go:
+  - "1.10"
+
+before_install:
+  - ./do.sh get
+
+script:
+  - ./do.sh build
+  - ./do.sh test
+  - docker build -t $TRAVIS_REPO_SLUG .
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: bash .travis/docker_push
+    on:
+      go: "1.10"
+      branch: master
+  - provider: script
+    skip_cleanup: true
+    script: bash .travis/docker_push
+    on:
+      go: "1.10"
+      tags: true
