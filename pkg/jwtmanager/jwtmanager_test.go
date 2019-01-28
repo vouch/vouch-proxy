@@ -13,9 +13,8 @@ import (
 
 var (
 	u1 = structs.User{
-		Username:      "test@testing.com",
-		EmailVerified: true,
-		Name:          "Test Name",
+		Username: "test@testing.com",
+		Name:     "Test Name",
 	}
 
 	lc VouchClaims
