@@ -3,10 +3,12 @@ package cfg
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -50,6 +52,7 @@ type config struct {
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
+		Key  string `mapstructure:"key"`
 	}
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
@@ -158,7 +161,7 @@ func init() {
 
 	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
 	if !isTCPPortAvailable(listen) {
-		log.Fatal(errors.New("check the port availability (is " + Branding.CcName + " already running?)"))
+		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
 	log.Debug(viper.AllSettings())
@@ -167,9 +170,14 @@ func init() {
 // ParseConfig parse the config file
 func ParseConfig() {
 	log.Debug("opening config")
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+	if os.Getenv(Branding.UCName+"_CONFIG") != "" {
+		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
+		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
+	} else {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
@@ -209,14 +217,62 @@ func Get(key string) string {
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
 		if !viper.IsSet(opt) {
-			return errors.New("configuration option " + opt + " is not set in config")
+			return errors.New("configuration error: required configuration option " + opt + " is not set")
+		}
+	}
+	// Domains is required _unless_ Cfg.AllowAllUsers is set
+	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
+		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	}
+
+	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
+		if GenOAuth.RedirectURL != "" {
+			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
+				return err
+			}
+		}
+		if len(GenOAuth.RedirectURLs) > 0 {
+			for _, cb := range GenOAuth.RedirectURLs {
+				if err := checkCallbackConfig(cb); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
 	// issue a warning if the secret is too small
-	log.Debugf("secret is %d characters long", len(Cfg.JWT.Secret))
+	log.Debugf("vouch.jwt.secret is %d characters long", len(Cfg.JWT.Secret))
 	if len(Cfg.JWT.Secret) < minBase64Length {
-		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting the current secret to automatically generate a secret of %d characters", len(Cfg.JWT.Secret), minBase64Length)
+		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.JWT.Secret),
+			Branding.LCName+".jwt.secret",
+			minBase64Length)
+	}
+
+	log.Debugf("vouch.session.key is %d characters long", len(Cfg.Session.Key))
+	if len(Cfg.Session.Key) < minBase64Length {
+		log.Errorf("Your session key is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.Session.Key),
+			Branding.LCName+".session.key",
+			minBase64Length)
+	}
+	return nil
+}
+
+func checkCallbackConfig(url string) error {
+	inDomain := false
+	for _, d := range Cfg.Domains {
+		if strings.Contains(url, d) {
+			inDomain = true
+			break
+		}
+	}
+	if !inDomain {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
+	}
+
+	if !strings.Contains(url, "/auth") {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must contain '/auth'", url)
 	}
 	return nil
 }
@@ -267,7 +323,7 @@ func setDefaults() {
 
 	// cookie defaults
 	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = "VouchCookie"
+		Cfg.Cookie.Name = Branding.CcName + "Cookie"
 	}
 	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
 		Cfg.Cookie.Secure = false
@@ -298,9 +354,17 @@ func setDefaults() {
 		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
 	}
 
-	// session HERE
+	// session
 	if !viper.IsSet(Branding.LCName + ".session.name") {
-		Cfg.Session.Name = Branding.LCName + "Session"
+		Cfg.Session.Name = Branding.CcName + "Session"
+	}
+	if !viper.IsSet(Branding.LCName + ".session.key") {
+		log.Warn("generating random session.key")
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Cfg.Session.Key = rstr
 	}
 
 	// testing convenience variable
