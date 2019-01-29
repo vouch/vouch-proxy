@@ -2,7 +2,7 @@ package cfg
 
 import (
 	"testing"
-	// "github.com/LassoProject/lasso/pkg/structs"
+	// "github.com/vouch/vouch-proxy/pkg/structs"
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

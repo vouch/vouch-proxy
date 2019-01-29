@@ -1,8 +1,8 @@
 
-# lasso config
-# bare minimum to get lasso running with github
+# vouch config
+# bare minimum to get vouch running with github
 
-lasso:
+vouch:
   # domains:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
@@ -12,7 +12,7 @@ lasso:
   domains:
   - yourothersite.io
 
-  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at GitHub
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
   # allowAllUsers: true
 
 oauth:

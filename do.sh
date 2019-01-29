@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # change dir to where this script is running
 CURDIR=${PWD}
@@ -6,11 +7,11 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export LASSO_ROOT=${GOPATH}/src/github.com/LassoProject/lasso/
+export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 
-IMAGE=lassoproject/lasso
+IMAGE=voucher/vouch-proxy
 GOIMAGE=golang:1.10
-NAME=lasso
+NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
 
@@ -28,7 +29,7 @@ build () {
 }
 
 install () {
-  cp ./lasso ${GOPATH}/bin/lasso
+  cp ./vouch-proxy ${GOPATH}/bin/vouch-proxy
 }
 
 gogo () {
@@ -40,10 +41,9 @@ dbuild () {
 }
 
 gobuildstatic () {
-  # TODO: this doesn't include the templates
-  # https://github.com/shurcooL/vfsgen
-
-  CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+  export CGO_ENABLED=0
+  export GOOS=linux
+  build
 }
 
 drun () {
@@ -65,32 +65,26 @@ drun () {
 
 
 watch () {
-    CMD=$@;
-    if [ -z "$CMD" ]; then
-	     CMD="go run main.go"
-    fi
-    clear
-    echo -e "starting watcher for:\n\t$CMD"
-    $CMD &
-    WATCH_PID=$!
-    echo WATCH_PID $WATCH_PID
-    # FIRST_TIME=1
-    while inotifywait -q --exclude *.db --exclude './.git/FETCH_HEAD' --exclude do.sh -e modify -r .; do
-      if [ -n "$WATCH_PID" ]; then
-        echo "killing $WATCH_PID and restarting $CMD"
-        kill $WATCH_PID
-        sleep 3
-      fi
-     echo -e "\n---restart---\n"
-	   $CMD &
-     WATCH_PID=$!
-     echo WATCH_PID $WATCH_PID
-   done;
+  CMD=$@;
+  if [ -z "$CMD" ]; then
+      CMD="go run main.go"
+  fi
+  clear
+  echo -e "starting watcher for:\n\t$CMD"
+
+  # TODO: add *.tmpl and *.css
+  # find . -type f -name '*.css' | entr -cr $CMD
+  find . -name '*.go' | entr -cr $CMD
 }
 
 goget () {
   # install all the things
   go get -v -race ./...
+}
+
+coverage() {
+  go test -coverprofile coverage.out
+  go tool cover -html=coverage.out -o coverage.html
 }
 
 test () {
@@ -113,7 +107,7 @@ loc () {
   find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
 }
 
-DB=data/lasso_bolt.db
+DB=data/vouch_bolt.db
 browsebolt() {
 	${GOPATH}/bin/boltbrowser $DB
 }
@@ -123,10 +117,11 @@ usage() {
    usage:
      $0 run                    - go run main.go
      $0 build                  - go build
-     $0 install                - move binary to ${GOPATH}/bin/lasso
+     $0 install                - move binary to ${GOPATH}/bin/vouch
      $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
+     $0 coverage               - code coverage report
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 coverage               - coverage report
      $0 browsebolt             - browse the boltdb at ${DB}
@@ -140,10 +135,11 @@ EOF
 
 }
 
-ARG=$1; shift;
+ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc'|'usage')
+   shift
    $ARG $*
    ;;
    'godoc')
@@ -151,6 +147,7 @@ case "$ARG" in
    godoc -http=:${GODOC_PORT}
    ;;
    'all')
+   shift
    gobuildstatic
    dbuild
    drun $*
