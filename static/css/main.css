@@ -1,26 +1,25 @@
 body {
-    background-image: url("/img/background.png");
-    background-color: #cccccc;
+    background-color: #ffffff;
 }
 
-h1 {
-    text-align: center;
-    /*color: green;*/
-    /*text-decoration: overline;*/
-    text-shadow: 2px 2px #ff0000;
+.top img {
+    height: 50px;
+    width: 50px;
+    margin: 10px;
+    vertical-align: middle
 }
 
-button {
-    background-color: #4CAF50; /* Green */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
+.top span {
+    margin: 5px;
+    font-size: 1.5em;
+}
+
+.top a {
     text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    border-radius: 12px;
-    position: absolute;
-    top: 45%;
-    left: 42%;
+    color: #000000;
+}
+    
+
+.test {
+    clear: both;
 }
