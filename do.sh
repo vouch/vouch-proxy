@@ -90,7 +90,7 @@ coverage() {
 
 test () {
   if [ -z "$VOUCH_CONFIG" ]; then
-    export VOUCH_CONFIG="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/config/test_config.yml"
+    export VOUCH_CONFIG="$SDIR/config/test_config.yml"
   fi
   # test all the things
   if [ -n "$*" ]; then
