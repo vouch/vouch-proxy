@@ -83,29 +83,21 @@ goget () {
 }
 
 coverage() {
-  # test all the things
-  if [ -n "$*" ]; then
-    go test -v -cover $* -coverprofile coverage.out
-  else
-    go test -v -cover ./... -coverprofile coverage.out
-  fi
+  export EXTRA_TEST_ARGS='-cover'
+  test
   go tool cover -html=coverage.out -o coverage.html
 }
 
 test () {
-  if [ -n LASSO_CONFIG ]; then
-    export LASSO_CONFIG=${GOPATH}/src/github.com/LassoProject/lasso/config/test_config.yml
+  if [ -z "$VOUCH_CONFIG" ]; then
+    export VOUCH_CONFIG="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/config/test_config.yml"
   fi
   # test all the things
   if [ -n "$*" ]; then
-    go test -v $*
+    go test -v $EXTRA_TEST_ARGS $*
   else
-    go test -v ./...
+    go test -v $EXTRA_TEST_ARGS ./...
   fi
-}
-coverage () {
-  go test -coverprofile cover.out -cover ./... 
-  go tool cover -html=cover.out
 }
 
 loc () {
