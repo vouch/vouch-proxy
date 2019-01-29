@@ -1,5 +1,6 @@
 config/config.yml
 config/*config.yml
+!config/test_config.yml
 data/lasso_bolt.db
 data/vouch_bolt.db
 pkg/model/storage-test.db
