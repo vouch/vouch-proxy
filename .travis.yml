@@ -9,7 +9,7 @@ go:
   - "1.10"
 
 before_install:
-  - ./do.sh get
+  - ./do.sh goget
 
 script:
   - ./do.sh build
