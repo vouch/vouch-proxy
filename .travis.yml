@@ -30,3 +30,6 @@ script:
 #    on:
 #      go: "1.10"
 #      tags: true
+#
+notifications:
+  irc: "chat.freenode.net#vouch"
