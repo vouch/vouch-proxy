@@ -79,7 +79,7 @@ watch () {
 
 goget () {
   # install all the things
-  go get -v -race ./...
+  go get -t -v -race ./...
 }
 
 coverage() {
