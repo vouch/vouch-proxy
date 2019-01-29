@@ -119,6 +119,7 @@ usage() {
   do is like make
 
 EOF
+  exit 1
 
 }
 
