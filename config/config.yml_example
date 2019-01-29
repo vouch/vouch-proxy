@@ -1,4 +1,8 @@
 # vouch config
+
+# you should probably start with one of the other configs in the example directory
+# vouch proxy does a fairly good job of setting its config to sane defaults
+
 vouch:
   # logLevel: debug
   logLevel: info
@@ -48,13 +52,19 @@ vouch:
     # name of cookie to store the jwt
     name: VouchCookie
     # optionally force the domain of the cookie to set
-    # domain: yourdomain.com
+    domain: yourdomain.com
     secure: true
     httpOnly: true
 
   session:
-    # just the name of session variable stored locally
+    # name of session variable stored locally
     name: vouchSession
+    # key: a cryptographic string used to store the session variable
+    # if the key is not set here then it is generated at startup and stored in memory
+    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
+    # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
+    key: you_random_key
+
 
   headers:
     jwt: X-Vouch-Token

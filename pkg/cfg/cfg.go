@@ -50,6 +50,7 @@ type config struct {
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
+		Key  string `mapstructure:"key"`
 	}
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
@@ -214,9 +215,20 @@ func BasicTest() error {
 	}
 
 	// issue a warning if the secret is too small
-	log.Debugf("secret is %d characters long", len(Cfg.JWT.Secret))
+	log.Debugf("vouch.jwt.secret is %d characters long", len(Cfg.JWT.Secret))
 	if len(Cfg.JWT.Secret) < minBase64Length {
-		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting the current secret to automatically generate a secret of %d characters", len(Cfg.JWT.Secret), minBase64Length)
+		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.JWT.Secret),
+			Branding.LCName+".jwt.secret",
+			minBase64Length)
+	}
+
+	log.Debugf("vouch.session.key is %d characters long", len(Cfg.Session.Key))
+	if len(Cfg.Session.Key) < minBase64Length {
+		log.Errorf("Your session key is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.Session.Key),
+			Branding.LCName+".session.key",
+			minBase64Length)
 	}
 	return nil
 }
@@ -298,9 +310,17 @@ func setDefaults() {
 		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
 	}
 
-	// session HERE
+	// session
 	if !viper.IsSet(Branding.LCName + ".session.name") {
 		Cfg.Session.Name = Branding.LCName + "Session"
+	}
+	if !viper.IsSet(Branding.LCName + ".session.key") {
+		log.Warn("generating random session.key")
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Cfg.Session.Key = rstr
 	}
 
 	// testing convenience variable
