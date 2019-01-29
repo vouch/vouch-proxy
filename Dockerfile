@@ -6,7 +6,7 @@ LABEL maintainer="vouch@bnf.net"
 
 RUN mkdir -p ${GOPATH}/src/github.com/vouch/vouch-proxy
 WORKDIR ${GOPATH}/src/github.com/vouch/vouch-proxy
-    
+
 COPY . .
 
 # RUN go-wrapper download  # "go get -d -v ./..."
@@ -16,6 +16,8 @@ COPY . .
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
 RUN ./do.sh install
+## test but don't fail the build for now
+RUN ./do.sh test || true
 
 FROM scratch
 LABEL maintainer="vouch@bnf.net"
