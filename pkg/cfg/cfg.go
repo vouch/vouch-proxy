@@ -225,6 +225,18 @@ func BasicTest() error {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
 	}
 
+	// OAuthconfig Checks
+	switch {
+	case GenOAuth.ClientID == "":
+		return errors.New("configuration error: oauth.client_id not found")
+	// case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.ClientSecret == "":
+	// 	return errors.New("configuration error: oauth.client_secret not found")
+	case GenOAuth.AuthURL == "":
+		return errors.New("configuration error: oauth.auth_url not found")
+	case GenOAuth.UserInfoURL == "":
+		return errors.New("configuration error: oauth.user_info_url not found")
+	}
+
 	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
 		if GenOAuth.RedirectURL != "" {
 			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
