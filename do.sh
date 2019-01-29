@@ -93,12 +93,23 @@ coverage() {
 }
 
 test () {
+  if [ -n LASSO_CONFIG ]; then
+    export LASSO_CONFIG=${GOPATH}/src/github.com/LassoProject/lasso/config/test_config.yml
+  fi
   # test all the things
   if [ -n "$*" ]; then
     go test -v $*
   else
     go test -v ./...
   fi
+}
+coverage () {
+  go test -coverprofile cover.out -cover ./... 
+  go tool cover -html=cover.out
+}
+
+loc () {
+  find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
 }
 
 DB=data/vouch_bolt.db
@@ -117,8 +128,10 @@ usage() {
      $0 drun [args]            - run docker container
      $0 coverage               - code coverage report
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
+     $0 coverage               - coverage report
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
+     $0 loc                    - lines of code in project
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
 
   do is like make
@@ -131,7 +144,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'coverage'|'goget'|'gogo'|'watch'|'gobuildstatic'|'usage')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc'|'usage')
    shift
    $ARG $*
    ;;

@@ -1,26 +1,33 @@
 # vouch config
+
+# you should probably start with one of the other configs in the example directory
+# vouch proxy does a fairly good job of setting its config to sane defaults
+
 vouch:
   # logLevel: debug
   logLevel: info
   listen: 0.0.0.0
   port: 9090
 
-  # domains
+  # domains:
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
+  # you usually *don't* want to list every individual website that will be protected
+  # if you have siteA.internal.yourdomain.com and siteB.internal.yourdomain.com 
+  # then your domains should be set as yourdomain.com or perhaps internal.yourdomain.com   
   # usually you'll just have one.
-  # Comment this out if you set allowAllUser:true
+  # Comment `domains:` out if you set allowAllUser:true
   domains:
   - yourdomain.com
   - yourotherdomain.com
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
-  allowAllUsers: false
+  # allowAllUsers: false
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 
   # If the user is logged in, the cookie will be validated and the user header will be set.
   # You will need to direct people to the Vouch Proxy login page from your application.
-  publicAccess: false
+  # publicAccess: false
 
   # whiteList (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
@@ -53,8 +60,14 @@ vouch:
     httpOnly: true
 
   session:
-    # just the name of session variable stored locally
-    name: vouchSession
+    # name of session variable stored locally
+    name: VouchSession
+    # key: a cryptographic string used to store the session variable
+    # if the key is not set here then it is generated at startup and stored in memory
+    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
+    # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
+    key: you_random_key
+
 
   headers:
     jwt: X-Vouch-Token

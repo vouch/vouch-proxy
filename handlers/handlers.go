@@ -38,16 +38,12 @@ type AuthError struct {
 }
 
 var (
-	//oauthclient = cfg.OAuthClient*oauth2.Config TODO: remove
-
-	// Templates with functions available to them
+	// Templates
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
-	sessstore     = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Name))
-)
 
-// func init() {
-// 	log.Debug("handlers ")
-// }
+	// http://www.gorillatoolkit.org/pkg/sessions
+	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+)
 
 func randString() string {
 	b := make([]byte, 32)
@@ -181,7 +177,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
 			if !cfg.Cfg.PublicAccess {
-				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+				error401(w, r, AuthError{
+					fmt.Sprintf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host),
+					jwt})
 			} else {
 				w.Header().Add(cfg.Cfg.Headers.User, "")
 			}
@@ -376,7 +374,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		errorDescription := r.URL.Query().Get("error_description")
 		log.Warning("Error state: ", errorState, ", Error description: ", errorDescription)
 		w.WriteHeader(http.StatusForbidden)
-		renderIndex(w, "FORBIDDEN: " + errorDescription)
+		renderIndex(w, "FORBIDDEN: "+errorDescription)
 		return
 	}
 
