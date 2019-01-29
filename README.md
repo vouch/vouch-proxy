@@ -186,3 +186,5 @@ Note that outside of some innocuos redirection, Bob only ever sees `https://priv
 Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://vouch.oursites.com/validate` from the `auth_request` nginx module.
 
 The next time Bob is forwarded to google for login, since he has already authorized the Vouch OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via Vouch.
+
+
