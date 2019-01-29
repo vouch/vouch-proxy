@@ -83,7 +83,12 @@ goget () {
 }
 
 coverage() {
-  go test -coverprofile coverage.out
+  # test all the things
+  if [ -n "$*" ]; then
+    go test -v $* -coverprofile coverage.out
+  else
+    go test -v ./... -coverprofile coverage.out
+  fi
   go tool cover -html=coverage.out -o coverage.html
 }
 
