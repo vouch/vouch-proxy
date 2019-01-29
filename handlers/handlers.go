@@ -177,7 +177,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
 			if !cfg.Cfg.PublicAccess {
-				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+				error401(w, r, AuthError{
+					fmt.Sprintf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host),
+					jwt})
 			} else {
 				w.Header().Add(cfg.Cfg.Headers.User, "")
 			}
