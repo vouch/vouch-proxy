@@ -11,3 +11,4 @@ config/secret
 config/config.yml_orig
 coverage.out
 coverage.html
+vouch-proxy
