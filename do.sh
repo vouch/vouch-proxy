@@ -88,8 +88,8 @@ coverage() {
 }
 
 test () {
-  if [ -n LASSO_CONFIG ]; then
-    export LASSO_CONFIG=${GOPATH}/src/github.com/LassoProject/lasso/config/test_config.yml
+  if [ -n VOUCH_CONFIG ]; then
+    export VOUCH_CONFIG=${GOPATH}/src/github.com/vouch/vouch-proxy/config/test_config.yml
   fi
   # test all the things
   if [ -n "$*" ]; then
