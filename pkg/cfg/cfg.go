@@ -3,12 +3,12 @@ package cfg
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"os"
 	"strconv"
-	"time"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -16,9 +16,10 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
+	securerandom "github.com/theckman/go-securerandom"
 )
 
-// config lasso jwt cookie configuration
+// config vouch jwt cookie configuration
 type config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
@@ -51,6 +52,7 @@ type config struct {
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
+		Key  string `mapstructure:"key"`
 	}
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
@@ -81,14 +83,16 @@ type OAuthProviders struct {
 }
 
 type branding struct {
-	LCName string // lower case
-	UCName string // upper case
-	CcName string // camel case
+	LCName    string // lower case
+	UCName    string // upper case
+	CcName    string // camel case
+	OldLCName string // lasso
+	URL       string // https://github.com/vouch/vouch-proxy
 }
 
 var (
 	// Branding that's our name
-	Branding = branding{"lasso", "LASSO", "Lasso"}
+	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// Cfg the main exported config variable
 	Cfg config
@@ -111,10 +115,18 @@ var (
 		IndieAuth: "indieauth",
 		OIDC:      "oidc",
 	}
+
+	// RequiredOptions must have these fields set for minimum viable config
+	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
+
+	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
 )
 
-// RequiredOptions must have these fields set for minimum viable config
-var RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
+const (
+	// for a Base64 string we need 44 characters to get 32bytes (6 bits per char)
+	minBase64Length = 44
+	base64Bytes     = 32
+)
 
 func init() {
 	// from config file
@@ -122,13 +134,24 @@ func init() {
 
 	// can pass loglevel on the command line
 	var ll = flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	var port = flag.Int("port", -1, "port")
+	var help = flag.Bool("help", false, "show usage")
 	flag.Parse()
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	if *ll == "debug" {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("logLevel set to debug")
 	}
 
 	setDefaults()
+
+	if *port != -1 {
+		Cfg.Port = *port
+	}
 
 	errT := BasicTest()
 	if errT != nil {
@@ -138,7 +161,7 @@ func init() {
 
 	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
 	if !isTCPPortAvailable(listen) {
-		log.Fatal(errors.New("check the port availability (is " + Branding.CcName + " already running?)"))
+		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
 	log.Debug(viper.AllSettings())
@@ -147,15 +170,35 @@ func init() {
 // ParseConfig parse the config file
 func ParseConfig() {
 	log.Debug("opening config")
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+	if os.Getenv(Branding.UCName+"_CONFIG") != "" {
+		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
+		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
+	} else {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		panic(err)
 	}
 	UnmarshalKey(Branding.LCName, &Cfg)
+	if len(Cfg.Domains) == 0 {
+		// then lets check for "lasso"
+		var oldConfig config
+		UnmarshalKey(Branding.OldLCName, &oldConfig)
+		if len(oldConfig.Domains) != 0 {
+			log.Errorf(`						
+
+IMPORTANT!
+
+please update your config file to change '%s:' to '%s:' as per %s
+			`, Branding.OldLCName, Branding.LCName, Branding.URL)
+			Cfg = oldConfig
+		}
+	}
+
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }
@@ -174,8 +217,78 @@ func Get(key string) string {
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
 		if !viper.IsSet(opt) {
-			return errors.New("configuration option " + opt + " is not set in config")
+			return errors.New("configuration error: required configuration option " + opt + " is not set")
 		}
+	}
+	// Domains is required _unless_ Cfg.AllowAllUsers is set
+	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
+		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	}
+
+	// OAuthconfig Checks
+	switch {
+	case GenOAuth.ClientID == "":
+		// everyone has a clientID
+		return errors.New("configuration error: oauth.client_id not found")
+	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.ClientSecret == "":
+		// everyone except IndieAuth has a clientSecret
+		return errors.New("configuration error: o`auth.client_secret not found")
+	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
+		// everyone except IndieAuth and Google has an authURL
+		return errors.New("configuration error: oauth.auth_url not found")
+	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.UserInfoURL == "":
+		// everyone except IndieAuth and Google has an userInfoURL
+		return errors.New("configuration error: oauth.user_info_url not found")
+	}
+
+	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
+		if GenOAuth.RedirectURL != "" {
+			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
+				return err
+			}
+		}
+		if len(GenOAuth.RedirectURLs) > 0 {
+			for _, cb := range GenOAuth.RedirectURLs {
+				if err := checkCallbackConfig(cb); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	// issue a warning if the secret is too small
+	log.Debugf("vouch.jwt.secret is %d characters long", len(Cfg.JWT.Secret))
+	if len(Cfg.JWT.Secret) < minBase64Length {
+		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.JWT.Secret),
+			Branding.LCName+".jwt.secret",
+			minBase64Length)
+	}
+
+	log.Debugf("vouch.session.key is %d characters long", len(Cfg.Session.Key))
+	if len(Cfg.Session.Key) < minBase64Length {
+		log.Errorf("Your session key is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+			len(Cfg.Session.Key),
+			Branding.LCName+".session.key",
+			minBase64Length)
+	}
+	return nil
+}
+
+func checkCallbackConfig(url string) error {
+	inDomain := false
+	for _, d := range Cfg.Domains {
+		if strings.Contains(url, d) {
+			inDomain = true
+			break
+		}
+	}
+	if !inDomain {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
+	}
+
+	if !strings.Contains(url, "/auth") {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must contain '/auth'", url)
 	}
 	return nil
 }
@@ -190,7 +303,7 @@ func setDefaults() {
 	// viper.SetDefault(Cfg.Port, 9090)
 	// viper.SetDefault("Headers.SSO", "X-"+Branding.CcName+"-Token")
 	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
-	// viper.SetDefault("Cookie.Name", "Lasso")
+	// viper.SetDefault("Cookie.Name", "Vouch")
 
 	// logging
 	if !viper.IsSet(Branding.LCName + ".logLevel") {
@@ -226,7 +339,7 @@ func setDefaults() {
 
 	// cookie defaults
 	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = "LassoCookie"
+		Cfg.Cookie.Name = Branding.CcName + "Cookie"
 	}
 	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
 		Cfg.Cookie.Secure = false
@@ -257,9 +370,17 @@ func setDefaults() {
 		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
 	}
 
-	// session HERE
+	// session
 	if !viper.IsSet(Branding.LCName + ".session.name") {
-		Cfg.Session.Name = Branding.LCName + "Session"
+		Cfg.Session.Name = Branding.CcName + "Session"
+	}
+	if !viper.IsSet(Branding.LCName + ".session.key") {
+		log.Warn("generating random session.key")
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Cfg.Session.Key = rstr
 	}
 
 	// testing convenience variable
@@ -305,8 +426,6 @@ func setDefaultsGoogle() {
 	if GenOAuth.PreferredDomain != "" {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
-	} else {
-		OAuthopts = oauth2.SetAuthURLParam("hd", "")
 	}
 }
 
@@ -340,13 +459,6 @@ func configureOAuthClient() {
 	}
 }
 
-var secretFile = os.Getenv("LASSO_ROOT") + "config/secret"
-
-// a-z A-Z 0-9 except no l, o, O
-const charRunes = "abcdefghijkmnpqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ012346789"
-
-const secretLen = 18
-
 func getOrGenerateJWTSecret() string {
 	b, err := ioutil.ReadFile(secretFile)
 	if err == nil {
@@ -357,12 +469,14 @@ func getOrGenerateJWTSecret() string {
 		log.Info("jwt.secret not found in " + secretFile)
 		log.Warn("generating random jwt.secret and storing it in " + secretFile)
 
-		rand.Seed(time.Now().UnixNano())
-		b := make([]byte, secretLen)
-		for i := range b {
-			b[i] = charRunes[rand.Intn(len(charRunes))]
+		// make sure to create 256 bits for the secret
+		// see https://github.com/vouch/vouch-proxy/issues/54
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Error(err)
 		}
-		err := ioutil.WriteFile(secretFile, b, 0600)
+		b = []byte(rstr)
+		err = ioutil.WriteFile(secretFile, b, 0600)
 		if err != nil {
 			log.Debug(err)
 		}

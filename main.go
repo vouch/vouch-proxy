@@ -1,30 +1,34 @@
 package main
 
-// lasso
-// github.com/LassoProject/lasso
+// vouch
+// github.com/vouch/vouch-proxy
 
 import (
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/LassoProject/lasso/handlers"
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/timelog"
-	tran "github.com/LassoProject/lasso/pkg/transciever"
+	"github.com/gorilla/mux"
+
+	"github.com/vouch/vouch-proxy/handlers"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/timelog"
+	tran "github.com/vouch/vouch-proxy/pkg/transciever"
 )
 
-// version ang semver get overwritten by build with
+// version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 
 var (
-	version = "undefined"
-	builddt = "undefined"
-	host    = "undefined"
-	semver  = "undefined"
-	branch  = "undefined"
+	version   = "undefined"
+	builddt   = "undefined"
+	host      = "undefined"
+	semver    = "undefined"
+	branch    = "undefined"
+	staticDir = "/static/"
 )
 
 func init() {
@@ -42,10 +46,11 @@ func main() {
 		"semver":    semver,
 		"listen":    listen}).Info("starting " + cfg.Branding.CcName)
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
 	mux.HandleFunc("/validate", timelog.TimeLog(authH))
+	mux.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	mux.HandleFunc("/login", timelog.TimeLog(loginH))
@@ -56,8 +61,18 @@ func main() {
 	callH := http.HandlerFunc(handlers.CallbackHandler)
 	mux.HandleFunc("/auth", timelog.TimeLog(callH))
 
-	// serve static files from /static
-	mux.Handle("/static", http.FileServer(http.Dir("./static")))
+	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
+	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
+
+	if log.GetLevel() == log.DebugLevel {
+		path, err := filepath.Abs(staticDir)
+		if err != nil {
+			log.Errorf("couldn't find static assets at %s", path)
+		}
+		log.Debugf("serving static files from %s", path)
+	}
+	// https://golangcode.com/serve-static-assets-using-the-mux-router/
+	mux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, (http.FileServer(http.Dir("." + staticDir)))))
 
 	if cfg.Cfg.WebApp {
 		log.Info("enabling websocket")
