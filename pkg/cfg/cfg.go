@@ -441,7 +441,9 @@ func setDefaultsGitHub() {
 		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
 	}
 	if len(GenOAuth.Scopes) == 0 {
-		GenOAuth.Scopes = []string{"user"}
+		// https://github.com/vouch/vouch-proxy/issues/63
+		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
+		GenOAuth.Scopes = []string{"read:user"}
 	}
 }
 
