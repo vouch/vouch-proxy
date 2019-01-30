@@ -14,13 +14,13 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
-	"github.com/LassoProject/lasso/pkg/cookie"
-	"github.com/LassoProject/lasso/pkg/domains"
-	"github.com/LassoProject/lasso/pkg/jwtmanager"
-	"github.com/LassoProject/lasso/pkg/model"
-	"github.com/LassoProject/lasso/pkg/structs"
 	"github.com/gorilla/sessions"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/model"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 )
 
@@ -38,16 +38,12 @@ type AuthError struct {
 }
 
 var (
-	//oauthclient = cfg.OAuthClient*oauth2.Config TODO: remove
-
-	// Templates with functions available to them
+	// Templates
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
-	sessstore     = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Name))
-)
 
-// func init() {
-// 	log.Debug("handlers ")
-// }
+	// http://www.gorillatoolkit.org/pkg/sessions
+	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+)
 
 func randString() string {
 	b := make([]byte, 32)
@@ -70,7 +66,11 @@ func loginURL(r *http.Request, state string) string {
 				break
 			}
 		}
-		url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		if cfg.OAuthopts != nil {
+			url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+		} else {
+			url = cfg.OAuthClient.AuthCodeURL(state)
+		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
@@ -112,8 +112,8 @@ func FindJWT(r *http.Request) string {
 }
 
 // ClaimsFromJWT parse the jwt and return the claims
-func ClaimsFromJWT(jwt string) (jwtmanager.LassoClaims, error) {
-	var claims jwtmanager.LassoClaims
+func ClaimsFromJWT(jwt string) (jwtmanager.VouchClaims, error) {
+	var claims jwtmanager.VouchClaims
 
 	jwtParsed, err := jwtmanager.ParseTokenString(jwt)
 	if err != nil {
@@ -125,7 +125,7 @@ func ClaimsFromJWT(jwt string) (jwtmanager.LassoClaims, error) {
 	claims, err = jwtmanager.PTokenClaims(jwtParsed)
 	if err != nil {
 		// claims = jwtmanager.PTokenClaims(jwtParsed)
-		// if claims == &jwtmanager.LassoClaims{} {
+		// if claims == &jwtmanager.VouchClaims{} {
 		return claims, err
 	}
 	return claims, nil
@@ -177,7 +177,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
 			if !cfg.Cfg.PublicAccess {
-				error401(w, r, AuthError{"not authorized for " + r.Host, jwt})
+				error401(w, r, AuthError{
+					fmt.Sprintf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host),
+					jwt})
 			} else {
 				w.Header().Add(cfg.Cfg.Headers.User, "")
 			}
@@ -243,6 +245,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "{ \"ok\": true }")
+}
+
 // LoginHandler /login
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -252,7 +259,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
-		log.Error(err)
+		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
 	// set the state variable in the session
@@ -264,7 +271,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// requestedURL comes from nginx in the query string via a 302 redirect
 	// it sets the ultimate destination
-	// https://lasso.yoursite.com/login?url=
+	// https://vouch.yoursite.com/login?url=
 	var requestedURL = r.URL.Query().Get("url")
 	if requestedURL == "" {
 		renderIndex(w, "/login no destination URL requested")
@@ -289,8 +296,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 
 	if failcount > 2 {
-		var lassoError = r.URL.Query().Get("error")
-		renderIndex(w, "/login too many redirects for "+requestedURL+" - "+lassoError)
+		var vouchError = r.URL.Query().Get("error")
+		renderIndex(w, "/login too many redirects for "+requestedURL+" - "+vouchError)
 	} else {
 		// bounce to oauth provider for login
 		var lURL = loginURL(r, state)
@@ -331,7 +338,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
-		// 	err = fmt.Errorf("HostDomain %s is not within a lasso managed domain", u.HostDomain)
+		// 	err = fmt.Errorf("HostDomain %s is not within a vouch managed domain", u.HostDomain)
 	} else {
 		ok = true
 		log.Debug("no domains configured")
@@ -367,7 +374,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		errorDescription := r.URL.Query().Get("error_description")
 		log.Warning("Error state: ", errorState, ", Error description: ", errorDescription)
 		w.WriteHeader(http.StatusForbidden)
-		renderIndex(w, "FORBIDDEN: " + errorDescription)
+		renderIndex(w, "FORBIDDEN: "+errorDescription)
 		return
 	}
 
@@ -567,7 +574,7 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 func error401(w http.ResponseWriter, r *http.Request, ae AuthError) {
 	log.Error(ae.Error)
 	cookie.ClearCookie(w, r)
-	// w.Header().Set("X-Lasso-Error", ae.Error)
+	// w.Header().Set("X-Vouch-Error", ae.Error)
 	http.Error(w, ae.Error, http.StatusUnauthorized)
 	// TODO put this back in place if multiple auth mechanism are available
 	// c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"message": errStr})

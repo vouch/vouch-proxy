@@ -1,26 +1,33 @@
-# lasso config
-lasso:
+# vouch config
+
+# you should probably start with one of the other configs in the example directory
+# vouch proxy does a fairly good job of setting its config to sane defaults
+
+vouch:
   # logLevel: debug
   logLevel: info
   listen: 0.0.0.0
   port: 9090
 
-  # domains
-  # each of these domains must serve the url https://lasso.$domains[0] https://lasso.$domains[1] ...
+  # domains:
+  # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
+  # you usually *don't* want to list every individual website that will be protected
+  # if you have siteA.internal.yourdomain.com and siteB.internal.yourdomain.com 
+  # then your domains should be set as yourdomain.com or perhaps internal.yourdomain.com   
   # usually you'll just have one.
-  # Comment this out if you set allowAllUser:true
+  # Comment `domains:` out if you set allowAllUser:true
   domains:
   - yourdomain.com
   - yourotherdomain.com
 
-  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
-  allowAllUsers: false
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # allowAllUsers: false
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 
   # If the user is logged in, the cookie will be validated and the user header will be set.
-  # You will need to direct people to the Lasso login page from your application.
-  publicAccess: false
+  # You will need to direct people to the Vouch Proxy login page from your application.
+  # publicAccess: false
 
   # whiteList (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
@@ -30,14 +37,15 @@ lasso:
   - joe@yourdomain.com
 
   jwt:
-    # secret: a random 18 character string used to cryptographically sign the jwt
+    # secret: a random string used to cryptographically sign the jwt
+    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then..
     # look for the secret in `./config/secret`
     # if `./config/secret` doesn't exist then randomly generate a secret and store it there
-    # in order to run multiple instances of lasso on multiple servers (perhaps purely for validating the jwt),
+    # in order to run multiple instances of vouch on multiple servers (perhaps purely for validating the jwt),
     # you'll want them all to have the same secret
     secret: your_random_string
-    issuer: Lasso
+    issuer: Vouch
     # number of minutes until jwt expires
     maxAge: 240
     # compress the jwt
@@ -45,29 +53,35 @@ lasso:
 
   cookie: 
     # name of cookie to store the jwt
-    name: LassoCookie
+    name: VouchCookie
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
     secure: true
     httpOnly: true
 
   session:
-    # just the name of session variable stored locally
-    name: lassoSession
+    # name of session variable stored locally
+    name: VouchSession
+    # key: a cryptographic string used to store the session variable
+    # if the key is not set here then it is generated at startup and stored in memory
+    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
+    # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
+    key: you_random_key
+
 
   headers:
-    jwt: X-Lasso-Token
+    jwt: X-Vouch-Token
     querystring: access_token
-    redirect: X-Lasso-Requested-URI
+    redirect: X-Vouch-Requested-URI
 
   db: 
-    file: data/lasso_bolt.db
+    file: data/vouch_bolt.db
 
   # testing: force all 302 redirects to be rendered as a webpage with a link
   testing: true
-  # test_url: add this URL to the page which lasso displays
+  # test_url: add this URL to the page which vouch displays
   test_url: http://yourdomain.com
-  # webapp: WIP for web interface to lasso (mostly logs)
+  # webapp: WIP for web interface to vouch (mostly logs)
   webapp: true
 
 #
@@ -83,8 +97,8 @@ oauth:
   client_id: 
   client_secret: 
   callback_urls:
-    - http://lasso.yourdomain.com:9090/auth
-    - http://lasso.yourotherdomain.com:9090/auth
+    - http://vouch.yourdomain.com:9090/auth
+    - http://vouch.yourotherdomain.com:9090/auth
   preferredDomain: yourdomain.com
 
   # GitHub
@@ -93,7 +107,7 @@ oauth:
   client_id:
   client_secret:
   # callback_url is configured at github.com when setting up the app
-  # set to e.g. https://lasso.yourdomain.com/auth
+  # set to e.g. https://vouch.yourdomain.com/auth
   # defaults (uncomment and change these if you are using github enterprise on-prem)
   # auth_url: https://github.com/login/oauth/authorize
   # token_url: https://github.com/login/oauth/access_token
@@ -112,12 +126,12 @@ oauth:
     - openid
     - email
     - profile
-  callback_url: http://lasso.yourdomain.com:9090/auth
+  callback_url: http://vouch.yourdomain.com:9090/auth
 
   # IndieAuth
   # https://indielogin.com/api
   provider: indieauth
   client_id: http://yourdomain.com
   auth_url: https://indielogin.com/auth
-  callback_url: http://lasso.yourdomain.com:9090/auth
+  callback_url: http://vouch.yourdomain.com:9090/auth
   

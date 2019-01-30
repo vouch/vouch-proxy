@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/LassoProject/lasso/pkg/structs"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 var testdb = "/tmp/storage-test.db"
@@ -75,22 +75,40 @@ func TestPutTeamGetTeamDeleteTeam(t *testing.T) {
 	os.Remove(testdb)
 	OpenDB(testdb)
 
-	t1 := structs.Team{Name: "testname"}
+	t1 := structs.Team{Name: "testname1"}
 	t2 := &structs.Team{}
 	t3 := &structs.Team{}
+	t4 := structs.Team{Name: "testname4"}
+	t5 := structs.Team{Name: "testname5"}
 
-	if err := PutTeam(t1); err != nil {
+	var err error
+	if err = PutTeam(t1); err != nil {
 		log.Error(err)
 	}
 	Team([]byte(t1.Name), t2)
 	log.Debugf("team retrieved: %v", *t2)
 	assert.Equal(t, t1.Name, t2.Name)
 
-	if err := DeleteTeam(t1); err != nil {
+	if err = DeleteTeam(t1); err != nil {
 		log.Error(err)
 	}
 	// should fail
-	err := Team([]byte(t1.Name), t3)
+	err = Team([]byte(t1.Name), t3)
 	assert.Error(t, err)
+
+	err = PutTeam(t1)
+	assert.NoError(t, err)
+	err = PutTeam(t4)
+	assert.NoError(t, err)
+	err = PutTeam(t5)
+	assert.NoError(t, err)
+
+	var teams []structs.Team
+	err = AllTeams(&teams)
+	assert.Contains(t, teams, t1)
+	assert.Contains(t, teams, t4)
+	assert.Contains(t, teams, t5)
+
+	assert.NoError(t, err)
 
 }

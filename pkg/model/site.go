@@ -6,8 +6,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/LassoProject/lasso/pkg/structs"
 	"github.com/boltdb/bolt"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 // PutSite inna da db

@@ -1,8 +1,8 @@
 
-# lasso config
-# bare minimum to get lasso running with OpenID Connect (such as okta)
+# vouch config
+# bare minimum to get vouch running with OpenID Connect (such as okta)
 
-lasso:
+vouch:
   # domains:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
@@ -12,7 +12,7 @@ lasso:
 
   # - OR -
   # instead of setting specific domains you may prefer to allow all users...
-  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   # allowAllUsers: true
 
 oauth:
@@ -28,4 +28,4 @@ oauth:
     - openid
     - email
     - profile
-  callback_url: http://lasso.yourdomain.com:9090/auth
+  callback_url: http://vouch.yourdomain.com:9090/auth

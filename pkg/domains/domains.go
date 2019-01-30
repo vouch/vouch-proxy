@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/LassoProject/lasso/pkg/cfg"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 var domains = cfg.Cfg.Domains
@@ -19,15 +19,16 @@ func init() {
 // Matches return the first match of the
 func Matches(s string) string {
 	for i, v := range domains {
-		log.Debugf("domain matched array value at [%d]=%v", i, v)
 		if strings.Contains(s, v) {
+			log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
 			return v
 		}
 	}
+	log.Warnf("domain %s not found in any domains %v", s, domains)
 	return ""
 }
 
-// IsUnderManagement check if string contains a lasso managed domain
+// IsUnderManagement check if string contains a vouch managed domain
 func IsUnderManagement(s string) bool {
 	match := Matches(s)
 	if match != "" {

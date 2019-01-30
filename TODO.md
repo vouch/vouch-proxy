@@ -42,14 +42,14 @@
 
 * if the user is forwarded to /login a few times, we need to provide some explanation, and offer them an escaltion path or some way forward
 
-* `/validate` endpoint that *any* service can connect to that validates the `X-LASSO-TOKEN` header
+* `/validate` endpoint that *any* service can connect to that validates the `X-VOUCH-TOKEN` header
   * any of these are valid..
     * http cookie contents
-    * X-Lasso-Token: ${TOKEN}
+    * X-Vouch-Token: ${TOKEN}
     * Authorization: Bearer ${TOKEN}
-    * ?lasso-token=${TOKEN}
+    * ?vouch-token=${TOKEN}
 
-* set X-Lasso-User header passed through to the backend app
+* set X-Vouch-User header passed through to the backend app
   https://stackoverflow.com/questions/19366215/setting-headers-with-nginx-auth-request-proxy#19366411
 
 * replace gin.Cookie with gorilla.cookie
@@ -58,7 +58,7 @@
   * can nginx pass a 302 back to /login with an argument in the querystring such as..
   /login?jwt=$COOKIE
   yes it can! using the auth_request_set $variable value;
-    `auth_request_set $auth_lasso_redirect $upstream_http_lasso_redirect`
+    `auth_request_set $auth_vouch_redirect $upstream_http_vouch_redirect`
   http://nginx.org/en/docs/http/ngx_http_auth_request_module.html#auth_request_set
   * but we're forgetting about the round trip from the state login and setting the cookie
   * we just need to detect if we've been here several times in a row, using state and then provide some kind of auth error

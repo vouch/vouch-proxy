@@ -1,8 +1,8 @@
-# lasso config
-# bare minimum to get lasso running with github enterprise
+# vouch config
+# bare minimum to get vouch running with github enterprise
 # see config.yml_example for all options
 
-lasso:
+vouch:
   # domains:
   # valid domains that the jwt cookies can be set into
   # each of these domains must serve the url https://login.$domains[0] https://login.$domains[1] ...
@@ -13,7 +13,7 @@ lasso:
 
   # - OR -
   # instead of setting specific domains you may prefer to allow all users...
-  # set allowAllUsers: true to use Lasso to just accept anyone who can authenticate at the configured provider
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   # allowAllUsers: true
 
 oauth:
