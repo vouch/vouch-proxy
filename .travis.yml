@@ -15,7 +15,7 @@ before_install:
 script:
   - ./do.sh build
   - ./do.sh test
-  - docker build -t $TRAVIS_REPO_SLUG .
+#  - docker build -t $TRAVIS_REPO_SLUG .
 
 #deploy:
 #  - provider: script
