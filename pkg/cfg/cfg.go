@@ -228,12 +228,16 @@ func BasicTest() error {
 	// OAuthconfig Checks
 	switch {
 	case GenOAuth.ClientID == "":
+		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
-	// case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.ClientSecret == "":
-	// 	return errors.New("configuration error: oauth.client_secret not found")
-	case GenOAuth.AuthURL == "":
+	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.ClientSecret == "":
+		// everyone except IndieAuth has a clientSecret
+		return errors.New("configuration error: o`auth.client_secret not found")
+	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
+		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.UserInfoURL == "":
+	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.UserInfoURL == "":
+		// everyone except IndieAuth and Google has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
 	}
 
@@ -437,7 +441,9 @@ func setDefaultsGitHub() {
 		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
 	}
 	if len(GenOAuth.Scopes) == 0 {
-		GenOAuth.Scopes = []string{"user"}
+		// https://github.com/vouch/vouch-proxy/issues/63
+		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
+		GenOAuth.Scopes = []string{"read:user"}
 	}
 }
 

@@ -259,7 +259,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
-		log.Error(err)
+		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
 	// set the state variable in the session
