@@ -79,7 +79,7 @@ watch () {
 
 goget () {
   # install all the things
-  go get -t -v -race ./...
+  go get -t -v ./...
 }
 
 coverage() {
@@ -94,9 +94,9 @@ test () {
   fi
   # test all the things
   if [ -n "$*" ]; then
-    go test -v $EXTRA_TEST_ARGS $*
+    go test -v -race $EXTRA_TEST_ARGS $*
   else
-    go test -v $EXTRA_TEST_ARGS ./...
+    go test -v -race $EXTRA_TEST_ARGS ./...
   fi
 }
 
