@@ -143,6 +143,20 @@ If you are using [nginx-ingress](https://github.com/kubernetes/ingress-nginx) in
   ./vouch-proxy
 ```
 
+## /logout endpoint redirection
+
+The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string which can be used to `302` redirect a user to your orignal OAuth provider/IDP/OIDC provider's [revocation_endpoint](https://tools.ietf.org/html/rfc7009)
+
+```
+    https://vouch.oursites.com/login?url=https://oauth2.googleapis.com/revoke
+```
+
+logout resources..
+ * [Google](https://developers.google.com/identity/protocols/OAuth2WebServer#tokenrevoke)
+ * [Okta](https://developer.okta.com/docs/api/resources/oidc#logout)
+ * [Auth0](https://auth0.com/docs/logout/guides/logout-idps)
+
+
 ## the flow of login and authentication using Google Oauth
 
 * Bob visits `https://private.oursites.com`
