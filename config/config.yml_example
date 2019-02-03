@@ -80,7 +80,7 @@ vouch:
   # testing: force all 302 redirects to be rendered as a webpage with a link
   testing: true
   # test_url: add this URL to the page which vouch displays
-  test_url: http://yourdomain.com
+  test_url: https://yourdomain.com
   # webapp: WIP for web interface to vouch (mostly logs)
   webapp: true
 
@@ -97,8 +97,8 @@ oauth:
   client_id: 
   client_secret: 
   callback_urls:
-    - http://vouch.yourdomain.com:9090/auth
-    - http://vouch.yourotherdomain.com:9090/auth
+    - https://vouch.yourdomain.com:9090/auth
+    - https://vouch.yourotherdomain.com:9090/auth
   preferredDomain: yourdomain.com
 
   # GitHub
@@ -118,7 +118,7 @@ oauth:
   # Generic OpenID Connect
   provider: oidc
   client_id: 
-  client_secret: 
+  client_secret:
   auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
   token_url: https://{yourOktaDomain}/oauth2/default/v1/token
   user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
@@ -126,12 +126,24 @@ oauth:
     - openid
     - email
     - profile
-  callback_url: http://vouch.yourdomain.com:9090/auth
+  callback_url: https://vouch.yourdomain.com:9090/auth
+
+  # Generic OpenID Connect using OIDC discovery
+  provider: oidc
+  client_id: 
+  client_secret:
+  # provider_url is the url *without* `/.well-known/openid-configuration` appended
+  # this will result in a call to https://accounts.google.com/.well-known/openid-configuration expecting a json blob
+  # which will be used to configure the `auth_url`, `token_url`, `user_info_url` and eventually the revocation_url
+  # also the scopes will be configured by the call, or set to `openid` as per the spec
+  provider_url: https://accounts.google.com
+  # but you still need to set the callback_url (only one in this case)
+  callback_url: https://vouch.yourdomain.com:9090/auth
 
   # IndieAuth
   # https://indielogin.com/api
   provider: indieauth
-  client_id: http://yourdomain.com
+  client_id: https://yourdomain.com
   auth_url: https://indielogin.com/auth
-  callback_url: http://vouch.yourdomain.com:9090/auth
+  callback_url: https://vouch.yourdomain.com:9090/auth
   

@@ -1,22 +1,23 @@
 package cfg
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/spf13/viper"
+	securerandom "github.com/theckman/go-securerandom"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
-
-	"github.com/spf13/viper"
-	securerandom "github.com/theckman/go-securerandom"
 )
 
 // config vouch jwt cookie configuration
@@ -65,6 +66,7 @@ type oauthConfig struct {
 	Provider        string   `mapstructure:"provider"`
 	ClientID        string   `mapstructure:"client_id"`
 	ClientSecret    string   `mapstructure:"client_secret"`
+	ProviderURL     string   `mapstructure:"provider_url"`
 	AuthURL         string   `mapstructure:"auth_url"`
 	TokenURL        string   `mapstructure:"token_url"`
 	RedirectURL     string   `mapstructure:"callback_url"`
@@ -397,20 +399,90 @@ func setDefaults() {
 
 	// OAuth defaults and client configuration
 	err := UnmarshalKey("oauth", &GenOAuth)
-	if err == nil {
-		if GenOAuth.Provider == Providers.Google {
-			setDefaultsGoogle()
-			// setDefaultsGoogle also configures the OAuthClient
-		} else if GenOAuth.Provider == Providers.GitHub {
-			setDefaultsGitHub()
-			configureOAuthClient()
-		} else {
-			configureOAuthClient()
+	if err != nil {
+		log.Errorf("error configuring oauth %s", err.Error())
+	}
+	if GenOAuth.Provider == Providers.Google {
+		setOAuthDefaultsGoogle()
+		// setDefaultsGoogle also configures the OAuthClient
+	} else if GenOAuth.Provider == Providers.GitHub {
+		setOAuthDefaultsGitHub()
+		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.OIDC && GenOAuth.ProviderURL != "" {
+		err := setOAuthDefaultsOIDCDiscovery()
+		if err != nil {
+			log.Errorf("error setting endpoints from OIDC Discovery: %s", err.Error())
 		}
+		configureOAuthClient()
+	} else {
+		configureOAuthClient()
 	}
 }
 
-func setDefaultsGoogle() {
+type oidcDiscoveryJSON struct {
+	Issuer          string   `json:"issuer"`
+	AuthURL         string   `json:"authorization_endpoint"`
+	TokenURL        string   `json:"token_endpoint"`
+	UserInfoURL     string   `json:"userinfo_endpoint"`
+	ScopesSupported []string `json:"scopes_supported"`
+}
+
+// retrieve JSON from provider's /.well-known/openid-configuration and configure endpoints
+func setOAuthDefaultsOIDCDiscovery() error {
+	// func NewProvider(ctx context.Context, issuer string) (*Provider, error) {
+	wellKnownURL := strings.TrimSuffix(GenOAuth.ProviderURL, "/") + "/.well-known/openid-configuration"
+	log.Infof("configuring oauth enpoints via OIDC Discovery from %s", wellKnownURL)
+	req, err := http.NewRequest("GET", wellKnownURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("oidc: unable to read response body: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%s: %s", resp.Status, body)
+	}
+
+	var oidcD oidcDiscoveryJSON
+	err = json.Unmarshal(body, &oidcD)
+	if err != nil {
+		return fmt.Errorf("oidc: couldn't read json from provider: %v", err)
+	}
+
+	if GenOAuth.ProviderURL != oidcD.Issuer {
+		return fmt.Errorf("oidc: issuers did not match, wanted: %q got: %q", GenOAuth.ProviderURL, oidcD.Issuer)
+	}
+
+	// SUCCESS!!
+	// set the retrieved items
+
+	GenOAuth.AuthURL = oidcD.AuthURL
+	GenOAuth.TokenURL = oidcD.TokenURL
+	GenOAuth.UserInfoURL = oidcD.UserInfoURL
+
+	if len(oidcD.ScopesSupported) > 0 {
+		GenOAuth.Scopes = oidcD.ScopesSupported
+	} else {
+		GenOAuth.Scopes = []string{"openid"}
+	}
+
+	log.Debugf("set oauth.AuthURL %s", GenOAuth.AuthURL)
+	log.Debugf("set oauth.TokenURL %s", GenOAuth.TokenURL)
+	log.Debugf("set oauth.UserInfoURL %s", GenOAuth.UserInfoURL)
+	log.Debugf("set oauth.Scopes %s", GenOAuth.Scopes)
+
+	return nil
+}
+
+func setOAuthDefaultsGoogle() {
 	log.Info("configuring Google OAuth")
 	GenOAuth.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
 	OAuthClient = &oauth2.Config{
@@ -429,7 +501,7 @@ func setDefaultsGoogle() {
 	}
 }
 
-func setDefaultsGitHub() {
+func setOAuthDefaultsGitHub() {
 	// log.Info("configuring GitHub OAuth")
 	if GenOAuth.AuthURL == "" {
 		GenOAuth.AuthURL = github.Endpoint.AuthURL
