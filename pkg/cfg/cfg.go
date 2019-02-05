@@ -131,6 +131,7 @@ const (
 func init() {
 	// from config file
 	ParseConfig()
+	log.Debug("test 1")
 
 	// can pass loglevel on the command line
 	var ll = flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
@@ -148,6 +149,7 @@ func init() {
 	}
 
 	setDefaults()
+	log.Debug("test 2")
 
 	if *port != -1 {
 		Cfg.Port = *port
@@ -165,6 +167,8 @@ func init() {
 	}
 
 	log.Debug(viper.AllSettings())
+	log.Debug("test 3")
+	log.Debuf("debug Cfg: %v", Cfg)
 }
 
 // ParseConfig parse the config file

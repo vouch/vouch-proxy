@@ -27,8 +27,6 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// Allow overriding the cookie domain in the config file
 	log.Debugf("debug domain: %v", cfg.Cfg.Cookie.Domain)
 	log.Debugf("debug viper: %v", viper.AllSettings())
-	var temp = viper.AllSettings().Cookies.domain
-	log.Debugf("debug temp: %v", temp)
 	if cfg.Cfg.Cookie.Domain != "" {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
