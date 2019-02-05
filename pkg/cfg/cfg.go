@@ -168,7 +168,7 @@ func init() {
 
 	log.Debug(viper.AllSettings())
 	log.Debug("test 3")
-	log.Debuf("debug Cfg: %v", Cfg)
+	log.Debugf("debug Cfg: %v", Cfg)
 }
 
 // ParseConfig parse the config file
