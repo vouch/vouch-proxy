@@ -7,7 +7,7 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export VOUCH_ROOT=${GOPATH}/src/github.com/simongottschlag/vouch-proxy/
+export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 
 IMAGE=voucher/vouch-proxy
 GOIMAGE=golang:1.10

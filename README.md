@@ -1,7 +1,7 @@
 # Vouch Proxy
 # Renaming project to **Vouch Proxy** in January 2019
 
-In January the project was renamed to [vouch/vouch-proxy](https://github.com/simongottschlag/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/simongottschlag/vouch-proxy/issues/35) with another project.
+In January the project was renamed to [vouch/vouch-proxy](https://github.com/vouch/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/vouch/vouch-proxy/issues/35) with another project.
 
 Other namespaces have been changed including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which has become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
 
@@ -85,7 +85,7 @@ server {
       proxy_pass http://dev.yourdomain.com:8080;
       #  may need to set
       #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
-      #  in this bock as per https://github.com/simongottschlag/vouch-proxy/issues/26#issuecomment-425215810
+      #  in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
       # set user header (usually an email)
       proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
     }

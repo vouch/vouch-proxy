@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/simongottschlag/vouch-proxy/pkg/structs"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 var testdb = "/tmp/storage-test.db"

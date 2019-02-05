@@ -87,12 +87,12 @@ type branding struct {
 	UCName    string // upper case
 	CcName    string // camel case
 	OldLCName string // lasso
-	URL       string // https://github.com/simongottschlag/vouch-proxy
+	URL       string // https://github.com/vouch/vouch-proxy
 }
 
 var (
 	// Branding that's our name
-	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/simongottschlag/vouch-proxy"}
+	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// Cfg the main exported config variable
 	Cfg config
@@ -452,7 +452,7 @@ func setDefaultsGitHub() {
 		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
 	}
 	if len(GenOAuth.Scopes) == 0 {
-		// https://github.com/simongottschlag/vouch-proxy/issues/63
+		// https://github.com/vouch/vouch-proxy/issues/63
 		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
 		GenOAuth.Scopes = []string{"read:user"}
 	}
@@ -483,7 +483,7 @@ func getOrGenerateJWTSecret() string {
 		log.Warn("generating random jwt.secret and storing it in " + secretFile)
 
 		// make sure to create 256 bits for the secret
-		// see https://github.com/simongottschlag/vouch-proxy/issues/54
+		// see https://github.com/vouch/vouch-proxy/issues/54
 		rstr, err := securerandom.Base64OfBytes(base64Bytes)
 		if err != nil {
 			log.Error(err)

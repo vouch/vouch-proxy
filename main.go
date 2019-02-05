@@ -1,7 +1,7 @@
 package main
 
 // vouch
-// github.com/simongottschlag/vouch-proxy
+// github.com/vouch/vouch-proxy
 
 import (
 	"net/http"
@@ -13,10 +13,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/simongottschlag/vouch-proxy/handlers"
-	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
-	"github.com/simongottschlag/vouch-proxy/pkg/timelog"
-	tran "github.com/simongottschlag/vouch-proxy/pkg/transciever"
+	"github.com/vouch/vouch-proxy/handlers"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/timelog"
+	tran "github.com/vouch/vouch-proxy/pkg/transciever"
 )
 
 // version and semver get overwritten by build with

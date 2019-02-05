@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"github.com/simongottschlag/vouch-proxy/pkg/structs"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 // PutSite inna da db

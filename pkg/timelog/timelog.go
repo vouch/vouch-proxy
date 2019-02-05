@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/simongottschlag/vouch-proxy/pkg/response"
+	"github.com/vouch/vouch-proxy/pkg/response"
 
 	log "github.com/Sirupsen/logrus"
 	isatty "github.com/mattn/go-isatty"
