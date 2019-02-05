@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-var defaultMaxAge = config.JWT.MaxAge * 60
 var config = viper.AllSettings()
+var defaultMaxAge = config.JWT.MaxAge * 60
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
