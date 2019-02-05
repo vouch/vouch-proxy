@@ -6,7 +6,7 @@ import (
 
 	// "github.com/vouch/vouch-proxy/pkg/structs"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
+	Cfg "github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
