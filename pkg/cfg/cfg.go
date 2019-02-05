@@ -184,7 +184,6 @@ func ParseConfig() {
 		panic(err)
 	}
 	UnmarshalKey(Branding.LCName, &Cfg)
-	log.Debugf("debug unmarshal Cfg: %v", Cfg)
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
 		var oldConfig config
