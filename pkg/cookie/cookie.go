@@ -12,6 +12,7 @@ import (
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
+var cookieConfig = cfg.Cfg.Cookie
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -28,6 +29,8 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	log.Debugf("temp debug - cookie domain: %v", cfg.Cfg.Cookie.Domain)
 	log.Debugf("temp debug - cookie: %v", cfg.Cfg.Cookie)
 	log.Debugf("temp debug - cfg: %v", pretty.Formatter(cfg.Cfg))
+	log.Debugf("temp debug - host: %v", r.Host)
+	log.Debugf("temp debug - cookieConfig: %v", cookieConfig)
 	if cfg.Cfg.Cookie.Domain != "" {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
