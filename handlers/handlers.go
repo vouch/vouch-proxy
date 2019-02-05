@@ -48,7 +48,7 @@ var (
 func randString() string {
 	b := make([]byte, 32)
 	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
+	return base64.StdEncoding.EncodeToString(b)
 }
 
 func loginURL(r *http.Request, state string) string {
