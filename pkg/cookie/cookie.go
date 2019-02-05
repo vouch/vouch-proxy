@@ -12,7 +12,7 @@ import (
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
-
+cfg.Init()
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
 	setCookie(w, r, val, defaultMaxAge)
