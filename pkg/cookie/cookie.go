@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var config = viper.AllSettings()
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
 
 // SetCookie http
@@ -26,9 +25,10 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	}
 	domain := domains.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
-	log.Debugf("debug domain: %v", config.Cookie.Domain)
-	if config.Cookie.Domain != "" {
-		domain = config.Cookie.Domain
+	log.Debugf("debug domain: %v", cfg.Cfg.Cookie.Domain)
+	log.Debugf("debug viper: %v", viper.AllSettings())
+	if cfg.Cfg.Cookie.Domain != "" {
+		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
