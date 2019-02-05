@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/kr/pretty"
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
