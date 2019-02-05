@@ -165,6 +165,7 @@ func init() {
 	}
 
 	log.Debug(viper.AllSettings())
+	log.Debugf("temp debug - all settings: %v", viper.AllSettings())
 }
 
 // ParseConfig parse the config file
