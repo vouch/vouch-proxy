@@ -36,7 +36,6 @@ func init() {
 }
 
 func main() {
-	log.Debugf("debug main cfg: %v", cfg.Cfg)
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	log.WithFields(log.Fields{
 		// "semver":    semver,
