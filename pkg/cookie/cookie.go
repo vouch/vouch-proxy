@@ -10,7 +10,7 @@ import (
 	"github.com/simongottschlag/vouch-proxy/pkg/domains"
 )
 
-var defaultMaxAge = cfg.Get("JWT.MaxAge") * 60
+var defaultMaxAge = cfg.Get("JWT.MaxAge").(int) * 60
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
