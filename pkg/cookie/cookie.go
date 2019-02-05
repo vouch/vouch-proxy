@@ -8,11 +8,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
 	"github.com/simongottschlag/vouch-proxy/pkg/domains"
-	"github.com/kr/pretty"
+	"github.com/spf13/viper"
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
-var cookieConfig = cfg.Cfg.Cookie
+var cookieConfig = viper.AllSettings()
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -28,7 +28,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// Allow overriding the cookie domain in the config file
 	log.Debugf("temp debug - cookie domain: %v", cfg.Cfg.Cookie.Domain)
 	log.Debugf("temp debug - cookie: %v", cfg.Cfg.Cookie)
-	log.Debugf("temp debug - cfg: %v", pretty.Formatter(cfg.Cfg))
+	log.Debugf("temp debug - cfg: %v", cfg.Cfg)
 	log.Debugf("temp debug - host: %v", r.Host)
 	log.Debugf("temp debug - cookieConfig: %v", cookieConfig)
 	if cfg.Cfg.Cookie.Domain != "" {
