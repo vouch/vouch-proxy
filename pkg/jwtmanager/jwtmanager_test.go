@@ -3,8 +3,8 @@ package jwtmanager
 import (
 	"testing"
 
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
+	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
+	"github.com/simongottschlag/vouch-proxy/pkg/structs"
 
 	// log "github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"

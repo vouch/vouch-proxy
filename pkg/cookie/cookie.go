@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	// "github.com/vouch/vouch-proxy/pkg/structs"
+	// "github.com/simongottschlag/vouch-proxy/pkg/structs"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
+	"github.com/simongottschlag/vouch-proxy/pkg/domains"
 	"github.com/kr/pretty"
 )
 

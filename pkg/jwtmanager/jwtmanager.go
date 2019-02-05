@@ -11,8 +11,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
+	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
+	"github.com/simongottschlag/vouch-proxy/pkg/structs"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )

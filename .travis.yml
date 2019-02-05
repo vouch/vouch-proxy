@@ -1,5 +1,5 @@
 language: go
-go_import_path: github.com/vouch/vouch-proxy
+go_import_path: github.com/simongottschlag/vouch-proxy
 
 sudo: false
 

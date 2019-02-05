@@ -10,7 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/simongottschlag/vouch-proxy/pkg/cfg"
 )
 
 var (

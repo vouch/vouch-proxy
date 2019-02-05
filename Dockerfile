@@ -1,11 +1,11 @@
 # voucher/vouch-proxy
-# https://github.com/vouch/vouch-proxy
+# https://github.com/simongottschlag/vouch-proxy
 FROM golang:1.10 AS builder
 
 LABEL maintainer="vouch@bnf.net"
 
-RUN mkdir -p ${GOPATH}/src/github.com/vouch/vouch-proxy
-WORKDIR ${GOPATH}/src/github.com/vouch/vouch-proxy
+RUN mkdir -p ${GOPATH}/src/github.com/simongottschlag/vouch-proxy
+WORKDIR ${GOPATH}/src/github.com/simongottschlag/vouch-proxy
 
 COPY . .
 
