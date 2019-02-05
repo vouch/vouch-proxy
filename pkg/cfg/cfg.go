@@ -165,8 +165,6 @@ func init() {
 	}
 
 	log.Debug(viper.AllSettings())
-	var Cfg = viper.AllSettings()
-	return Cfg
 }
 
 // ParseConfig parse the config file
