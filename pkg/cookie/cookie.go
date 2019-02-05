@@ -6,11 +6,11 @@ import (
 
 	// "github.com/vouch/vouch-proxy/pkg/structs"
 	log "github.com/Sirupsen/logrus"
-	Cfg "github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
-var defaultMaxAge = Cfg.JWT.MaxAge * 60
+var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -24,27 +24,27 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	}
 	domain := domains.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
-	log.Debugf("temp debug - cookie domain: %v", Cfg.Cookie.Domain)
-	log.Debugf("temp debug - cfg: %v", Cfg)
-	if Cfg.Cookie.Domain != "" {
-		domain = Cfg.Cookie.Domain
+	log.Debugf("temp debug - cookie domain: %v", cfg.Cfg.Cookie.Domain)
+	log.Debugf("temp debug - cfg: %v", cfg)
+	if cfg.Cfg.Cookie.Domain != "" {
+		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
 	http.SetCookie(w, &http.Cookie{
-		Name:     Cfg.Cookie.Name,
+		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
 		Path:     "/",
 		Domain:   domain,
 		MaxAge:   maxAge,
-		Secure:   Cfg.Cookie.Secure,
-		HttpOnly: Cfg.Cookie.HTTPOnly,
+		Secure:   cfg.Cfg.Cookie.Secure,
+		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
 	})
 }
 
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(Cfg.Cookie.Name)
+	cookie, err := r.Cookie(cfg.Cfg.Cookie.Name)
 	if err != nil {
 		return "", err
 	}
@@ -53,7 +53,7 @@ func Cookie(r *http.Request) (string, error) {
 	}
 
 	log.WithFields(log.Fields{
-		"cookieName":  Cfg.Cookie.Name,
+		"cookieName":  cfg.Cfg.Cookie.Name,
 		"cookieValue": cookie.Value,
 	}).Debug("cookie")
 	return cookie.Value, err
