@@ -79,6 +79,7 @@ type OAuthProviders struct {
 	Google    string
 	GitHub    string
 	IndieAuth string
+	ADFS      string
 	OIDC      string
 }
 
@@ -113,6 +114,7 @@ var (
 		Google:    "google",
 		GitHub:    "github",
 		IndieAuth: "indieauth",
+		ADFS:      "adfs",
 		OIDC:      "oidc",
 	}
 
@@ -213,12 +215,12 @@ func Get(key string) string {
 	return viper.GetString(key)
 }
 
-// Get int value for key
+// GetInt int value for key
 func GetInt(key string) int {
 	return viper.GetInt(key)
 }
 
-// Get bool value for key
+// GetBool bool value for key
 func GetBool(key string) bool {
 	return viper.GetBool(key)
 }
@@ -246,8 +248,8 @@ func BasicTest() error {
 	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.UserInfoURL == "":
-		// everyone except IndieAuth and Google has an userInfoURL
+	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
+		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
 	}
 
