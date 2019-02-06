@@ -47,6 +47,22 @@ func (u *GoogleUser) PrepareUserData() {
 	u.Username = u.Email
 }
 
+type ADFSUser struct {
+	User
+	Sub string `json:"sub"`
+	UPN string `json:"upn"`
+	// UniqueName string `json:"unique_name"`
+	// PwdExp     string `json:"pwd_exp"`
+	// SID        string `json:"sid"`
+	// Groups     string `json:"groups"`
+	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *ADFSUser) PrepareUserData() {
+	u.Username = u.UPN
+}
+
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
