@@ -190,6 +190,12 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
+	if cfg.Get("Headers.IDToken") != "" {
+		w.Header().Add(cfg.Get("Headers.IDToken"), claims.IDToken)
+	}
+	if cfg.Get("Headers.AccessToken") != "" {
+		w.Header().Add(cfg.Get("Headers.AccessToken"), claims.AccessToken)
+	}
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
 
@@ -638,6 +644,8 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 
 	adfsUser.PrepareUserData()
 	user.Username = adfsUser.UPN
+	user.IDToken = string(tokenRes.IDToken)
+	user.AccessToken = string(tokenRes.AccessToken)
 	log.Debug(user)
 	return nil
 }

@@ -10,12 +10,14 @@ type User struct {
 	// TODO: set Provider here so that we can pass it to db
 	// populated by db (via mapstructure) or from provider (via json)
 	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username",mapstructure:"username"`
-	Name       string `json:"name",mapstructure:"name"`
-	Email      string `json:"email",mapstructure:"email"`
-	CreatedOn  int64  `json:"createdon"`
-	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id",mapstructure:"id"`
+	Username    string `json:"username",mapstructure:"username"`
+	Name        string `json:"name",mapstructure:"name"`
+	Email       string `json:"email",mapstructure:"email"`
+	CreatedOn   int64  `json:"createdon"`
+	LastUpdate  int64  `json:"lastupdate"`
+	ID          int    `json:"id",mapstructure:"id"`
+	IDToken     string `json:"id_token",mapstructure:"id_token"`
+	AccessToken string `json:"access_token,mapstructure:"id_token"`
 	// jwt.StandardClaims
 }
 
