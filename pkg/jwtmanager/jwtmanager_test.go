@@ -26,6 +26,8 @@ func init() {
 	lc = VouchClaims{
 		u1.Username,
 		Sites,
+		u1.IDToken,
+		u1.AccessToken,
 		StandardClaims,
 	}
 }
