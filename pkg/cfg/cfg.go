@@ -424,6 +424,9 @@ func setDefaults() {
 		} else if GenOAuth.Provider == Providers.GitHub {
 			setDefaultsGitHub()
 			configureOAuthClient()
+		} else if GenOAuth.Provider == Providers.ADFS {
+			setDefaultsADFS()
+			configureOAuthClient()
 		} else {
 			configureOAuthClient()
 		}
@@ -447,6 +450,11 @@ func setDefaultsGoogle() {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
 	}
+}
+
+func setDefaultsADFS() {
+	log.Info("configuring ADFS OAuth")
+	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
 }
 
 func setDefaultsGitHub() {
