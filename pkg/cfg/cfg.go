@@ -217,16 +217,6 @@ func Get(key string) string {
 	return viper.GetString(key)
 }
 
-// GetInt int value for key
-func GetInt(key string) int {
-	return viper.GetInt(key)
-}
-
-// GetBool bool value for key
-func GetBool(key string) bool {
-	return viper.GetBool(key)
-}
-
 // BasicTest just a quick sanity check to see if the config is sound
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
