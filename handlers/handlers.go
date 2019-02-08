@@ -573,6 +573,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	return nil
 }
 
+type adfsTokenRes struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	IDToken     string `json:"id_token"`
+	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
+}
+
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
 func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 	code := r.URL.Query().Get("code")
@@ -594,26 +601,16 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 	req.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
 	req.Header.Set("Accept", "application/json")
 
-	// v := url.Values{}
-	// userinfo, err := client.PostForm(cfg.GenOAuth.UserInfoURL, v)
-
 	client := &http.Client{}
 	userinfo, err := client.Do(req)
 
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 	defer userinfo.Body.Close()
 
 	body, _ := ioutil.ReadAll(userinfo.Body)
-
-	var tokenRes struct {
-		AccessToken string `json:"access_token"`
-		TokenType   string `json:"token_type"`
-		IDToken     string `json:"id_token"`
-		ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
-	}
+	tokenRes := adfsTokenRes{}
 
 	if err := json.Unmarshal(body, &tokenRes); err != nil {
 		log.Errorf("oauth2: cannot fetch token: %v", err)
@@ -637,7 +634,7 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 	log.Println("adfs adfsUser: ", adfsUser)
 
 	adfsUser.PrepareUserData()
-	user.Username = adfsUser.UPN
+	user.Username = adfsUser.Username
 	log.Debug(user)
 	return nil
 }
