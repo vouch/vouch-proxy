@@ -215,16 +215,6 @@ func Get(key string) string {
 	return viper.GetString(key)
 }
 
-// GetInt int value for key
-func GetInt(key string) int {
-	return viper.GetInt(key)
-}
-
-// GetBool bool value for key
-func GetBool(key string) bool {
-	return viper.GetBool(key)
-}
-
 // BasicTest just a quick sanity check to see if the config is sound
 func BasicTest() error {
 	for _, opt := range RequiredOptions {
@@ -416,6 +406,9 @@ func setDefaults() {
 		} else if GenOAuth.Provider == Providers.GitHub {
 			setDefaultsGitHub()
 			configureOAuthClient()
+		} else if GenOAuth.Provider == Providers.ADFS {
+			setDefaultsADFS()
+			configureOAuthClient()
 		} else {
 			configureOAuthClient()
 		}
@@ -439,6 +432,11 @@ func setDefaultsGoogle() {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
 	}
+}
+
+func setDefaultsADFS() {
+	log.Info("configuring ADFS OAuth")
+	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
 }
 
 func setDefaultsGitHub() {
