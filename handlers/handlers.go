@@ -192,11 +192,11 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
-	if cfg.Get("Headers.IDToken") != "" {
-		w.Header().Add(cfg.Get("Headers.IDToken"), claims.IDToken)
+	if cfg.Cfg.Headers.IDToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.IDToken, claims.IDToken)
 	}
-	if cfg.Get("Headers.AccessToken") != "" {
-		w.Header().Add(cfg.Get("Headers.AccessToken"), claims.AccessToken)
+	if cfg.Cfg.Headers.AccessToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.AccessToken)
 	}
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")

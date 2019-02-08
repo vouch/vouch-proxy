@@ -10,8 +10,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
-var defaultMaxAge = cfg.GetInt("JWT.MaxAge") * 60
-
+var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -25,25 +24,25 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	}
 	domain := domains.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
-	if cfg.Get("Cookie.Domain") != "" {
-		domain = cfg.Get("Cookie.Domain")
+	if cfg.Cfg.Cookie.Domain != "" {
+		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
 	http.SetCookie(w, &http.Cookie{
-		Name:     cfg.Get("Cookie.Name"),
+		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
 		Path:     "/",
 		Domain:   domain,
 		MaxAge:   maxAge,
-		Secure:   cfg.GetBool("Cookie.Secure"),
-		HttpOnly: cfg.GetBool("Cookie.HTTPOnly"),
+		Secure:   cfg.Cfg.Cookie.Secure,
+		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
 	})
 }
 
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(cfg.Get("Cookie.Name"))
+	cookie, err := r.Cookie(cfg.Cfg.Cookie.Name)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +51,7 @@ func Cookie(r *http.Request) (string, error) {
 	}
 
 	log.WithFields(log.Fields{
-		"cookieName":  cfg.Get("Cookie.Name"),
+		"cookieName":  cfg.Cfg.Cookie.Name,
 		"cookieValue": cookie.Value,
 	}).Debug("cookie")
 	return cookie.Value, err
