@@ -25,4 +25,4 @@ COPY templates/ templates/
 COPY static /static
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 EXPOSE 9090
-CMD ["/vouch-proxy"]
+ENTRYPOINT ["/vouch-proxy"]
