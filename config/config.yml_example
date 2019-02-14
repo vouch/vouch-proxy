@@ -11,6 +11,12 @@ vouch:
   listen: 0.0.0.0
   port: 9090
 
+  # testing: force all 302 redirects to be rendered as a webpage with a link
+  # if you're having difficulty with constant redirects, please do turn on testing
+  # testing: true
+  # test_url: add this URL to the page which vouch displays as a convenience for testing
+  test_url: http://yourdomain.com
+
   # domains:
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
@@ -75,22 +81,19 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
-    # If idToken is defined, all valid requests to /validate will receive a header (defined in the value) containing the id_token from the OpenID Provider
-    # If idToken is empty or undefined, no header will be added
-    # This will make the response largerwich in turn can affect the response time
-    # idToken: x-vouch-idtoken
-    # If accessToken is defined, all valid requests to /validate will receive a header (defined in the value) containing the access_token from the OpenID Provider
-    # If accessToken is empty or undefined, no header will be added
-    # This will make the response larger wich in turn can affect the response time
-    # accessToken: x-vouch-accesstoken
+    # If idpIDToken is defined, the `id_token` from the OpenID Provider will be returned by /validate in the configured header
+    # idpIDToken: X-Vouch-IdP-IDToken
+    # If idpAccessToken is defined, the `access_token` from the OpenID Provider will be returned by /validate in the configured header
+    # idpAccessToken: X-Vouch-IdP-AccessToken
+    # If either idpIDToken or idpAccessToken is empty or undefined, no header will be added
+    # a note on idp headers:
+    # Unless your application will make use of these headers there is no reason you should expose these tokens.
+    # They are not used by Vouch Proxy for validation. Including these headers will make the response slightly larger which may
+    # incur a marginal performance penalty
 
   db: 
     file: data/vouch_bolt.db
 
-  # testing: force all 302 redirects to be rendered as a webpage with a link
-  testing: true
-  # test_url: add this URL to the page which vouch displays
-  test_url: http://yourdomain.com
   # webapp: WIP for web interface to vouch (mostly logs)
   webapp: true
 

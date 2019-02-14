@@ -192,11 +192,11 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
-	if cfg.Cfg.Headers.IDToken != "" {
-		w.Header().Add(cfg.Cfg.Headers.IDToken, claims.IDToken)
+	if cfg.Cfg.Headers.IdpIDToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.IdpIDToken, claims.IDToken)
 	}
-	if cfg.Cfg.Headers.AccessToken != "" {
-		w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.AccessToken)
+	if cfg.Cfg.Headers.IdpAccessToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.IdpAccessToken, claims.AccessToken)
 	}
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
@@ -255,6 +255,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HealthcheckHandler returns json "ok" (we're alive!)
+// TODO: add additional checks!
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"ok\": true }")

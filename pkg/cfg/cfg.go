@@ -41,13 +41,13 @@ type config struct {
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
 	Headers struct {
-		JWT         string `mapstructure:"jwt"`
-		IDToken     string `mapstructure:"idToken"`
-		AccessToken string `mapstructure:"accessToken"`
-		User        string `mapstructure:"user"`
-		QueryString string `mapstructure:"querystring"`
-		Redirect    string `mapstructure:"redirect"`
-		Success     string `mapstructure:"success"`
+		JWT            string `mapstructure:"jwt"`
+		User           string `mapstructure:"user"`
+		QueryString    string `mapstructure:"querystring"`
+		Redirect       string `mapstructure:"redirect"`
+		Success        string `mapstructure:"success"`
+		IdpIDToken     string `mapstructure:"idpIDToken"`
+		IdpAccessToken string `mapstructure:"idpAccessToken"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
@@ -356,11 +356,11 @@ func setDefaults() {
 	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
 		Cfg.Headers.JWT = "X-" + Branding.CcName + "-Token"
 	}
-	if !viper.IsSet(Branding.LCName + ".headers.idToken") {
-		Cfg.Headers.IDToken = ""
+	if !viper.IsSet(Branding.LCName + ".headers.idpIDToken") {
+		Cfg.Headers.IdpAccessToken = ""
 	}
-	if !viper.IsSet(Branding.LCName + ".headers.accessToken") {
-		Cfg.Headers.AccessToken = ""
+	if !viper.IsSet(Branding.LCName + ".headers.idpAccessToken") {
+		Cfg.Headers.IdpAccessToken = ""
 	}
 	if !viper.IsSet(Branding.LCName + ".headers.querystring") {
 		Cfg.Headers.QueryString = "access_token"
