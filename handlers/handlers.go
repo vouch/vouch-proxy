@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -48,7 +50,7 @@ var (
 func randString() string {
 	b := make([]byte, 32)
 	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
+	return base64.URLEncoding.EncodeToString(b)
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -424,6 +426,8 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		return getUserInfoFromIndieAuth(r, user)
+	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
+		return getUserInfoFromADFS(r, user)
 	}
 
 	providerToken, err := cfg.OAuthClient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
@@ -565,6 +569,72 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	}
 	iaUser.PrepareUserData()
 	user.Username = iaUser.Username
+	log.Debug(user)
+	return nil
+}
+
+type adfsTokenRes struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	IDToken     string `json:"id_token"`
+	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
+}
+
+// More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
+func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
+	code := r.URL.Query().Get("code")
+	log.Errorf("code: %s", code)
+
+	formData := url.Values{}
+	formData.Set("code", code)
+	formData.Set("grant_type", "authorization_code")
+	formData.Set("resource", cfg.GenOAuth.RedirectURL)
+	formData.Set("client_id", cfg.GenOAuth.ClientID)
+	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
+	formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
+
+	req, err := http.NewRequest("POST", cfg.GenOAuth.TokenURL, strings.NewReader(formData.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{}
+	userinfo, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+	defer userinfo.Body.Close()
+
+	body, _ := ioutil.ReadAll(userinfo.Body)
+	tokenRes := adfsTokenRes{}
+
+	if err := json.Unmarshal(body, &tokenRes); err != nil {
+		log.Errorf("oauth2: cannot fetch token: %v", err)
+		return nil
+	}
+
+	s := strings.Split(tokenRes.IDToken, ".")
+	if len(s) < 2 {
+		log.Error("jws: invalid token received")
+		return nil
+	}
+
+	idToken, err := base64.RawURLEncoding.DecodeString(s[1])
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+
+	adfsUser := structs.ADFSUser{}
+	json.Unmarshal([]byte(idToken), &adfsUser)
+	log.Println("adfs adfsUser: ", adfsUser)
+
+	adfsUser.PrepareUserData()
+	user.Username = adfsUser.Username
 	log.Debug(user)
 	return nil
 }
