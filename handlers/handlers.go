@@ -75,6 +75,8 @@ func loginURL(r *http.Request, state string) string {
 		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
+		url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
 		url = cfg.OAuthClient.AuthCodeURL(state)
 	}
@@ -190,6 +192,12 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
+	if cfg.Cfg.Headers.IDToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.IDToken, claims.IDToken)
+	}
+	if cfg.Cfg.Headers.AccessToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.AccessToken)
+	}
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
 

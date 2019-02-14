@@ -75,6 +75,14 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
+    # If idToken is defined, all valid requests to /validate will receive a header (defined in the value) containing the id_token from the OpenID Provider
+    # If idToken is empty or undefined, no header will be added
+    # This will make the response largerwich in turn can affect the response time
+    # idToken: x-vouch-idtoken
+    # If accessToken is defined, all valid requests to /validate will receive a header (defined in the value) containing the access_token from the OpenID Provider
+    # If accessToken is empty or undefined, no header will be added
+    # This will make the response larger wich in turn can affect the response time
+    # accessToken: x-vouch-accesstoken
 
   db: 
     file: data/vouch_bolt.db

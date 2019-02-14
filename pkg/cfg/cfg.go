@@ -42,6 +42,8 @@ type config struct {
 	}
 	Headers struct {
 		JWT         string `mapstructure:"jwt"`
+		IDToken     string `mapstructure:"idToken"`
+		AccessToken string `mapstructure:"accessToken"`
 		User        string `mapstructure:"user"`
 		QueryString string `mapstructure:"querystring"`
 		Redirect    string `mapstructure:"redirect"`
@@ -353,6 +355,12 @@ func setDefaults() {
 	// headers defaults
 	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
 		Cfg.Headers.JWT = "X-" + Branding.CcName + "-Token"
+	}
+	if !viper.IsSet(Branding.LCName + ".headers.idToken") {
+		Cfg.Headers.IDToken = ""
+	}
+	if !viper.IsSet(Branding.LCName + ".headers.accessToken") {
+		Cfg.Headers.AccessToken = ""
 	}
 	if !viper.IsSet(Branding.LCName + ".headers.querystring") {
 		Cfg.Headers.QueryString = "access_token"
