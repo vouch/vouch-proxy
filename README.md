@@ -107,6 +107,8 @@ server {
 
 ```
 
+An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
+
 ## Running from Docker
 
 ```bash
