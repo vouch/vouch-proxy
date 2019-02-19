@@ -645,6 +645,8 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 
 	adfsUser.PrepareUserData()
 	user.Username = adfsUser.Username
+	user.IDToken = string(tokenRes.IDToken)
+	user.AccessToken = string(tokenRes.AccessToken)
 	log.Debug(user)
 	return nil
 }
