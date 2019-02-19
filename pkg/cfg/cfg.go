@@ -485,7 +485,7 @@ func getOrGenerateJWTSecret() string {
 		// see https://github.com/vouch/vouch-proxy/issues/54
 		rstr, err := securerandom.Base64OfBytes(base64Bytes)
 		if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 		}
 		b = []byte(rstr)
 		err = ioutil.WriteFile(secretFile, b, 0600)
