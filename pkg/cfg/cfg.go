@@ -232,8 +232,9 @@ func BasicTest() error {
 	case GenOAuth.ClientID == "":
 		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
-	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.ClientSecret == "":
+	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
 		// everyone except IndieAuth has a clientSecret
+		// ADFS and OIDC providers also do not require this, but can have it optionally set.
 		return errors.New("configuration error: o`auth.client_secret not found")
 	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
