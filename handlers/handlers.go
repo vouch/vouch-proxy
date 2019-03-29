@@ -47,6 +47,11 @@ var (
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 )
 
+func init() {
+	sessstore.Options.HttpOnly = cfg.Cfg.Session.HTTPOnly
+	sessstore.Options.Secure = cfg.Cfg.Session.Secure
+}
+
 func randString() string {
 	b := make([]byte, 32)
 	rand.Read(b)

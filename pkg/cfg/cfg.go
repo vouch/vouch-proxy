@@ -51,8 +51,10 @@ type config struct {
 		File string `mapstructure:"file"`
 	}
 	Session struct {
-		Name string `mapstructure:"name"`
-		Key  string `mapstructure:"key"`
+		Name     string `mapstructure:"name"`
+		Key      string `mapstructure:"key"`
+		Secure   bool   `mapstructure:"secure"`
+		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
@@ -375,6 +377,12 @@ func setDefaults() {
 	// session
 	if !viper.IsSet(Branding.LCName + ".session.name") {
 		Cfg.Session.Name = Branding.CcName + "Session"
+	}
+	if !viper.IsSet(Branding.LCName + ".session.secure") {
+		Cfg.Session.Secure = true
+	}
+	if !viper.IsSet(Branding.LCName + ".session.httpOnly") {
+		Cfg.Session.HTTPOnly = true
 	}
 	if !viper.IsSet(Branding.LCName + ".session.key") {
 		log.Warn("generating random session.key")

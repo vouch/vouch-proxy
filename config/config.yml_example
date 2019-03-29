@@ -69,7 +69,8 @@ vouch:
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
     key: you_random_key
-
+    secure: true
+    httpOnly: true
 
   headers:
     jwt: X-Vouch-Token
