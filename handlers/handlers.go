@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	securerandom "github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -38,6 +38,10 @@ type AuthError struct {
 	Error string
 	JWT   string
 }
+
+const (
+	base64Bytes = 32
+)
 
 var (
 	// Templates
@@ -246,6 +250,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HealthcheckHandler /healthcheck
+// just returns 200 '{ "ok": true }'
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"ok\": true }")
@@ -263,8 +269,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
+	state, err := securerandom.Base64OfBytes(base64Bytes)
+	if err != nil {
+		log.Error(err)
+	}
+
 	// set the state variable in the session
-	var state = randString()
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
