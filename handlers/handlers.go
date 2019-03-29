@@ -346,6 +346,10 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 				break
 			}
 		}
+
+		if !ok {
+			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
+		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
