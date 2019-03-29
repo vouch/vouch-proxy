@@ -47,10 +47,9 @@ var (
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 )
 
-func randString() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
+func init() {
+	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
+	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 }
 
 func loginURL(r *http.Request, state string) string {
