@@ -122,6 +122,8 @@ var (
 	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
 
 	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
+
+	cmdLineConfig *string
 )
 
 const (
@@ -131,14 +133,15 @@ const (
 )
 
 func init() {
-	// from config file
-	ParseConfig()
 
 	// can pass loglevel on the command line
-	var ll = flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
-	var port = flag.Int("port", -1, "port")
-	var help = flag.Bool("help", false, "show usage")
+	ll := flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	// from config file
+	port := flag.Int("port", -1, "port")
+	help := flag.Bool("help", false, "show usage")
+	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
+	ParseConfig()
 	if *help {
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -172,9 +175,16 @@ func init() {
 // ParseConfig parse the config file
 func ParseConfig() {
 	log.Debug("opening config")
+
 	if os.Getenv(Branding.UCName+"_CONFIG") != "" {
 		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
 		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
+	} else if *cmdLineConfig != "" {
+		log.Infof("config file set on commandline: %s", *cmdLineConfig)
+		viper.AddConfigPath("/")
+		viper.AddConfigPath(os.Getenv(Branding.UCName + "_ROOT"))
+		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+		viper.SetConfigFile(*cmdLineConfig)
 	} else {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
