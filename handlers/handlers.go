@@ -469,6 +469,10 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Println("OpenID userinfo body: ", string(data))
+	if err = mapClaims(data, user); err != nil {
+		log.Error(err)
+		return err
+	}
 	if err = json.Unmarshal(data, user); err != nil {
 		log.Errorln(err)
 		return err
@@ -681,4 +685,28 @@ func ok200(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
+}
+
+func mapClaims(claims []byte, user *structs.User) error {
+	// Create a struct that contains the claims that we want to store from the config.
+	var f interface{}
+	err := json.Unmarshal(claims, &f)
+	if err != nil {
+		log.Error("Error unmarshaling claims")
+		return err
+	}
+	m := f.(map[string]interface{})
+	for k, _ := range m {
+		var found = false
+		for _, e := range cfg.Cfg.Claims {
+			if k == e {
+				found = true
+			}
+		}
+		if found == false {
+			delete(m, k)
+		}
+	}
+	user.UserClaims = m
+	return nil
 }
