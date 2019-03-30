@@ -9,8 +9,8 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/model"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mitchellh/mapstructure"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gorilla/websocket"
 )

@@ -3,8 +3,8 @@ package cfg
 import (
 	"testing"
 	// "github.com/vouch/vouch-proxy/pkg/structs"
-	// log "github.com/Sirupsen/logrus"
-	log "github.com/Sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
