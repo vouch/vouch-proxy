@@ -34,6 +34,7 @@ type config struct {
 		Secret   string `mapstructure:"secret"`
 		Compress bool   `mapstructure:"compress"`
 	}
+	Claims []string `mapstructure:"claims"`
 	Cookie struct {
 		Name     string `mapstructure:"name"`
 		Domain   string `mapstructure:"domain"`
@@ -41,11 +42,15 @@ type config struct {
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
 	Headers struct {
-		JWT         string `mapstructure:"jwt"`
-		User        string `mapstructure:"user"`
-		QueryString string `mapstructure:"querystring"`
-		Redirect    string `mapstructure:"redirect"`
-		Success     string `mapstructure:"success"`
+		JWT          string `mapstructure:"jwt"`
+		User         string `mapstructure:"user"`
+		QueryString  string `mapstructure:"querystring"`
+		Redirect     string `mapstructure:"redirect"`
+		MappedClaims []struct {
+			Claim  string `mapstructure:"claim"`
+			Header string `mapstructure:"header"`
+		} `mapstructure:"mappedClaims"`
+		Success string `mapstructure:"success"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
@@ -191,15 +196,23 @@ func ParseConfig() {
 		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
 	}
 	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+
+	log.Println("headers: ", viper.Get("vouch.headers.mappedclaims"))
+	if err != nil { // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		panic(err)
 	}
-	UnmarshalKey(Branding.LCName, &Cfg)
+	err = UnmarshalKey(Branding.LCName, &Cfg)
+	if err != nil {
+		log.Errorf("Couldn't unmarshal configuration")
+	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
 		var oldConfig config
-		UnmarshalKey(Branding.OldLCName, &oldConfig)
+		err = UnmarshalKey(Branding.OldLCName, &oldConfig)
+		if err != nil {
+			log.Errorf("Couldn't unmarshal configuration")
+		}
 		if len(oldConfig.Domains) != 0 {
 			log.Errorf(`						
 
@@ -402,7 +415,7 @@ func setDefaults() {
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
-	// TODO: proably change this name, maybe set the domain/port the webapp runs on
+	// TODO: probably change this name, maybe set the domain/port the webapp runs on
 	if !viper.IsSet(Branding.LCName + ".webapp") {
 		Cfg.WebApp = false
 	}
