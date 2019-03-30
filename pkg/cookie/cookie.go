@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	// "github.com/vouch/vouch-proxy/pkg/structs"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )

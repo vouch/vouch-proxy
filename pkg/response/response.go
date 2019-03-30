@@ -1,7 +1,7 @@
 package response
 
 import "net/http"
-import log "github.com/Sirupsen/logrus"
+import log "github.com/sirupsen/logrus"
 
 // we wrap ResponseWriter so that we can store the StatusCode
 // and then pull it out later for logging

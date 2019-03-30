@@ -10,8 +10,8 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/response"
 
-	log "github.com/Sirupsen/logrus"
 	isatty "github.com/mattn/go-isatty"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

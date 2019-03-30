@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	log "github.com/sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 

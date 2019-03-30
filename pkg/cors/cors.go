@@ -3,7 +3,7 @@ package cors
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // AllowAll is middle ware to set Access-Control-Allow-Origin: *
