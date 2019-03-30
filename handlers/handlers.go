@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	securerandom "github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
