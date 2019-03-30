@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	securerandom "github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -39,6 +39,10 @@ type AuthError struct {
 	JWT   string
 }
 
+const (
+	base64Bytes = 32
+)
+
 var (
 	// Templates
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
@@ -47,10 +51,9 @@ var (
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 )
 
-func randString() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
+func init() {
+	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
+	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -247,6 +250,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HealthcheckHandler /healthcheck
+// just returns 200 '{ "ok": true }'
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"ok\": true }")
@@ -264,8 +269,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
+	state, err := securerandom.Base64OfBytes(base64Bytes)
+	if err != nil {
+		log.Error(err)
+	}
+
 	// set the state variable in the session
-	var state = randString()
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
@@ -336,6 +345,10 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 				ok = true
 				break
 			}
+		}
+
+		if !ok {
+			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
 		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
