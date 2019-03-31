@@ -402,7 +402,6 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 								return ok, err
 							}
 						} else if val, ok := ucval.([]interface{}); ok {
-							log.Println("Hello2: ", uclaim, ucval)
 							for _, v := range val {
 								if fmt.Sprintf("%s", v) == allowed {
 									ok = true
@@ -540,7 +539,6 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Println("OpenID userinfo body: ", string(data))
 	if err = mapClaims(data, user); err != nil {
 		log.Error(err)
 		return err
