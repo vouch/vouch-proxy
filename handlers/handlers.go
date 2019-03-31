@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	securerandom "github.com/theckman/go-securerandom"
+	"github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -191,7 +191,25 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+	if len(cfg.Cfg.Headers.MappedClaims) > 0 {
+		for k, v := range claims.CustomClaims {
+			for _, cv := range cfg.Cfg.Headers.MappedClaims {
+				if cv.Claim == k {
+					if val, ok := v.(string); ok {
+						w.Header().Add(cv.Header, val)
+					} else if val, ok := v.([]interface{}); ok {
+						strs := make([]string, len(val))
+						for i, v := range val {
+							strs[i] = fmt.Sprintf("\"%s\"", v)
+						}
+						w.Header().Add(cv.Header, strings.Join(strs, ","))
+					} else {
+						log.Error("Couldn't parse header type.  Please submit an issue.")
+					}
+				}
+			}
+		}
+	}
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
@@ -411,7 +429,10 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// SUCCESS!! they are authorized
 
 	// store the user in the database
-	model.PutUser(user)
+	if err := model.PutUser(user); err != nil {
+		log.Error(err)
+		return
+	}
 
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user)
@@ -423,7 +444,10 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		// clear out the session value
 		session.Values["requestedURL"] = ""
 		session.Values[requestedURL] = 0
-		session.Save(r, w)
+		if err := session.Save(r, w); err != nil {
+			log.Error(err)
+			return
+		}
 
 		redirect302(w, r, requestedURL)
 		return
