@@ -21,13 +21,22 @@ import (
 
 // config vouch jwt cookie configuration
 type config struct {
-	LogLevel      string   `mapstructure:"logLevel"`
-	Listen        string   `mapstructure:"listen"`
-	Port          int      `mapstructure:"port"`
-	Domains       []string `mapstructure:"domains"`
-	WhiteList     []string `mapstructure:"whitelist"`
-	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
-	PublicAccess  bool     `mapstructure:"publicAccess"`
+	LogLevel             string   `mapstructure:"logLevel"`
+	Listen               string   `mapstructure:"listen"`
+	Port                 int      `mapstructure:"port"`
+	Domains              []string `mapstructure:"domains"`
+	WhiteList            []string `mapstructure:"whitelist"`
+	GlobalClaimWhiteList []struct {
+		Claim   string   `mapstructure:"claim"`
+		Allowed []string `mapstructure:"allowed"`
+	} `mapstructure:"globalclaimwhitelist"`
+	Authorization []struct {
+		Host    string   `mapstructure:"host"`
+		Claim   string   `mapstructure:"claim"`
+		Allowed []string `mapstructure:"allowed"`
+	} `mapstructure:"authorization"`
+	AllowAllUsers bool `mapstructure:"allowAllUsers"`
+	PublicAccess  bool `mapstructure:"publicAccess"`
 	JWT           struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
