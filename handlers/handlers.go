@@ -156,6 +156,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	claims, err := ClaimsFromJWT(jwt)
+
 	if err != nil {
 		// no email in jwt
 		if !cfg.Cfg.PublicAccess {
@@ -372,6 +373,53 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
 		// 	err = fmt.Errorf("HostDomain %s is not within a vouch managed domain", u.HostDomain)
+	} else if len(cfg.Cfg.GlobalClaimWhiteList) != 0 {
+		for _, wl := range cfg.Cfg.GlobalClaimWhiteList {
+			for _, allowed := range wl.Allowed {
+				if wl.Claim == "Username" {
+					if user.Username == allowed {
+						ok = true
+						return ok, err
+					}
+				}
+				if wl.Claim == "Name" {
+					if user.Name == allowed {
+						ok = true
+						return ok, err
+					}
+				}
+				if wl.Claim == "Email" {
+					if user.Email == allowed {
+						ok = true
+						return ok, err
+					}
+				}
+				for uclaim, ucval := range user.UserClaims {
+					if wl.Claim == uclaim {
+						if val, ok := ucval.(string); ok {
+							if val == allowed {
+								ok = true
+								return ok, err
+							}
+						} else if val, ok := ucval.([]interface{}); ok {
+							log.Println("Hello2: ", uclaim, ucval)
+							for _, v := range val {
+								if fmt.Sprintf("%s", v) == allowed {
+									ok = true
+									return ok, err
+								}
+							}
+						} else {
+							log.Error("Couldn't parse claim type.  Please submit an issue.")
+						}
+					}
+				}
+			}
+		}
+	} else if len(cfg.Cfg.Authorization) != 0 {
+		for k, v := range cfg.Cfg.Authorization {
+			log.Println(k, "=>", v)
+		}
 	} else {
 		ok = true
 		log.Debug("no domains configured")
