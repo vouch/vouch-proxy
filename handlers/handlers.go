@@ -10,11 +10,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/theckman/go-securerandom"
+	securerandom "github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -344,7 +345,7 @@ func renderIndex(w http.ResponseWriter, msg string) {
 
 // VerifyUser validates that the domains match for the user
 // func VerifyUser(u structs.User) (ok bool, err error) {
-func VerifyUser(u interface{}) (ok bool, err error) {
+func VerifyUser(u interface{}, requestedURL string) (ok bool, err error) {
 	// (w http.ResponseWriter, req http.Request)
 	// is Hd google specific? probably yes
 	// TODO rewrite / abstract this validation
@@ -376,48 +377,27 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 	} else if len(cfg.Cfg.GlobalClaimWhiteList) != 0 {
 		for _, wl := range cfg.Cfg.GlobalClaimWhiteList {
 			for _, allowed := range wl.Allowed {
-				if wl.Claim == "Username" {
-					if user.Username == allowed {
-						ok = true
-						return ok, err
-					}
-				}
-				if wl.Claim == "Name" {
-					if user.Name == allowed {
-						ok = true
-						return ok, err
-					}
-				}
-				if wl.Claim == "Email" {
-					if user.Email == allowed {
-						ok = true
-						return ok, err
-					}
-				}
-				for uclaim, ucval := range user.UserClaims {
-					if wl.Claim == uclaim {
-						if val, ok := ucval.(string); ok {
-							if val == allowed {
-								ok = true
-								return ok, err
-							}
-						} else if val, ok := ucval.([]interface{}); ok {
-							for _, v := range val {
-								if fmt.Sprintf("%s", v) == allowed {
-									ok = true
-									return ok, err
-								}
-							}
-						} else {
-							log.Error("Couldn't parse claim type.  Please submit an issue.")
-						}
-					}
+				if findField(user, wl.Claim, allowed) {
+					log.Debug("Authenticated using globalClaimWhiteList.  Claim: ", wl.Claim, " Value: ", allowed)
+					ok = true
+					break
 				}
 			}
 		}
 	} else if len(cfg.Cfg.Authorization) != 0 {
-		for k, v := range cfg.Cfg.Authorization {
-			log.Println(k, "=>", v)
+		for _, auth := range cfg.Cfg.Authorization {
+			host := auth.Host
+			if host == requestedURL {
+				claim := auth.Claim
+				allowedArray := auth.Allowed
+				for _, allowed := range allowedArray {
+					if findField(user, claim, allowed) {
+						log.Debug("Authenticated using host authentication.  Host: ", host, " Claim: ", claim, " Value: ", allowed)
+						ok = true
+						break
+					}
+				}
+			}
 		}
 	} else {
 		ok = true
@@ -467,7 +447,12 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("CallbackHandler")
 	log.Debug(user)
 
-	if ok, err := VerifyUser(user); !ok {
+	url, err := url.Parse(session.Values["requestedURL"].(string))
+	if err != nil {
+		log.Error(err)
+	}
+	host := url.Host
+	if ok, err := VerifyUser(user, host); !ok {
 		log.Error(err)
 		renderIndex(w, fmt.Sprintf("/auth User is not authorized. %s Please try again.", err))
 		return
@@ -779,4 +764,49 @@ func mapClaims(claims []byte, user *structs.User) error {
 	}
 	user.UserClaims = m
 	return nil
+}
+
+func findField(v interface{}, fieldName string, fieldValue string) bool {
+	// create queue of values to search. Start with the function arg.
+	queue := []reflect.Value{reflect.ValueOf(v)}
+	for len(queue) > 0 {
+		v := queue[0]
+		queue = queue[1:]
+		// dereference pointers
+		for v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		// ignore if this is not a struct
+		if v.Kind() != reflect.Struct {
+			continue
+		}
+		// iterate through fields looking for match on name
+		t := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			if t.Field(i).Name == "UserClaims" {
+				for mkey, mval := range v.Field(i).Interface().(map[string]interface{}) {
+					if mkey == fieldName {
+						if reflect.ValueOf(mval).Kind() == reflect.Slice {
+							for _, sval := range mval.([]interface{}) {
+								if sval == fieldValue {
+									return true
+								}
+							}
+						} else if mval == fieldValue {
+							return true
+						}
+					}
+				}
+			}
+			if t.Field(i).Name == fieldName {
+				// found it!
+				if v.Field(i).String() == fieldValue {
+					return true
+				}
+			}
+			// push field to queue
+			queue = append(queue, v.Field(i))
+		}
+	}
+	return false
 }
