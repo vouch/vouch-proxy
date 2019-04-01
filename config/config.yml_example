@@ -6,39 +6,71 @@
 # be aware of your indentation, the only top level elements are `vouch` and `oauth`. 
 
 vouch:
-  # logLevel: debug
-  logLevel: info
-  listen: 0.0.0.0
-  port: 9090
+    # logLevel: debug
+    logLevel: info
+    listen: 0.0.0.0
+    port: 9090
 
-  # domains:
-  # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
-  # so that the cookie which stores the JWT can be set in the relevant domain
-  # you usually *don't* want to list every individual website that will be protected
-  # if you have siteA.internal.yourdomain.com and siteB.internal.yourdomain.com 
-  # then your domains should be set as yourdomain.com or perhaps internal.yourdomain.com   
-  # usually you'll just have one.
-  # Comment `domains:` out if you set allowAllUser:true
-  domains:
-  - yourdomain.com
-  - yourotherdomain.com
+    # domains:
+    # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
+    # so that the cookie which stores the JWT can be set in the relevant domain
+    # you usually *don't* want to list every individual website that will be protected
+    # if you have siteA.internal.yourdomain.com and siteB.internal.yourdomain.com
+    # then your domains should be set as yourdomain.com or perhaps internal.yourdomain.com
+    # usually you'll just have one.
+    # Comment `domains:` out if you set allowAllUser:true
+    domains:
+        - yourdomain.com
+        - yourotherdomain.com
 
-  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
-  # allowAllUsers: false
+    # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+    # allowAllUsers: false
 
-  # Setting publicAccess: true will accept all requests, even without a cookie. 
-  # If the user is logged in, the cookie will be validated and the user header will be set.
-  # You will need to direct people to the Vouch Proxy login page from your application.
-  # publicAccess: false
+    # Setting publicAccess: true will accept all requests, even without a cookie.
+    # If the user is logged in, the cookie will be validated and the user header will be set.
+    # You will need to direct people to the Vouch Proxy login page from your application.
+    # publicAccess: false
 
-  # whiteList (optional) allows only the listed usernames
-  # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
-  whiteList:
-  - bob@yourdomain.com
-  - alice@yourdomain.com
-  - joe@yourdomain.com
+    # whiteList (optional) allows only the listed usernames
+    # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
+    whiteList:
+        - bob@yourdomain.com
+        - alice@yourdomain.com
+        - joe@yourdomain.com
 
-  jwt:
+    # globalClaimWhiteList (optional) allows you to restrict access based on the values saved for the user.
+    # These values include custom claims that can be sent back from a federated authentication service.
+    # You can choose which claim to match, as well as the value to match.  A match here will authorize a user.
+    # This can be used globally to allow a group, a role, a user, or any other custom claim.
+    # Valid claims that are always available: Username, Name, Email, ID
+    # Any claim returned from the federated service can be used.
+    # All values are case sensitive.
+    #  globalClaimWhiteList:
+    #    - claim: groups
+    #      allowed:
+    #        - WebApp Users
+    #        - WebApp Admins
+
+    # The authorization section allows you to restrict each host (application) to a claim.
+    # These values include custom claims that can be sent back from a federated authentication service.
+    # You can choose which claim to match, as well as the value to match.  A match here will authorize a user.
+    # This can be used to allow a group, a role, a user, or any other custom claim.
+    # Valid claims that are always available: Username, Name, Email, ID
+    # Any claim returned from the federated service can be used.
+    # All values are case sensitive.
+    authorization:
+        - host: portal.yourdomain.com
+          claim: groups
+          allowed:
+            - WebApp User
+            - WebApp Admins
+        - host: intranet.yourdomain.com
+          claim: Username
+          allowed:
+            - john.q.public@yourdomain.com
+            - mary.poppins@yourdomain.com
+
+    jwt:
     # secret: a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then..
@@ -46,94 +78,109 @@ vouch:
     # if `./config/secret` doesn't exist then randomly generate a secret and store it there
     # in order to run multiple instances of vouch on multiple servers (perhaps purely for validating the jwt),
     # you'll want them all to have the same secret
-    secret: your_random_string
-    issuer: Vouch
-    # number of minutes until jwt expires
-    maxAge: 240
-    # compress the jwt
-    compress: true
+        secret: your_random_string
+        issuer: Vouch
+        # number of minutes until jwt expires
+        maxAge: 240
+        # compress the jwt
+        compress: true
 
-  cookie: 
-    # name of cookie to store the jwt
-    name: VouchCookie
-    # optionally force the domain of the cookie to set
-    # domain: yourdomain.com
-    secure: true
-    httpOnly: true
+    claims:
+    # A list of claims that you want to capture in the JWT.  These can be used in many ways later, but essentially
+    # you can pass them as headers to nginx.  These are case sensitive
+        - groups
+        - given_name
+        - family_name
 
-  session:
-    # name of session variable stored locally
-    name: VouchSession
-    # key: a cryptographic string used to store the session variable
-    # if the key is not set here then it is generated at startup and stored in memory
-    # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
-    # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
-    key: you_random_key
+    cookie:
+        # name of cookie to store the jwt
+        name: VouchCookie
+        # optionally force the domain of the cookie to set
+        # domain: yourdomain.com
+        secure: true
+        httpOnly: true
+
+    session:
+        # name of session variable stored locally
+        name: VouchSession
+        # key: a cryptographic string used to store the session variable
+        # if the key is not set here then it is generated at startup and stored in memory
+        # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
+        # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
+        key: you_random_key
+        # For mappedClaims create a list of mappings for claim and header. These are case sensitive
+        mappedClaims:
+          - claim: groups
+            header: X-Vouch-Groups
+          - claim: given_name
+            header: X-Vouch-GivenName
+          - claim: family_name
+            header: X-Vouch-FamilyName
 
 
-  headers:
-    jwt: X-Vouch-Token
-    querystring: access_token
-    redirect: X-Vouch-Requested-URI
+    headers:
+        jwt: X-Vouch-Token
+        querystring: access_token
+        redirect: X-Vouch-Requested-URI
 
-  db: 
-    file: data/vouch_bolt.db
+    db:
+        file: data/vouch_bolt.db
 
-  # testing: force all 302 redirects to be rendered as a webpage with a link
-  testing: true
-  # test_url: add this URL to the page which vouch displays
-  test_url: http://yourdomain.com
-  # webapp: WIP for web interface to vouch (mostly logs)
-  webapp: true
+    # testing: force all 302 redirects to be rendered as a webpage with a link
+    testing: true
+    # test_url: add this URL to the page which vouch displays
+    test_url: http://yourdomain.com
+    # webapp: WIP for web interface to vouch (mostly logs)
+    webapp: true
 
-#
-# OAuth Provider
-# configure ONLY ONE of the following oauth providers
-#
-oauth:
+    #
+    # OAuth Provider
+    # configure ONLY ONE of the following oauth providers
+    #
+    oauth:
 
-  # Google
-  provider: google
-  # create new credentials at:
-  # https://console.developers.google.com/apis/credentials
-  client_id: 
-  client_secret: 
-  callback_urls:
-    - http://vouch.yourdomain.com:9090/auth
-    - http://vouch.yourotherdomain.com:9090/auth
-  preferredDomain: yourdomain.com
+      # Google
+      provider: google
+      # create new credentials at:
+      # https://console.developers.google.com/apis/credentials
+      client_id:
+      client_secret:
+      callback_urls:
+        - http://vouch.yourdomain.com:9090/auth
+        - http://vouch.yourotherdomain.com:9090/auth
+      preferredDomain: yourdomain.com
 
-  # GitHub
-  # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-  provider: github
-  client_id:
-  client_secret:
-  # callback_url is configured at github.com when setting up the app
-  # set to e.g. https://vouch.yourdomain.com/auth
-  # defaults (uncomment and change these if you are using github enterprise on-prem)
-  # auth_url: https://github.com/login/oauth/authorize
-  # token_url: https://github.com/login/oauth/access_token
-  # user_info_url: https://api.github.com/user?access_token=
-  # scopes:
-    # - user
+      # GitHub
+      # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
+      provider: github
+      client_id:
+      client_secret:
+      # callback_url is configured at github.com when setting up the app
+      # set to e.g. https://vouch.yourdomain.com/auth
+      # defaults (uncomment and change these if you are using github enterprise on-prem)
+      # auth_url: https://github.com/login/oauth/authorize
+      # token_url: https://github.com/login/oauth/access_token
+      # user_info_url: https://api.github.com/user?access_token=
+      # scopes:
+        # - user
 
-  # Generic OpenID Connect
-  provider: oidc
-  client_id: 
-  client_secret: 
-  auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
-  token_url: https://{yourOktaDomain}/oauth2/default/v1/token
-  user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
-  scopes:
-    - openid
-    - email
-    - profile
-  callback_url: http://vouch.yourdomain.com:9090/auth
+      # Generic OpenID Connect
+      provider: oidc
+      client_id:
+      client_secret:
+      auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
+      token_url: https://{yourOktaDomain}/oauth2/default/v1/token
+      user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+      scopes:
+        - openid
+        - email
+        - profile
+      callback_url: http://vouch.yourdomain.com:9090/auth
 
-  # IndieAuth
-  # https://indielogin.com/api
-  provider: indieauth
-  client_id: http://yourdomain.com
-  auth_url: https://indielogin.com/auth
-  callback_url: http://vouch.yourdomain.com:9090/auth
-  
+      # IndieAuth
+      # https://indielogin.com/api
+      provider: indieauth
+      client_id: http://yourdomain.com
+      auth_url: https://indielogin.com/auth
+      callback_url: http://vouch.yourdomain.com:9090/auth
+
