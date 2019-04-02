@@ -683,7 +683,6 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 
 	body, _ := ioutil.ReadAll(userinfo.Body)
 	tokenRes := adfsTokenRes{}
-
 	if err := json.Unmarshal(body, &tokenRes); err != nil {
 		log.Errorf("oauth2: cannot fetch token: %v", err)
 		return nil
@@ -700,14 +699,17 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
 		log.Error(err)
 		return nil
 	}
-
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
-	log.Println("adfs adfsUser: ", adfsUser)
-
+	log.Printf("adfs adfsUser: %+v", adfsUser)
+	if err = mapClaims([]byte(idToken), user); err != nil {
+		log.Error(err)
+		return err
+	}
 	adfsUser.PrepareUserData()
 	user.Username = adfsUser.Username
-	log.Debug(user)
+	user.Email = adfsUser.Email
+	log.Debugf("User Obj: %+v", user)
 	return nil
 }
 
