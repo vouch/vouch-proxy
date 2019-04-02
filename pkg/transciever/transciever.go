@@ -2,8 +2,6 @@ package transciever
 
 import (
 	"net/http"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // WSHandler implements the Handler Interface

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
@@ -31,6 +30,7 @@ var StandardClaims jwt.StandardClaims
 
 // Sites just testing
 var Sites []string
+var log = cfg.Cfg.Logger
 
 func init() {
 	StandardClaims = jwt.StandardClaims{

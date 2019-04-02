@@ -4,14 +4,14 @@ package main
 // github.com/vouch/vouch-proxy
 
 import (
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/handlers"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -21,7 +21,6 @@ import (
 
 // version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
-
 var (
 	version   = "undefined"
 	builddt   = "undefined"
@@ -29,22 +28,31 @@ var (
 	semver    = "undefined"
 	branch    = "undefined"
 	staticDir = "/static/"
+	logger    = cfg.Cfg.Logger
+	fastlog   = cfg.Cfg.FastLogger
 )
 
-func init() {
-	// var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+// fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
+// see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
+type fwdToZapWriter struct {
+	logger *zap.Logger
+}
+
+func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
+	fw.logger.Error(string(p))
+	return len(p), nil
 }
 
 func main() {
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
-	log.WithFields(log.Fields{
+	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
-		"version":   version,
-		"buildtime": builddt,
-		"buildhost": host,
-		"branch":    branch,
-		"semver":    semver,
-		"listen":    listen}).Info("starting " + cfg.Branding.CcName)
+		"version", version,
+		"buildtime", builddt,
+		"buildhost", host,
+		"branch", branch,
+		"semver", semver,
+		"listen", listen)
 
 	mux := mux.NewRouter()
 
@@ -64,18 +72,18 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
-	if log.GetLevel() == log.DebugLevel {
+	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
 		path, err := filepath.Abs(staticDir)
 		if err != nil {
-			log.Errorf("couldn't find static assets at %s", path)
+			logger.Errorf("couldn't find static assets at %s", path)
 		}
-		log.Debugf("serving static files from %s", path)
+		logger.Debugf("serving static files from %s", path)
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
 	mux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, (http.FileServer(http.Dir("." + staticDir)))))
 
 	if cfg.Cfg.WebApp {
-		log.Info("enabling websocket")
+		logger.Info("enabling websocket")
 		tran.ExplicitInit()
 		mux.Handle("/ws", tran.WS)
 	}
@@ -90,9 +98,7 @@ func main() {
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		/// logrus has an example of using ErrorLog but it doesn't apply to this MUX implimentation
-		// https://github.com/sirupsen/logrus#logger-as-an-iowriter
-		// ErrorLog:     log.New(w, "", 0),
+		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
 	log.Fatal(srv.ListenAndServe())

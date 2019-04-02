@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
@@ -30,6 +29,8 @@ var (
 	userBucket = []byte("users")
 	teamBucket = []byte("teams")
 	siteBucket = []byte("sites")
+
+	log = cfg.Cfg.Logger
 )
 
 // may want to use encode/gob to store the user record
