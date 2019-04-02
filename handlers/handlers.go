@@ -543,6 +543,10 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
+	if err = mapClaims(data, user); err != nil {
+		log.Error(err)
+		return err
+	}
 	log.Println("google userinfo body: ", string(data))
 	if err = json.Unmarshal(data, user); err != nil {
 		log.Errorln(err)
@@ -576,6 +580,10 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, ptoken *oaut
 	log.Debug("getUserInfoFromGitHub user")
 	log.Debug(user)
 
+	if err = mapClaims(data, user); err != nil {
+		log.Error(err)
+		return err
+	}
 	ghUser.PrepareUserData()
 	user.Email = ghUser.Email
 	user.Name = ghUser.Name
@@ -633,6 +641,10 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
+	if err = mapClaims(data, user); err != nil {
+		log.Error(err)
+		return err
+	}
 	log.Println("indieauth userinfo body: ", string(data))
 	iaUser := structs.IndieAuthUser{}
 	if err = json.Unmarshal(data, &iaUser); err != nil {
