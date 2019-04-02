@@ -65,6 +65,8 @@ server {
 
       # pass X-Vouch-User along with the request
       auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
+      # pass X-Vouch-Groups, or any other custom claim you have configured and mapped
+      auth_request_set $auth_resp_x_vouch_groups $upstream_http_x_vouch_groups;
 
       # these return values are used by the @error401 call
       auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
@@ -85,9 +87,12 @@ server {
       proxy_pass http://dev.yourdomain.com:8080;
       #  may need to set
       #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
+      #    auth_request_set $auth_resp_x_vouch_groups $upstream_http_x_vouch_groups;
       #  in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
       # set user header (usually an email)
       proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
+      # Pass X-Vouch-Groups down to the proxied application, it can now use it for additional information and context
+      proxy_set_header X-Vouch-Groups $auth_resp_x_vouch_groups;
     }
 }
 
