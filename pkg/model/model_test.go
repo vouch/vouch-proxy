@@ -7,14 +7,14 @@ import (
 	"os"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 var testdb = "/tmp/storage-test.db"
+var log = cfg.Cfg.Logger
 
 func init() {
 	Db, _ = OpenDB(testdb)

@@ -6,8 +6,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
-	// log "github.com/Sirupsen/logrus"
-	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,6 +16,8 @@ var (
 	}
 
 	lc VouchClaims
+
+	log = cfg.Cfg.Logger
 )
 
 func init() {

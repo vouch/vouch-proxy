@@ -10,17 +10,20 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // config vouch jwt cookie configuration
 type config struct {
+	Logger        *zap.SugaredLogger
+	FastLogger    *zap.Logger
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
@@ -124,6 +127,8 @@ var (
 	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
 
 	cmdLineConfig *string
+
+	log *zap.SugaredLogger
 )
 
 const (
@@ -141,15 +146,34 @@ func init() {
 	help := flag.Bool("help", false, "show usage")
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
+
+	atom := zap.NewAtomicLevel()
+	// logger, _ := zap.NewProduction()
+	// encoderCfg := zap.NewDevelopmentEncoderConfig()
+	encoderCfg := zap.NewProductionEncoderConfig()
+	// encoderCfg.TimeKey = ""
+
+	logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atom,
+	))
+
+	defer logger.Sync() // flushes buffer, if any
+	log = logger.Sugar()
+	Cfg.Logger = log
+	Cfg.FastLogger = log.Desugar()
+
 	ParseConfig()
+
+	if *ll == "debug" || Cfg.LogLevel == "debug" {
+		atom.SetLevel(zap.DebugLevel)
+		log.Debug("logLevel set to debug")
+	}
+
 	if *help {
 		flag.PrintDefaults()
 		os.Exit(1)
-	}
-
-	if *ll == "debug" {
-		log.SetLevel(log.DebugLevel)
-		log.Debug("logLevel set to debug")
 	}
 
 	setDefaults()
@@ -169,7 +193,7 @@ func init() {
 		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
-	log.Debug(viper.AllSettings())
+	log.Debugw("viper settings", viper.AllSettings())
 }
 
 // ParseConfig parse the config file

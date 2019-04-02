@@ -1,11 +1,16 @@
 package response
 
-import "net/http"
-import log "github.com/Sirupsen/logrus"
+import (
+	"net/http"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+)
 
 // we wrap ResponseWriter so that we can store the StatusCode
 // and then pull it out later for logging
 // https://play.golang.org/p/wPHaX9DH-Ik
+
+var log = cfg.Cfg.FastLogger
 
 // CaptureWriter extends http.ResponseWriter
 type CaptureWriter struct {
@@ -16,7 +21,7 @@ type CaptureWriter struct {
 func (w *CaptureWriter) Write(b []byte) (int, error) {
 	if w.StatusCode == 0 {
 		w.StatusCode = 200
-		log.Debugf("CaptureWriter.Write set w.StatusCode %d", w.StatusCode)
+		log.Debug("CaptureWriter.Write set w.StatusCode " + string(w.StatusCode))
 	}
 	return w.ResponseWriter.Write(b)
 }
@@ -29,7 +34,7 @@ func (w *CaptureWriter) Header() http.Header {
 // WriteHeader calls http.Writer.WriteHeader(code)
 func (w *CaptureWriter) WriteHeader(code int) {
 	w.StatusCode = code
-	log.Debugf("CaptureWriter.WriteHeader set w.StatusCode %d", w.StatusCode)
+	log.Debug("CaptureWriter.Write set w.StatusCode " + string(w.StatusCode))
 	w.ResponseWriter.WriteHeader(code)
 }
 
