@@ -85,13 +85,13 @@ func AllTeams(teams *[]structs.Team) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(teamBucket); b != nil {
 			b.ForEach(func(k, v []byte) error {
-				log.Debugf("key=%s, value=%s\n", k, v)
+				log.Debugf("AllTeams ForEach key %s", k)
 				t := structs.Team{}
 				Team(k, &t)
 				*teams = append(*teams, t)
 				return nil
 			})
-			log.Debugf("teams %v", teams)
+			log.Debugf("teams %+v", *teams)
 			return nil
 		}
 		return fmt.Errorf("no bucket for %s", teamBucket)

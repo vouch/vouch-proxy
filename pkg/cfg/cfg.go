@@ -133,15 +133,21 @@ const (
 )
 
 func init() {
+	// bail if we're testing
+	if flag.Lookup("test.v") != nil {
+		fmt.Println("`go test` detected, not loading")
+		return
+	}
 
 	// can pass loglevel on the command line
-	ll := flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	ll := flag.String("loglevel", "", "enable debug log output")
 	// from config file
 	port := flag.Int("port", -1, "port")
 	help := flag.Bool("help", false, "show usage")
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
 	ParseConfig()
+
 	if *help {
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -152,7 +158,7 @@ func init() {
 		log.Debug("logLevel set to debug")
 	}
 
-	setDefaults()
+	SetDefaults()
 
 	if *port != -1 {
 		Cfg.Port = *port
@@ -170,6 +176,15 @@ func init() {
 	}
 
 	log.Debug(viper.AllSettings())
+}
+
+// InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
+func InitForTestPurposes() {
+	os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml")
+	// log.Debug("opening config")
+	ParseConfig()
+	SetDefaults()
+
 }
 
 // ParseConfig parse the config file
@@ -305,8 +320,8 @@ func checkCallbackConfig(url string) error {
 	return nil
 }
 
-// setDefaults set default options for some items
-func setDefaults() {
+// SetDefaults set default options for some items
+func SetDefaults() {
 
 	// this should really be done by Viper up in parseConfig but..
 	// nested defaults is currently *broken*
