@@ -22,7 +22,7 @@ var hh = &HubHolder{
 
 // ExplicitInit only run init() if we're configured for such
 func ExplicitInit() {
-	log.Debug("hub %v", hh.Hub)
+	log.Debugf("hub %v", hh.Hub)
 	go hh.Hub.run()
 }
 

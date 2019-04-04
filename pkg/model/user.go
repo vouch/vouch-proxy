@@ -15,11 +15,17 @@ import (
 func PutUser(u structs.User) error {
 	userexists := false
 	curu := &structs.User{}
-	err := User([]byte(u.Username), curu)
-	if err == nil {
-		userexists = true
-	} else {
-		log.Error(err)
+	if u.Username != "" {
+		err := User([]byte(u.Username), curu)
+		if err == nil {
+			userexists = true
+		} else {
+			log.WithFields(log.Fields{
+				"userexists": userexists,
+				"u":          u,
+				"curu":       curu,
+			}).Errorf("PutUser userexists lookup: %s", err.Error())
+		}
 	}
 
 	return Db.Update(func(tx *bolt.Tx) error {
@@ -54,6 +60,7 @@ func PutUser(u structs.User) error {
 
 // User lookup user from key
 func User(key []byte, u *structs.User) error {
+	log.Debugf("looking up User %s", key)
 	return Db.View(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(userBucket); b != nil {
 			log.Debugf("key is %s", key)
