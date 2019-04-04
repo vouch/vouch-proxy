@@ -135,7 +135,7 @@ const (
 func init() {
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
-		fmt.Println("`go test` detected, not loading")
+		fmt.Println("`go test` detected, not loading regular config")
 		return
 	}
 
