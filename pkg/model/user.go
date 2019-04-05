@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
@@ -20,11 +19,12 @@ func PutUser(u structs.User) error {
 		if err == nil {
 			userexists = true
 		} else {
-			log.WithFields(log.Fields{
-				"userexists": userexists,
-				"u":          u,
-				"curu":       curu,
-			}).Errorf("PutUser userexists lookup: %s", err.Error())
+			log.Errorw("PutUser userexists lookup error",
+				"error", err.Error(),
+				"userexists", userexists,
+				"u", u,
+				"curu", curu,
+			)
 		}
 	}
 

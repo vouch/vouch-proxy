@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	// "github.com/vouch/vouch-proxy/pkg/structs"
-	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
 var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
+var log = cfg.Cfg.Logger
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -50,10 +50,10 @@ func Cookie(r *http.Request) (string, error) {
 		return "", errors.New("Cookie token empty")
 	}
 
-	log.WithFields(log.Fields{
-		"cookieName":  cfg.Cfg.Cookie.Name,
-		"cookieValue": cookie.Value,
-	}).Debug("cookie")
+	log.Debugw("cookie",
+		"cookieName", cfg.Cfg.Cookie.Name,
+		"cookieValue", cookie.Value,
+	)
 	return cookie.Value, err
 }
 
