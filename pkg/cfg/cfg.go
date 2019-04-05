@@ -128,7 +128,9 @@ var (
 
 	cmdLineConfig *string
 
-	log *zap.SugaredLogger
+	logger *zap.Logger
+	log    *zap.SugaredLogger
+	atom   zap.AtomicLevel
 )
 
 const (
@@ -138,11 +140,6 @@ const (
 )
 
 func init() {
-	// bail if we're testing
-	if flag.Lookup("test.v") != nil {
-		fmt.Println("`go test` detected, not loading regular config")
-		return
-	}
 
 	// can pass loglevel on the command line
 	ll := flag.String("loglevel", "", "enable debug log output")
@@ -152,18 +149,10 @@ func init() {
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
 
-	if *help {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	atom := zap.NewAtomicLevel()
-	// logger, _ := zap.NewProduction()
-	// encoderCfg := zap.NewDevelopmentEncoderConfig()
+	atom = zap.NewAtomicLevel()
 	encoderCfg := zap.NewProductionEncoderConfig()
-	// encoderCfg.TimeKey = ""
 
-	logger := zap.New(zapcore.NewCore(
+	logger = zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stdout),
 		atom,
@@ -174,20 +163,16 @@ func init() {
 	Cfg.FastLogger = logger
 	Cfg.Logger = log
 
+	// bail if we're testing
+	if flag.Lookup("test.v") != nil {
+		fmt.Println("`go test` detected, not loading regular config")
+		return
+	}
+
 	ParseConfig()
 
 	if Cfg.Testing {
-		// then configure the logger for development output
-		logger = logger.WithOptions(
-			zap.WrapCore(
-				func(zapcore.Core) zapcore.Core {
-					return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
-				}))
-		log = logger.Sugar()
-		Cfg.FastLogger = log.Desugar()
-		Cfg.Logger = log
-		log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
-
+		setDevelopmentLogger()
 	}
 
 	if *ll == "debug" || Cfg.LogLevel == "debug" {
@@ -220,10 +205,24 @@ func init() {
 	log.Debugf("viper settings %+v", viper.AllSettings())
 }
 
+func setDevelopmentLogger() {
+	// then configure the logger for development output
+	logger = logger.WithOptions(
+		zap.WrapCore(
+			func(zapcore.Core) zapcore.Core {
+				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
+			}))
+	log = logger.Sugar()
+	Cfg.FastLogger = log.Desugar()
+	Cfg.Logger = log
+	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
+}
+
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
 func InitForTestPurposes() {
 	os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml")
 	// log.Debug("opening config")
+	setDevelopmentLogger()
 	ParseConfig()
 	SetDefaults()
 

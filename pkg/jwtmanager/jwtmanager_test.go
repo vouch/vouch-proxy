@@ -16,12 +16,11 @@ var (
 	}
 
 	lc VouchClaims
-
-	log = cfg.Cfg.Logger
 )
 
 func init() {
 	// log.SetLevel(log.DebugLevel)
+
 	cfg.InitForTestPurposes()
 
 	lc = VouchClaims{
