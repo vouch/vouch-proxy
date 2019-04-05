@@ -161,10 +161,24 @@ func init() {
 
 	defer logger.Sync() // flushes buffer, if any
 	log = logger.Sugar()
+	Cfg.FastLogger = logger
 	Cfg.Logger = log
-	Cfg.FastLogger = log.Desugar()
 
 	ParseConfig()
+
+	if Cfg.Testing {
+		// then configure the logger for development output
+		logger = logger.WithOptions(
+			zap.WrapCore(
+				func(zapcore.Core) zapcore.Core {
+					return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
+				}))
+		log = logger.Sugar()
+		Cfg.FastLogger = log.Desugar()
+		Cfg.Logger = log
+		log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
+
+	}
 
 	if *ll == "debug" || Cfg.LogLevel == "debug" {
 		atom.SetLevel(zap.DebugLevel)
@@ -193,7 +207,7 @@ func init() {
 		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
-	log.Debugw("viper settings", viper.AllSettings())
+	log.Debugf("viper settings %+v", viper.AllSettings())
 }
 
 // ParseConfig parse the config file
