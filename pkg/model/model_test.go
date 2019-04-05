@@ -7,21 +7,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 var testdb = "/tmp/storage-test.db"
 
 func init() {
-	log.SetLevel(log.DebugLevel)
 	cfg.InitForTestPurposes()
 
+	Db, _ = OpenDB(testdb)
 }
 
 func TestPutUserGetUser(t *testing.T) {

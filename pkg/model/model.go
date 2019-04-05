@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
@@ -32,6 +31,8 @@ var (
 	teamBucket = []byte("teams")
 	siteBucket = []byte("sites")
 	dbpath     = os.Getenv("VOUCH_ROOT") + cfg.Cfg.DB.File
+
+	log = cfg.Cfg.Logger
 )
 
 // may want to use encode/gob to store the user record
