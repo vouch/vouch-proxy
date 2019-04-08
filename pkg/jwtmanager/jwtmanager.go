@@ -36,7 +36,7 @@ func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
-	// populateSites()
+	populateSites()
 }
 
 func populateSites() {
