@@ -52,7 +52,8 @@ func main() {
 		"buildhost", host,
 		"branch", branch,
 		"semver", semver,
-		"listen", listen)
+		"listen", listen,
+		"oauth.provider", cfg.GenOAuth.Provider)
 
 	mux := mux.NewRouter()
 
