@@ -3,6 +3,8 @@
 # you should probably start with one of the other configs in the example directory
 # vouch proxy does a fairly good job of setting its config to sane defaults
 
+# be aware of your indentation, the only top level elements are `vouch` and `oauth`. 
+
 vouch:
   # logLevel: debug
   logLevel: info

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,9 +9,13 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"go.uber.org/zap"
+
+	securerandom "github.com/theckman/go-securerandom"
 
 	"github.com/gorilla/sessions"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -37,18 +40,24 @@ type AuthError struct {
 	JWT   string
 }
 
+const (
+	base64Bytes = 32
+)
+
 var (
 	// Templates
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
 
 	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+
+	log     = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
 )
 
-func randString() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
+func init() {
+	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
+	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -134,7 +143,7 @@ func ClaimsFromJWT(jwt string) (jwtmanager.VouchClaims, error) {
 // ValidateRequestHandler /validate
 // TODO this should use the handler interface
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
-	log.Debug("/validate")
+	fastlog.Debug("/validate")
 
 	// TODO: collapse all of the `if !cfg.Cfg.PublicAccess` calls
 	// perhaps using an `ok=false` pattern
@@ -170,9 +179,8 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	log.WithFields(log.Fields{
-		"username": claims.Username,
-	}).Info("jwt cookie")
+	fastlog.Info("jwt cookie",
+		zap.String("username", claims.Username))
 
 	if !cfg.Cfg.AllowAllUsers {
 		if !jwtmanager.SiteInClaims(r.Host, &claims) {
@@ -189,7 +197,8 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
-	log.WithFields(log.Fields{cfg.Cfg.Headers.User: w.Header().Get(cfg.Cfg.Headers.User)}).Debug("response header")
+	fastlog.Debug("response header",
+		zap.String(cfg.Cfg.Headers.User, w.Header().Get(cfg.Cfg.Headers.User)))
 
 	// good to go!!
 	if cfg.Cfg.Testing {
@@ -245,6 +254,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HealthcheckHandler /healthcheck
+// just returns 200 '{ "ok": true }'
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"ok\": true }")
@@ -262,8 +273,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
+	state, err := securerandom.Base64OfBytes(base64Bytes)
+	if err != nil {
+		log.Error(err)
+	}
+
 	// set the state variable in the session
-	var state = randString()
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
@@ -335,6 +350,10 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 				break
 			}
 		}
+
+		if !ok {
+			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
+		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
@@ -372,7 +391,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	errorState := r.URL.Query().Get("error")
 	if errorState != "" {
 		errorDescription := r.URL.Query().Get("error_description")
-		log.Warning("Error state: ", errorState, ", Error description: ", errorDescription)
+		log.Warn("Error state: ", errorState, ", Error description: ", errorDescription)
 		w.WriteHeader(http.StatusForbidden)
 		renderIndex(w, "FORBIDDEN: "+errorDescription)
 		return
@@ -424,6 +443,8 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		return getUserInfoFromIndieAuth(r, user)
+	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
+		return getUserInfoFromADFS(r, user)
 	}
 
 	providerToken, err := cfg.OAuthClient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
@@ -451,9 +472,9 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, ptoken *oaut
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Println("OpenID userinfo body: ", string(data))
+	log.Infof("OpenID userinfo body: ", string(data))
 	if err = json.Unmarshal(data, user); err != nil {
-		log.Errorln(err)
+		log.Error(err)
 		return err
 	}
 	user.PrepareUserData()
@@ -467,9 +488,9 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User) error {
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Println("google userinfo body: ", string(data))
+	log.Infof("google userinfo body: ", string(data))
 	if err = json.Unmarshal(data, user); err != nil {
-		log.Errorln(err)
+		log.Error(err)
 		return err
 	}
 	user.PrepareUserData()
@@ -489,10 +510,10 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, ptoken *oaut
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Println("github userinfo body: ", string(data))
+	log.Infof("github userinfo body: ", string(data))
 	ghUser := structs.GitHubUser{}
 	if err = json.Unmarshal(data, &ghUser); err != nil {
-		log.Errorln(err)
+		log.Error(err)
 		return err
 	}
 	log.Debug("getUserInfoFromGitHub ghUser")
@@ -557,14 +578,80 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User) error {
 	}
 	defer userinfo.Body.Close()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Println("indieauth userinfo body: ", string(data))
+	log.Infof("indieauth userinfo body: ", string(data))
 	iaUser := structs.IndieAuthUser{}
 	if err = json.Unmarshal(data, &iaUser); err != nil {
-		log.Errorln(err)
+		log.Error(err)
 		return err
 	}
 	iaUser.PrepareUserData()
 	user.Username = iaUser.Username
+	log.Debug(user)
+	return nil
+}
+
+type adfsTokenRes struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	IDToken     string `json:"id_token"`
+	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
+}
+
+// More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
+func getUserInfoFromADFS(r *http.Request, user *structs.User) error {
+	code := r.URL.Query().Get("code")
+	log.Errorf("code: %s", code)
+
+	formData := url.Values{}
+	formData.Set("code", code)
+	formData.Set("grant_type", "authorization_code")
+	formData.Set("resource", cfg.GenOAuth.RedirectURL)
+	formData.Set("client_id", cfg.GenOAuth.ClientID)
+	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
+	formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
+
+	req, err := http.NewRequest("POST", cfg.GenOAuth.TokenURL, strings.NewReader(formData.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{}
+	userinfo, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+	defer userinfo.Body.Close()
+
+	body, _ := ioutil.ReadAll(userinfo.Body)
+	tokenRes := adfsTokenRes{}
+
+	if err := json.Unmarshal(body, &tokenRes); err != nil {
+		log.Errorf("oauth2: cannot fetch token: %v", err)
+		return nil
+	}
+
+	s := strings.Split(tokenRes.IDToken, ".")
+	if len(s) < 2 {
+		log.Error("jws: invalid token received")
+		return nil
+	}
+
+	idToken, err := base64.RawURLEncoding.DecodeString(s[1])
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+
+	adfsUser := structs.ADFSUser{}
+	json.Unmarshal([]byte(idToken), &adfsUser)
+	log.Infof("adfs adfsUser: ", adfsUser)
+
+	adfsUser.PrepareUserData()
+	user.Username = adfsUser.Username
 	log.Debug(user)
 	return nil
 }

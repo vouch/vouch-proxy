@@ -4,11 +4,11 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 var domains = cfg.Cfg.Domains
+var log = cfg.Cfg.Logger
 
 func init() {
 	sort.Sort(ByLengthDesc(domains))

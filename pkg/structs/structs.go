@@ -26,7 +26,6 @@ func (u *User) PrepareUserData() {
 
 // GoogleUser is a retrieved and authentiacted user from Google.
 // unused!
-
 // TODO: see if these should be pointers to the *User object as per
 // https://golang.org/doc/effective_go.html#embedding
 type GoogleUser struct {
@@ -47,6 +46,23 @@ func (u *GoogleUser) PrepareUserData() {
 	u.Username = u.Email
 }
 
+// ADFSUser Active Directory user record
+type ADFSUser struct {
+	User
+	Sub string `json:"sub"`
+	UPN string `json:"upn"`
+	// UniqueName string `json:"unique_name"`
+	// PwdExp     string `json:"pwd_exp"`
+	// SID        string `json:"sid"`
+	// Groups     string `json:"groups"`
+	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *ADFSUser) PrepareUserData() {
+	u.Username = u.UPN
+}
+
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
@@ -61,11 +77,13 @@ func (u *GitHubUser) PrepareUserData() {
 	u.Username = u.Login
 }
 
+// IndieAuthUser see indieauth.net
 type IndieAuthUser struct {
 	User
 	URL string `json:"me"`
 }
 
+// PrepareUserData implement PersonalData interface
 func (u *IndieAuthUser) PrepareUserData() {
 	u.Username = u.URL
 }

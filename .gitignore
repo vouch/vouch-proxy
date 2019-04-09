@@ -8,8 +8,10 @@ main
 config/google_config.json
 .vscode/*
 vouch
-config/config.yml_google
+config/config.yml_adfs
 config/config.yml_github
+config/config.yml_google
+config/config.yml_oidc
 config/secret
 config/config.yml_orig
 data/vouch_bolt.db

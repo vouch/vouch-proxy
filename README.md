@@ -107,6 +107,8 @@ server {
 
 ```
 
+An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
+
 ## Running from Docker
 
 ```bash
@@ -118,11 +120,11 @@ docker run -d \
     voucher/vouch-proxy
 ```
 
-The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub
+The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub.  In addition to `voucher/vouch-proxy:latest` which is based on [scratch](https://docs.docker.com/samples/library/scratch/) there is an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` as well as versioned images as `voucher/vouch-proxy:x.y.z` and `voucher/vouch-proxy:x.y.z_alpine`.
 
-[![docker-build status](https://img.shields.io/docker/build/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
+https://hub.docker.com/r/voucher/vouch-proxy/builds/
 
-If you are using [nginx-ingress](https://github.com/kubernetes/ingress-nginx) inside of kubernetes, you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
+If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/ingress-nginx), you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
 
 ```
     nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"

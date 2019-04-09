@@ -6,8 +6,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
-	// log "github.com/Sirupsen/logrus"
-	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,6 +20,8 @@ var (
 
 func init() {
 	// log.SetLevel(log.DebugLevel)
+
+	cfg.InitForTestPurposes()
 
 	lc = VouchClaims{
 		u1.Username,
@@ -47,8 +47,7 @@ func TestCreateUserTokenStringAndParseToUsername(t *testing.T) {
 }
 
 func TestClaims(t *testing.T) {
-	cfg.ParseConfig()
-
+	populateSites()
 	log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
 	assert.NotEmpty(t, cfg.Cfg.JWT.Secret)
 	assert.NotEmpty(t, cfg.Cfg.JWT.MaxAge)
@@ -60,6 +59,8 @@ func TestClaims(t *testing.T) {
 	// log.Infof("lc expiresAt %d", now.Unix()-lc.StandardClaims.ExpiresAt)
 	uts := CreateUserTokenString(u1)
 	utsParsed, _ := ParseTokenString(uts)
-	assert.True(t, SiteInToken("naga.bnf.net", utsParsed))
+	log.Infof("utsParsed: %+v", utsParsed)
+	log.Infof("Sites: %+v", Sites)
+	assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
 
 }
