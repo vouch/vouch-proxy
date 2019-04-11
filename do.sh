@@ -120,14 +120,17 @@ _redact_exit () {
 }
 
 _redact() {
-  SECRET_FIELDS=("secret client_id client_secret")
+  SECRET_FIELDS=("client_id client_secret secret")
   while IFS= read -r LINE; do
     for i in $SECRET_FIELDS; do
-      LINE=$(echo "$LINE" | sed -r "s/${i}:.* (.*)/${i}: XXXXXXXXXXX \1/g")
+      LINE=$(echo "$LINE" | sed -r "s/${i}..[[:graph:]]*\>/${i}: XXXXXXXXXXX/g")
     done
     # j=$(expr $j + 1)
     for i in $REDACT; do
-      LINE=$(echo "$LINE" | sed "s/${i}/+++++++/g")
+      r=$i
+      r=$(echo "$r" | sed "s/[[:alnum:]]/+/g")
+      # LINE=$(echo "$LINE" | sed "s/${i}/+++++++/g")
+      LINE=$(echo "$LINE" | sed "s/${i}/${r}/g")
     done
     echo "${LINE}"
   done
