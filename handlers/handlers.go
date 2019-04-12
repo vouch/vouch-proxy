@@ -273,7 +273,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
-	state, err := securerandom.Base64OfBytes(base64Bytes)
+	state, err := securerandom.URLBase64OfBytes(base64Bytes)
 	if err != nil {
 		log.Error(err)
 	}
