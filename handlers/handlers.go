@@ -44,9 +44,6 @@ const (
 	base64Bytes = 32
 )
 
-// Temporary struct storing custom claims until JWT creation.
-var CustomClaims map[string]interface{}
-
 var (
 	// Templates
 	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
@@ -140,6 +137,7 @@ func ClaimsFromJWT(jwt string) (jwtmanager.VouchClaims, error) {
 		// if claims == &jwtmanager.VouchClaims{} {
 		return claims, err
 	}
+	log.Debugf("JWT Claims: %+v", claims)
 	return claims, nil
 }
 
@@ -423,13 +421,14 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := structs.User{}
-	customClaims := CustomClaims
+	customClaims := structs.CustomClaims{}
 
-	if err := getUserInfo(r, &user, customClaims); err != nil {
+	if err := getUserInfo(r, &user, &customClaims); err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Debugf("Claims from userinfo: %+v", customClaims)
 	log.Debug("CallbackHandler")
 	log.Debug(user)
 
@@ -465,7 +464,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO: put all getUserInfo logic into its own pkg
 
-func getUserInfo(r *http.Request, user *structs.User, customClaims map[string]interface{}) error {
+func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) error {
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
@@ -492,7 +491,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims map[string]in
 	return nil
 }
 
-func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims map[string]interface{}, ptoken *oauth2.Token) error {
+func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) error {
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err
@@ -512,7 +511,7 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 	return nil
 }
 
-func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims map[string]interface{}) error {
+func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) error {
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err
@@ -535,7 +534,7 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 
 // github
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims map[string]interface{}, ptoken *oauth2.Token) error {
+func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
@@ -572,7 +571,7 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 	return nil
 }
 
-func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims map[string]interface{}) error {
+func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) error {
 
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)
@@ -641,7 +640,7 @@ type adfsTokenRes struct {
 }
 
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims map[string]interface{}) error {
+func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) error {
 	code := r.URL.Query().Get("code")
 	log.Errorf("code: %s", code)
 
@@ -734,7 +733,7 @@ func ok200(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func mapClaims(claims []byte, customClaims map[string]interface{}) error {
+func mapClaims(claims []byte, customClaims *structs.CustomClaims) error {
 	// Create a struct that contains the claims that we want to store from the config.
 	var f interface{}
 	err := json.Unmarshal(claims, &f)
@@ -754,6 +753,6 @@ func mapClaims(claims []byte, customClaims map[string]interface{}) error {
 			delete(m, k)
 		}
 	}
-	customClaims = m
+	customClaims.Claims = m
 	return nil
 }

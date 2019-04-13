@@ -1,5 +1,10 @@
 package structs
 
+// Temporary struct storing custom claims until JWT creation.
+type CustomClaims struct {
+	Claims map[string]interface{}
+}
+
 // UserI each *User struct must prepare the data for being placed in the JWT
 type UserI interface {
 	PrepareUserData()

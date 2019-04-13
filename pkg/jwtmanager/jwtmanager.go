@@ -54,13 +54,13 @@ func populateSites() {
 }
 
 // CreateUserTokenString converts user to signed jwt
-func CreateUserTokenString(u structs.User, customClaims map[string]interface{}) string {
+func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims) string {
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
 		u.Username,
 		Sites,
-		customClaims,
+		customClaims.Claims,
 		StandardClaims,
 	}
 
