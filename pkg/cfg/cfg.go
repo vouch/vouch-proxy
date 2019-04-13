@@ -42,6 +42,7 @@ type config struct {
 		Domain   string `mapstructure:"domain"`
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
+		MaxAge   int    `mapstructure:"maxage"`
 	}
 	Headers struct {
 		JWT         string `mapstructure:"jwt"`
@@ -340,6 +341,15 @@ func BasicTest() error {
 			Branding.LCName+".session.key",
 			minBase64Length)
 	}
+	if Cfg.Cookie.MaxAge < 0 {
+		return errors.New("configuration error: cookie maxAge cannot be lower than 0")
+	}
+	if Cfg.JWT.MaxAge <= 0 {
+		return errors.New("configuration error: JWT maxAge cannot be zero or lower")
+	}
+	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
+		return errors.New("configuration error: Cookie maxAge cannot be larger than the JWT maxAge")
+	}
 	return nil
 }
 
@@ -414,6 +424,9 @@ func SetDefaults() {
 	}
 	if !viper.IsSet(Branding.LCName + ".cookie.httpOnly") {
 		Cfg.Cookie.HTTPOnly = true
+	}
+	if !viper.IsSet(Branding.LCName + ".cookie.maxAge") {
+		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge * 60
 	}
 
 	// headers defaults

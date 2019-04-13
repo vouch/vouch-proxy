@@ -60,6 +60,8 @@ vouch:
     # domain: yourdomain.com
     secure: true
     httpOnly: true
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
+    maxAge: 14400
 
   session:
     # name of session variable stored locally
