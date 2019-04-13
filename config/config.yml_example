@@ -80,9 +80,9 @@ vouch:
     # claimheader: My-Custom-Claim-Prefix
     # Claims is a list of claims that will be stored in the JWT and passed down to applications via headers
     # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
-    claims:
-      - groups
-      - given_name
+    #claims:
+    #  - groups
+    #  - given_name
 
 
   db: 
