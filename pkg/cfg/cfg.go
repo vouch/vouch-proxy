@@ -50,7 +50,7 @@ type config struct {
 		QueryString string   `mapstructure:"querystring"`
 		Redirect    string   `mapstructure:"redirect"`
 		Success     string   `mapstructure:"success"`
-		claimHeader string   `mapstructure:"claimheader"`
+		ClaimHeader string   `mapstructure:"claimheader"`
 		Claims      []string `mapstructure:"claims"`
 	}
 	DB struct {
@@ -440,6 +440,9 @@ func SetDefaults() {
 	}
 	if !viper.IsSet(Branding.LCName + ".headers.success") {
 		Cfg.Headers.Success = "X-" + Branding.CcName + "-Success"
+	}
+	if !viper.IsSet(Branding.LCName + ".headers.claimheader") {
+		Cfg.Headers.ClaimHeader = "X-" + Branding.CcName + "-IdP-Claims-"
 	}
 
 	// db defaults
