@@ -75,6 +75,15 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
+    # Customizable claim header. By default claims are sent down as headers with a prefix of X-Vouch-IdP-Claims-ClaimKey
+    # if you set this option.
+    # claimheader: My-Custom-Claim-Prefix
+    # Claims is a list of claims that will be stored in the JWT and passed down to applications via headers
+    # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
+    claims:
+      - groups
+      - given_name
+
 
   db: 
     file: data/vouch_bolt.db
