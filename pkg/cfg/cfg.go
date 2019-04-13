@@ -43,12 +43,14 @@ type config struct {
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 	}
+	Claims  []string `mapstructure:"claims"`
 	Headers struct {
 		JWT         string `mapstructure:"jwt"`
 		User        string `mapstructure:"user"`
 		QueryString string `mapstructure:"querystring"`
 		Redirect    string `mapstructure:"redirect"`
 		Success     string `mapstructure:"success"`
+		Claims      string `mapstructure:"claims"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
@@ -251,11 +253,17 @@ func ParseConfig() {
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		panic(err)
 	}
-	UnmarshalKey(Branding.LCName, &Cfg)
+	err = UnmarshalKey(Branding.LCName, &Cfg)
+	if err != nil {
+		log.Errorf("Couldn't unmarshal configuration")
+	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
 		var oldConfig config
-		UnmarshalKey(Branding.OldLCName, &oldConfig)
+		err = UnmarshalKey(Branding.OldLCName, &oldConfig)
+		if err != nil {
+			log.Errorf("Couldn't unmarshal configuration")
+		}
 		if len(oldConfig.Domains) != 0 {
 			log.Errorf(`						
 
@@ -458,7 +466,7 @@ func SetDefaults() {
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
-	// TODO: proably change this name, maybe set the domain/port the webapp runs on
+	// TODO: probably change this name, maybe set the domain/port the webapp runs on
 	if !viper.IsSet(Branding.LCName + ".webapp") {
 		Cfg.WebApp = false
 	}
