@@ -44,14 +44,14 @@ type config struct {
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 		MaxAge   int    `mapstructure:"maxage"`
 	}
-	Claims  []string `mapstructure:"claims"`
+
 	Headers struct {
-		JWT         string `mapstructure:"jwt"`
-		User        string `mapstructure:"user"`
-		QueryString string `mapstructure:"querystring"`
-		Redirect    string `mapstructure:"redirect"`
-		Success     string `mapstructure:"success"`
-		Claims      string `mapstructure:"claims"`
+		JWT         string   `mapstructure:"jwt"`
+		User        string   `mapstructure:"user"`
+		QueryString string   `mapstructure:"querystring"`
+		Redirect    string   `mapstructure:"redirect"`
+		Success     string   `mapstructure:"success"`
+		Claims      []string `mapstructure:"claims"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
