@@ -447,9 +447,9 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims map[string]in
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		return getUserInfoFromIndieAuth(r, user)
+		return getUserInfoFromIndieAuth(r, user, customClaims)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		return getUserInfoFromADFS(r, user)
+		return getUserInfoFromADFS(r, user, customClaims)
 	}
 
 	providerToken, err := cfg.OAuthClient.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
@@ -460,9 +460,9 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims map[string]in
 	// make the "third leg" request back to google to exchange the token for the userinfo
 	client := cfg.OAuthClient.Client(oauth2.NoContext, providerToken)
 	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		return getUserInfoFromGoogle(client, user)
+		return getUserInfoFromGoogle(client, user, customClaims)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
-		return getUserInfoFromGitHub(client, user, providerToken)
+		return getUserInfoFromGitHub(client, user, customClaims, providerToken)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
 		return getUserInfoFromOpenID(client, user, customClaims, providerToken)
 	}
@@ -513,7 +513,7 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 
 // github
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func getUserInfoFromGitHub(client *http.Client, user *structs.User, ptoken *oauth2.Token, customClaims map[string]interface{}) error {
+func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims map[string]interface{}, ptoken *oauth2.Token) error {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
@@ -670,7 +670,7 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims map[s
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
 	log.Infof("adfs adfsUser: %+v", adfsUser)
-	if err = mapClaims([]byte(idToken), user); err != nil {
+	if err = mapClaims([]byte(idToken), customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
