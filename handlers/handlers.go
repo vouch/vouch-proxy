@@ -197,6 +197,28 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if len(cfg.Cfg.Headers.Claims) > 0 {
+		// Run through all the claims found
+		for k, v := range claims.CustomClaims {
+			// Run through the claims we are looking for
+			for _, cv := range cfg.Cfg.Headers.Claims {
+				// Check for matching claim
+				if cv == k {
+					if val, ok := v.(string); ok {
+						w.Header().Add(cfg.Cfg.Headers.ClaimHeader, val)
+					} else if val, ok := v.([]interface{}); ok {
+						strs := make([]string, len(val))
+						for i, v := range val {
+							strs[i] = fmt.Sprintf("\"%s\"", v)
+						}
+						w.Header().Add(cfg.Cfg.Headers.ClaimHeader, strings.Join(strs, ","))
+					} else {
+						log.Error("Couldn't parse header type.  Please submit an issue.")
+					}
+				}
+			}
+		}
+	}
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
@@ -721,7 +743,7 @@ func mapClaims(claims []byte, customClaims map[string]interface{}) error {
 		return err
 	}
 	m := f.(map[string]interface{})
-	for k, _ := range m {
+	for k := range m {
 		var found = false
 		for _, e := range cfg.Cfg.Headers.Claims {
 			if k == e {
