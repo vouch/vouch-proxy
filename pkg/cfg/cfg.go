@@ -50,6 +50,7 @@ type config struct {
 		QueryString string   `mapstructure:"querystring"`
 		Redirect    string   `mapstructure:"redirect"`
 		Success     string   `mapstructure:"success"`
+		claimHeader string   `mapstructure:"claimheader"`
 		Claims      []string `mapstructure:"claims"`
 	}
 	DB struct {
