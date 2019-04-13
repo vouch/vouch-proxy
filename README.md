@@ -1,46 +1,29 @@
 # Vouch Proxy
-# Renaming project to **Vouch Proxy** in January 2019
 
-In January the project was renamed to [vouch/vouch-proxy](https://github.com/vouch/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/vouch/vouch-proxy/issues/35) with another project.
+an SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
-Other namespaces have been changed including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which has become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
+Vouch Proxy supports many OAuth login providers and can enforce authentication to...
 
+* Google
+* [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
+* GitHub Enterprise
+* [IndieAuth](https://indieauth.spec.indieweb.org/)
+* [Okta](https://developer.okta.com/blog/2018/08/28/nginx-auth-request)
+* [ADFS](https://github.com/vouch/vouch-proxy/pull/68)
+* Keycloak
+* [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
+* most other OpenID Connect (OIDC) providers
 
-## you should change your config to the new name as of `v0.4.0`
+Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
 
-Existing configs for both nginx and Vouch Proxy (lasso) should work fine.  However it would be prudent to make these minor adjustments:
-
-in `config/config.yml`
-
-* change "lasso:" to "vouch:"
-
-and in your nginx config
-
-* change variable names "http_x_lasso_" to "http_x_vouch_"
-* change the headers "X-Lasso-" to "X-Vouch-"
-
-The examples below have been updated accordingly
-
-Sorry for the inconvenience but we wanted to make this change at this relatively early stage of the project.
-
-This notice will remain in the README through June 2019
-
-# Vouch Proxy
-
-an SSO solution for nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
-
-Vouch Proxy supports OAuth login via Google, [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), [IndieAuth](https://indieauth.spec.indieweb.org/), and OpenID Connect providers
-
-If Vouch is running on the same host as the nginx reverse proxy the response time from the `/validate` endpoint to nginx should be less than 1ms
-
-For support please file tickets here or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
+If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
 
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
 * create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
-* configure nginx...
+* configure Nginx...
 
 ```{.nginxconf}
 server {
@@ -55,15 +38,18 @@ server {
     auth_request /validate;
 
     location = /validate {
-      # Vouch Proxy can run behind the same nginx-revproxy
-      # May need to add "internal", and comply to "upstream" server naming
-      proxy_pass http://vouch.yourdomain.com:9090;
+      # Vouch Proxy can run behind the same Nginx reverse proxy
+      # may need to comply to "upstream" server naming
+      proxy_pass http://vouch.yourdomain.com:9090/validate;
+
+      # be sure to pass the original host header
+      proxy_set_header Host $http_host;
 
       # Vouch Proxy only acts on the request headers
       proxy_pass_request_body off;
       proxy_set_header Content-Length "";
 
-      # pass X-Vouch-User along with the request
+      # optionally add X-Vouch-User as returned by Vouch Proxy along with the request
       auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
 
       # these return values are used by the @error401 call
@@ -93,15 +79,16 @@ server {
 
 ```
 
-If Vouch is configured behind the **same** nginx reverseproxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
+If Vouch is configured behind the **same** Nginx reverse proxy (perhaps so you can configure ssl) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
 ```{.nginxconf}
 server {
     listen 80 default_server;
     server_name vouch.yourdomain.com;
     location / {
-       proxy_set_header Host vouch.yourdomain.com;
        proxy_pass http://127.0.0.1:9090;
+       # be sure to pass the original host header
+       proxy_set_header Host vouch.yourdomain.com;
     }
 }
 
@@ -122,11 +109,13 @@ docker run -d \
 
 The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub.  In addition to `voucher/vouch-proxy:latest` which is based on [scratch](https://docs.docker.com/samples/library/scratch/) there is an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` as well as versioned images as `voucher/vouch-proxy:x.y.z` and `voucher/vouch-proxy:x.y.z_alpine`.
 
-https://hub.docker.com/r/voucher/vouch-proxy/builds/
+[https://hub.docker.com/r/voucher/vouch-proxy/builds/](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
+
+## Kubernetes Nginx Ingress
 
 If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/ingress-nginx), you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
 
-```
+```bash
     nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
     nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com
     nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
@@ -145,10 +134,66 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
   ./vouch-proxy
 ```
 
+## Troubleshooting, Support and Feature Requests
+
+Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky.  We want to help you get up and running as quickly as possible.  The most common problem is..
+
+### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
+
+* first turn on `vouch.testing: true` and set `vouch.logLevel: debug`.  This will slow down the loop.
+* the `Host:` header in the http request, the `oauth.callback_url` and the configured `vouch.domains` must all align so that the cookie that carries the JWT can be placed properly into the browser and then returned on each request
+* it helps to ___think like a cookie___.
+  * a cookie is set into a domain.  If you have `siteA.yourdomain.com` and `siteB.yourdomain.com` protected by Vouch Proxy, you want the Vouch Proxy cookie to be set into `.yourdomain.com`
+  * if you authenticate to `vouch.yourdomain.com` the cookie will not be able to be seen by `dev.anythingelse.com`
+  * unless you are using https, you should set `vouch.cookie.secure: false`
+  * cookies **are** available to all ports of a domain
+
+* please see the [issues which have been closed that mention redirect](https://github.com/vouch/vouch-proxy/issues?utf8=%E2%9C%93&q=is%3Aissue+redirect+)
+
+### Okay, I looked at the issues and have tried some things with my configs but I still can't figure it out
+
+* okay, please file an issue in this manner..
+* run `./do.sh bug_report yourdomain.com [yourotherdomain.com]` which will create a redacted version of your config and logs
+  * and follow the instructions at the end to redact your Nginx config
+* paste those into [hastebin.com](https://hastebin.com/), and save it
+* then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
+* or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
+
+### I really love Vouch Proxy! I wish it did XXXX
+
+Thanks for the love, please open an issue describing your feature or idea before submitting a PR.
+
+Please know that Vouch Proxy is not sponsored and is developed and supported on a volunteer basis.
+
+## Project renamed to **Vouch Proxy** in January 2019
+
+In January the project was renamed to [vouch/vouch-proxy](https://github.com/vouch/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/vouch/vouch-proxy/issues/35) with another project.
+
+Other namespaces have been changed including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which has become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
+
+### you should change your config to the new name as of `v0.4.0`
+
+Existing configs for both Nginx and Vouch Proxy (lasso) should work fine.  However it would be prudent to make these minor adjustments:
+
+in `config/config.yml`
+
+* change "lasso:" to "vouch:"
+
+and in your Nginx config
+
+* change variable names "http_x_lasso_" to "http_x_vouch_"
+* change the headers "X-Lasso-" to "X-Vouch-"
+
+The examples below have been updated accordingly
+
+Sorry for the inconvenience but we wanted to make this change at this relatively early stage of the project.
+
+This notice will remain in the README through June 2019
+
 ## the flow of login and authentication using Google Oauth
 
 * Bob visits `https://private.oursites.com`
-* the nginx reverse proxy...
+* the Nginx reverse proxy...
   * recieves the request for private.oursites.com from Bob
   * uses the `auth_request` module configured for the `/validate` path
   * `/validate` is configured to `proxy_pass` requests to the authentication service at `https://vouch.oursites.com/validate`
@@ -158,12 +203,12 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
         * respond to Bob with a 302 redirect to `https://vouch.oursites.com/login?url=https://private.oursites.com`
 
 * vouch `https://vouch.oursites.com/validate`
-  * recieves the request for private.oursites.com from Bob via nginx `proxy_pass`
+  * recieves the request for private.oursites.com from Bob via Nginx `proxy_pass`
   * it looks for a cookie named "oursitesSSO" that contains a JWT
   * if the cookie is found, and the JWT is valid
-    * returns 200 to nginx, which will allow access (bob notices nothing)
+    * returns 200 to Nginx, which will allow access (bob notices nothing)
   * if the cookie is NOT found, or the JWT is NOT valid
-    * return 401 NotAuthorized to nginx (which forwards the request on to login)
+    * return 401 NotAuthorized to Nginx (which forwards the request on to login)
 
 * Bob is first forwarded briefly to `https://vouch.oursites.com/login?url=https://private.oursites.com`
   * clears out the cookie named "oursitesSSO" if it exists
@@ -185,8 +230,6 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
 
 Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser.  While Vouch does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
 
-Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://vouch.oursites.com/validate` from the `auth_request` nginx module.
+Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://vouch.oursites.com/validate` from the `auth_request` Nginx module.
 
 The next time Bob is forwarded to google for login, since he has already authorized the Vouch OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way.  Bob may not even notice that he logged in via Vouch.
-
-

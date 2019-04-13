@@ -10,17 +10,20 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // config vouch jwt cookie configuration
 type config struct {
+	Logger        *zap.SugaredLogger
+	FastLogger    *zap.Logger
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
@@ -124,6 +127,10 @@ var (
 	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
 
 	cmdLineConfig *string
+
+	logger *zap.Logger
+	log    *zap.SugaredLogger
+	atom   zap.AtomicLevel
 )
 
 const (
@@ -135,24 +142,50 @@ const (
 func init() {
 
 	// can pass loglevel on the command line
-	ll := flag.String("loglevel", Cfg.LogLevel, "enable debug log output")
+	ll := flag.String("loglevel", "", "enable debug log output")
 	// from config file
 	port := flag.Int("port", -1, "port")
 	help := flag.Bool("help", false, "show usage")
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
+
+	atom = zap.NewAtomicLevel()
+	encoderCfg := zap.NewProductionEncoderConfig()
+
+	logger = zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		atom,
+	))
+
+	defer logger.Sync() // flushes buffer, if any
+	log = logger.Sugar()
+	Cfg.FastLogger = logger
+	Cfg.Logger = log
+
+	// bail if we're testing
+	if flag.Lookup("test.v") != nil {
+		fmt.Println("`go test` detected, not loading regular config")
+		return
+	}
+
 	ParseConfig()
+
+	if Cfg.Testing {
+		setDevelopmentLogger()
+	}
+
+	if *ll == "debug" || Cfg.LogLevel == "debug" {
+		atom.SetLevel(zap.DebugLevel)
+		log.Debug("logLevel set to debug")
+	}
+
 	if *help {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	if *ll == "debug" {
-		log.SetLevel(log.DebugLevel)
-		log.Debug("logLevel set to debug")
-	}
-
-	setDefaults()
+	SetDefaults()
 
 	if *port != -1 {
 		Cfg.Port = *port
@@ -169,7 +202,30 @@ func init() {
 		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
 	}
 
-	log.Debug(viper.AllSettings())
+	log.Debugf("viper settings %+v", viper.AllSettings())
+}
+
+func setDevelopmentLogger() {
+	// then configure the logger for development output
+	logger = logger.WithOptions(
+		zap.WrapCore(
+			func(zapcore.Core) zapcore.Core {
+				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
+			}))
+	log = logger.Sugar()
+	Cfg.FastLogger = log.Desugar()
+	Cfg.Logger = log
+	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
+}
+
+// InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
+func InitForTestPurposes() {
+	os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml")
+	// log.Debug("opening config")
+	setDevelopmentLogger()
+	ParseConfig()
+	SetDefaults()
+
 }
 
 // ParseConfig parse the config file
@@ -305,8 +361,8 @@ func checkCallbackConfig(url string) error {
 	return nil
 }
 
-// setDefaults set default options for some items
-func setDefaults() {
+// SetDefaults set default options for some items
+func SetDefaults() {
 
 	// this should really be done by Viper up in parseConfig but..
 	// nested defaults is currently *broken*

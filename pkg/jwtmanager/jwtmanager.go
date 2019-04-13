@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
@@ -29,15 +28,19 @@ type VouchClaims struct {
 // StandardClaims jwt.StandardClaims implimentation
 var StandardClaims jwt.StandardClaims
 
-// Sites just testing
+// Sites added to VouchClaims
 var Sites []string
+var log = cfg.Cfg.Logger
 
 func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
-	Sites = make([]string, 0)
+	populateSites()
+}
 
+func populateSites() {
+	Sites = make([]string, 0)
 	// TODO: the Sites that end up in the JWT come from here
 	// if we add fine grain ability (ACL?) to the equation
 	// then we're going to have to add something fancier here

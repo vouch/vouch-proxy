@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/model"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/gorilla/websocket"
@@ -19,6 +19,7 @@ import (
 // https://github.com/gorilla/websocket/blob/master/examples/chat/client.go
 
 var allConns map[*websocket.Conn]bool
+var log = cfg.Cfg.Logger
 
 const (
 	// Time allowed to write a message to the peer.
@@ -216,7 +217,7 @@ func (c *Client) shipping(t string, v interface{}) {
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Info(err)
 		return
 	}
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}

@@ -5,10 +5,10 @@ package model
 
 import (
 	"errors"
+	"flag"
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
@@ -25,21 +25,29 @@ var (
 	//Db holds the db
 	Db *bolt.DB
 
-	dbpath string
+	// dbpath string
 
 	userBucket = []byte("users")
 	teamBucket = []byte("teams")
 	siteBucket = []byte("sites")
+	dbpath     = os.Getenv("VOUCH_ROOT") + cfg.Cfg.DB.File
+
+	log = cfg.Cfg.Logger
 )
 
 // may want to use encode/gob to store the user record
 func init() {
-	dbpath = os.Getenv("VOUCH_ROOT") + cfg.Cfg.DB.File
+	// in testing we open the dbfile from _test.go explicitly
+	if flag.Lookup("test.v") != nil {
+		return
+	}
 	Db, _ = OpenDB(dbpath)
 }
 
 // OpenDB the boltdb
 func OpenDB(dbfile string) (*bolt.DB, error) {
+
+	log.Debugf("opening dbfile %s", dbfile)
 
 	opts := &bolt.Options{
 		Timeout: 50 * time.Millisecond,
@@ -47,7 +55,7 @@ func OpenDB(dbfile string) (*bolt.DB, error) {
 
 	db, err := bolt.Open(dbfile, 0644, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("unable to open dbfile %s: %s", dbfile, err.Error())
 		return nil, err
 	}
 	return db, nil

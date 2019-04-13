@@ -82,6 +82,60 @@ goget () {
   go get -t -v ./...
 }
 
+REDACT=""
+bug_report() {
+  set +e
+  # CONFIG=$1; shift;
+  CONFIG=config/config.yml
+  REDACT=$*
+
+  if [ -z "$REDACT" ]; then 
+    cat <<EOF
+
+    bug_report cleans the ${CONFIG} and the Vouch Proxy logs of secrets and any additional strings (usually domains and email addresses)
+
+    usage:
+
+      $0 bug_report redacted_string redacted_string 
+
+EOF
+    exit 1;
+  fi
+  echo -e "\n-------------------------\n\n#\n# redacted Vouch Proxy ${CONFIG}\n# $(date -I)\n#\n"
+  cat $CONFIG | _redact
+
+  echo -e "\n-------------------------\n\n#\n# redacted Vouch Proxy logs\n# $(date -I)\n#\n"
+  echo -e "# be sure to set 'vouch.testing: true' and 'vouch.logLevel: debug' in your config\n"
+
+  trap _redact_exit SIGINT
+  ./vouch-proxy 2>&1 | _redact
+
+
+}
+_redact_exit () {
+  echo -e "\n\n-------------------------\n"
+  echo -e "redact your nginx config with:\n"
+  echo -e "\tcat nginx.conf | sed 's/yourdomain.com/DOMAIN.COM/g'\n"
+  echo -e "Please upload both configs and some logs to https://hastebin.com/ and open an issue on GitHub at https://github.com/vouch/vouch-proxy/issues\n"
+}
+
+_redact() {
+  SECRET_FIELDS=("client_id client_secret secret")
+  while IFS= read -r LINE; do
+    for i in $SECRET_FIELDS; do
+      LINE=$(echo "$LINE" | sed -r "s/${i}..[[:graph:]]*\>/${i}: XXXXXXXXXXX/g")
+    done
+    # j=$(expr $j + 1)
+    for i in $REDACT; do
+      r=$i
+      r=$(echo "$r" | sed "s/[[:alnum:]]/+/g")
+      # LINE=$(echo "$LINE" | sed "s/${i}/+++++++/g")
+      LINE=$(echo "$LINE" | sed "s/${i}/${r}/g")
+    done
+    echo "${LINE}"
+  done
+}
+
 coverage() {
   export EXTRA_TEST_ARGS='-cover'
   test
@@ -121,6 +175,7 @@ usage() {
      $0 coverage               - code coverage report
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 coverage               - coverage report
+     $0 bug_report domain.com  - print config file removing secrets and each provided domain
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 loc                    - lines of code in project
@@ -136,7 +191,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc'|'usage')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc'|'usage'|'bug_report')
    shift
    $ARG $*
    ;;
