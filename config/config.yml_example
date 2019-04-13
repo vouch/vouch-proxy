@@ -77,6 +77,19 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
+    # Claims is a list of claims that will be stored in the JWT and passed down to applications via headers
+    # By default claims are sent down as headers with a prefix of X-Vouch-IdP-Claims-ClaimKey
+    # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
+    claims:
+      - groups
+      - given_name
+    # these will result in two headers being passed back to nginx
+    # X-Vouch-IdP-Claims-groups
+    # X-Vouch-IdP-Claims-given_name
+      
+    # Customizable claim header. 
+    # claimheader: My-Custom-Claim-Prefix
+
 
   db: 
     file: data/vouch_bolt.db
