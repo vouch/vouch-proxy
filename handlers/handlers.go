@@ -423,7 +423,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	model.PutUser(user)
 
 	// issue the jwt
-	tokenstring := jwtmanager.CreateUserTokenString(user)
+	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims)
 	cookie.SetCookie(w, r, tokenstring)
 
 	// get the originally requested URL so we can send them on their way
