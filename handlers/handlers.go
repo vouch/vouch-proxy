@@ -196,20 +196,25 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(cfg.Cfg.Headers.Claims) > 0 {
+		log.Debug("Found claims in config, finding specific keys...")
 		// Run through all the claims found
 		for k, v := range claims.CustomClaims {
 			// Run through the claims we are looking for
 			for _, cv := range cfg.Cfg.Headers.Claims {
 				// Check for matching claim
 				if cv == k {
+					log.Debug("Found matching claim key: ", k)
+					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
 					if val, ok := v.(string); ok {
-						w.Header().Add(cfg.Cfg.Headers.ClaimHeader, val)
+						w.Header().Add(customHeader, val)
+						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
 					} else if val, ok := v.([]interface{}); ok {
 						strs := make([]string, len(val))
 						for i, v := range val {
 							strs[i] = fmt.Sprintf("\"%s\"", v)
 						}
-						w.Header().Add(cfg.Cfg.Headers.ClaimHeader, strings.Join(strs, ","))
+						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", strings.Join(strs, ","))
+						w.Header().Add(customHeader, strings.Join(strs, ","))
 					} else {
 						log.Error("Couldn't parse header type.  Please submit an issue.")
 					}
@@ -220,8 +225,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
-	fastlog.Debug("response header",
-		zap.String(cfg.Cfg.Headers.User, w.Header().Get(cfg.Cfg.Headers.User)))
+	log.Debugf("response header %+v", w.Header())
 
 	// good to go!!
 	if cfg.Cfg.Testing {
