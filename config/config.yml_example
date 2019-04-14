@@ -75,6 +75,12 @@ vouch:
     jwt: X-Vouch-Token
     querystring: access_token
     redirect: X-Vouch-Requested-URI
+    # accesstoken: Pass the user's access token from the provider.  This is useful if you need to pass this token to a downstream
+    # application. This is optional.
+    # accesstoken: X-Vouch-IdP-AccessToken
+    # idtoken: Pass the user's Id token from the provider.  This is useful if you need to pass this token to a downstream
+    # application. This is optional.
+    # idtoken: X-Vouch-IdP-IdToken
 
   db: 
     file: data/vouch_bolt.db
