@@ -49,6 +49,8 @@ type config struct {
 		QueryString string `mapstructure:"querystring"`
 		Redirect    string `mapstructure:"redirect"`
 		Success     string `mapstructure:"success"`
+		AccessToken string `mapstructure:"accesstoken"`
+		IdToken     string `mapstructure:"idtoken"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
