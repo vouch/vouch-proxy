@@ -51,7 +51,12 @@ server {
 
       # optionally add X-Vouch-User as returned by Vouch Proxy along with the request
       auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
-
+      # optionally add X-Vouch-IdP-Claims-* custom claims you are tracking
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_groups $upstream_http_x_vouch_idp_claims_groups;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_given_name $upstream_http_x_vouch_idp_claims_given_name;
+      # optinally add X-Vouch-IdP-AccessToken or IdToken 
+      #    auth_request_set $auth_resp_x_vouch_idp_accesstoken $upstream_http_x_vouch_idp_accesstoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_idtoken $upstream_http_x_vouch_idp_idtoken;
       # these return values are used by the @error401 call
       auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
       auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
@@ -74,6 +79,16 @@ server {
       #  in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
       # set user header (usually an email)
       proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
+      #    auth_request_set $auth_resp_x_vouch_idp_accesstoken $upstream_http_x_vouch_idp_accesstoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_idtoken $upstream_http_x_vouch_idp_idtoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_groups $upstream_http_x_vouch_idp_claims_groups;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_given_name $upstream_http_x_vouch_idp_claims_given_name;
+      # Pass any other custom claims you are tracking
+      # proxy_set_header X-Vouch-IdP-Claims-Groups $auth_resp_x_vouch_idp_claims_groups;
+      # proxy_set_header X-Vouch-IdP-Claims-Given_Name $auth_resp_x_vouch_idp_claims_given_name;
+      # optionally pass the accesstoken or idtoken 
+      # proxy_set_header X-Vouch-IdP-AccessToken $auth_resp_x_vouch_idp_accesstoken;
+      # proxy_set_header X-Vouch-IdP-IdToken $auth_resp_x_vouch_idp_idtoken;
     }
 }
 
@@ -133,6 +148,158 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
   go build
   ./vouch-proxy
 ```
+## Advanced Authorization Using OpenResty
+### What is OpenResty?
+OpenResty® is a full-fledged web platform that integrates the standard Nginx core, LuaJIT, many carefully written Lua libraries, lots of high quality 3rd-party Nginx modules, and most of their external dependencies. 
+
+### Instructions
+You can replace nginx with OpenResty very easily.  Their installation documents can be found here: [here](https://openresty.org/en/installation.html)
+
+* Add the following to nginx.conf http block
+```{.nginxconf}
+# Add the following into the http block
+    init_by_lua_block {
+      -- Function to find a key in a table
+      function tableHasKey(table,key)
+        return table[key] ~= nil
+      end
+      -- Function to turn a table with only values into a k=>v table
+      function Set (list)
+        local set = {}
+        for _, l in ipairs(list) do set[l] = true end
+          return set
+        end
+    }
+```
+* Configure nginx....
+```{.nginxconf}
+server {
+    listen 443 ssl http2;
+    server_name dev.yourdomain.com;
+    root /var/www/html/;
+
+    ssl_certificate /etc/letsencrypt/live/dev.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dev.yourdomain.com/privkey.pem;
+
+    # send all requests to the `/validate` endpoint for authorization
+    auth_request /validate;
+
+    location = /validate {
+      # Vouch Proxy can run behind the same Nginx reverse proxy
+      # may need to comply to "upstream" server naming
+      proxy_pass http://vouch.yourdomain.com:9090/validate;
+
+      # be sure to pass the original host header
+      proxy_set_header Host $http_host;
+
+      # Vouch Proxy only acts on the request headers
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+
+      # optionally add X-Vouch-User as returned by Vouch Proxy along with the request
+      auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
+      # optionally add X-Vouch-IdP-Claims-* custom claims you are tracking
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_groups $upstream_http_x_vouch_idp_claims_groups;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_given_name $upstream_http_x_vouch_idp_claims_given_name;
+      # optinally add X-Vouch-IdP-AccessToken or IdToken 
+      #    auth_request_set $auth_resp_x_vouch_idp_accesstoken $upstream_http_x_vouch_idp_accesstoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_idtoken $upstream_http_x_vouch_idp_idtoken;
+
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+    }
+
+    # if validate returns `401 not authorized` then forward the request to the error401block
+    error_page 401 = @error401;
+
+    location @error401 {
+        # redirect to Vouch Proxy for login
+        return 302 https://vouch.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
+    }
+
+    # proxy pass authorized requests to your service
+    location / {
+      proxy_pass http://dev.yourdomain.com:8080;
+      #  may need to set
+      #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
+      #    auth_request_set $auth_resp_x_vouch_idp_accesstoken $upstream_http_x_vouch_idp_accesstoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_idtoken $upstream_http_x_vouch_idp_idtoken;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_groups $upstream_http_x_vouch_idp_claims_groups;
+      #    auth_request_set $auth_resp_x_vouch_idp_claims_given_name $upstream_http_x_vouch_idp_claims_given_name;
+      #  in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
+      # set user header (usually an email)
+      proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
+      # Pass any other custom claims you are tracking
+      # proxy_set_header X-Vouch-IdP-Claims-Groups $auth_resp_x_vouch_idp_claims_groups;
+      # proxy_set_header X-Vouch-IdP-Claims-Given_Name $auth_resp_x_vouch_idp_claims_given_name;
+      # optionally pass the accesstoken or idtoken 
+      # proxy_set_header X-Vouch-IdP-AccessToken $auth_resp_x_vouch_idp_accesstoken;
+      # proxy_set_header X-Vouch-IdP-IdToken $auth_resp_x_vouch_idp_idtoken;
+      
+      access_by_lua_block {
+        -- ==============================
+        --     User Authentication
+        --      via X-Vouch-User
+        -- ==============================
+        -- Validate a user in nginx, instead of vouch
+        local authorized_users = Set {
+            "my@account.com",
+            "friend@gmail.com"
+           }
+        -- Verify the variable exists
+        if ngx.var.auth_resp_x_vouch_user then
+          -- Check if the found user is in the authorized_users table
+          if not tableHasKey(authorized_users, ngx.var.auth_resp_x_vouch_user) then
+             -- If not, throw a forbidden
+             ngx.exit(ngx.HTTP_FORBIDDEN)
+          end
+         else
+             -- Throw forbidden if variable doesn't exist
+             ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+      
+        -- ==============================
+        --     Group Authentication
+        --    via X-Vouch-IdP-Groups
+        -- ==============================
+        -- Validate that a user is in a group
+        local authorized_groups = Set {
+            "Domain Users",
+            "Website Users"
+           }
+        -- Verify the variable exists
+        if ngx.var.auth_resp_x_vouch_idp_claims_groups then
+          -- Check if the found user is in the allowed_users table
+          local cjson = require("cjson")
+          local groups = cjson.decode(ngx.var.auth_resp_x_vouch_idp_claims_groups)
+          local found = false
+          -- Parse the groups and check if they match any of our authorized groups
+          for i, group in ipairs(groups) do
+              if tableHasKey(authorized_groups, group) then
+                -- If we found an authorized group, say so and break the loop
+                found = true
+                break
+              end
+            end
+          -- If we didn't find out group in our list, then return forbidden
+          if not found then
+             -- If not, throw a forbidden
+             ngx.exit(ngx.HTTP_FORBIDDEN)
+          end
+         else
+             -- Throw forbidden if variable doesn't exist
+             ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+      }
+    }
+}
+
+```
+* Update the authorized_users and authorized_groups tables as needed.
+
+With OpenResty and Lua it is possible to provide customized and advanced authorization on any header or claims vouch passes down.    
 
 ## Troubleshooting, Support and Feature Requests
 
