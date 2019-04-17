@@ -20,8 +20,10 @@ import (
 
 // VouchClaims jwt Claims specific to vouch
 type VouchClaims struct {
-	Username string   `json:"username"`
-	Sites    []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	Username     string   `json:"username"`
+	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	PAccessToken string
+	PIdToken     string
 	jwt.StandardClaims
 }
 
@@ -50,12 +52,14 @@ func populateSites() {
 }
 
 // CreateUserTokenString converts user to signed jwt
-func CreateUserTokenString(u structs.User) string {
+func CreateUserTokenString(u structs.User, ptokens structs.PTokens) string {
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
 		u.Username,
 		Sites,
+		ptokens.PAccessToken,
+		ptokens.PIdToken,
 		StandardClaims,
 	}
 

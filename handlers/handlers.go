@@ -194,18 +194,18 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	u := structs.User{}
-	err = model.User([]byte(claims.Username), &u)
-	if err != nil {
-		log.Error("Error grabbing user from database")
-	}
+
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 	if cfg.Cfg.Headers.AccessToken != "" {
-		w.Header().Add(cfg.Cfg.Headers.AccessToken, u.AccessToken)
+		if claims.PAccessToken != "" {
+			w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.PAccessToken)
+		}
 	}
 	if cfg.Cfg.Headers.IdToken != "" {
-		w.Header().Add(cfg.Cfg.Headers.IdToken, u.IdToken)
+		if claims.PIdToken != "" {
+			w.Header().Add(cfg.Cfg.Headers.IdToken, claims.PIdToken)
+		}
 	}
 	fastlog.Debug("response header",
 		zap.String(cfg.Cfg.Headers.User, w.Header().Get(cfg.Cfg.Headers.User)))
@@ -408,7 +408,8 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := structs.User{}
-	if err := getUserInfo(r, &user); err != nil {
+	ptokens := structs.PTokens{}
+	if err := getUserInfo(r, &user, &ptokens); err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -429,7 +430,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	model.PutUser(user)
 
 	// issue the jwt
-	tokenstring := jwtmanager.CreateUserTokenString(user)
+	tokenstring := jwtmanager.CreateUserTokenString(user, ptokens)
 	cookie.SetCookie(w, r, tokenstring)
 
 	// get the originally requested URL so we can send them on their way
@@ -449,7 +450,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO: put all getUserInfo logic into its own pkg
 
-func getUserInfo(r *http.Request, user *structs.User) error {
+func getUserInfo(r *http.Request, user *structs.User, ptokens *structs.PTokens) error {
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
@@ -461,8 +462,8 @@ func getUserInfo(r *http.Request, user *structs.User) error {
 	if err != nil {
 		return err
 	}
-	user.AccessToken = providerToken.AccessToken
-	user.IdToken = providerToken.Extra("id_token").(string)
+	ptokens.PAccessToken = providerToken.AccessToken
+	ptokens.PIdToken = providerToken.Extra("id_token").(string)
 
 	// make the "third leg" request back to google to exchange the token for the userinfo
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
