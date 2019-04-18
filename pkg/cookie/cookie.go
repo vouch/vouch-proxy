@@ -47,8 +47,9 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// Cookies have a max size of 4096 bytes, but to support most browsers, we should stay below 4000 bytes
 	// https://tools.ietf.org/html/rfc6265#section-6.1
 	// http://browsercookielimits.squawky.net/
-	if cookieSize > 15000 {
-		log.Warnf("cookie sizes over 15000 bytes have shown to cause issues with browsers due to large header sizes.")
+	if cookieSize > 4096 {
+		// https://www.lifewire.com/cookie-limit-per-domain-3466809
+		log.Warnf("cookie sizes over 4096 bytes have shown to cause issues or simply aren't supported in certain browsers.")
 	}
 	if cookieSize > 4000 {
 		log.Debugf("Cookie is over 4000 bytes.  Total size: %d", cookieSize)
