@@ -13,7 +13,7 @@ var log = cfg.Cfg.Logger
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
-	setCookie(w, r, val, cfg.Cfg.Cookie.MaxAge)
+	setCookie(w, r, val, cfg.Cfg.Cookie.MaxAge*60) // convert minutes to seconds
 }
 
 func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
@@ -27,15 +27,15 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
 	// Cookies get deleted after the current session (when the browser closes) when no expires or maxage setting is set,
 	// or when expires is set to 0.
-		http.SetCookie(w, &http.Cookie{
-			Name:     cfg.Cfg.Cookie.Name,
-			Value:    val,
-			Path:     "/",
-			Domain:   domain,
-			MaxAge:   maxAge,
-			Secure:   cfg.Cfg.Cookie.Secure,
-			HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
-		})
+	http.SetCookie(w, &http.Cookie{
+		Name:     cfg.Cfg.Cookie.Name,
+		Value:    val,
+		Path:     "/",
+		Domain:   domain,
+		MaxAge:   maxAge,
+		Secure:   cfg.Cfg.Cookie.Secure,
+		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+	})
 }
 
 // Cookie get the vouch jwt cookie
