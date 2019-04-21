@@ -25,7 +25,7 @@ type VouchClaims struct {
 	jwt.StandardClaims
 }
 
-// StandardClaims jwt.StandardClaims implimentation
+// StandardClaims jwt.StandardClaims implementation
 var StandardClaims jwt.StandardClaims
 
 // Sites added to VouchClaims
