@@ -10,12 +10,12 @@ type User struct {
 	// TODO: set Provider here so that we can pass it to db
 	// populated by db (via mapstructure) or from provider (via json)
 	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username",mapstructure:"username"`
-	Name       string `json:"name",mapstructure:"name"`
-	Email      string `json:"email",mapstructure:"email"`
+	Username   string `json:"username" mapstructure:"username"`
+	Name       string `json:"name" mapstructure:"name"`
+	Email      string `json:"email" mapstructure:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id",mapstructure:"id"`
+	ID         int    `json:"id" mapstructure:"id"`
 	// jwt.StandardClaims
 }
 
@@ -90,12 +90,12 @@ func (u *IndieAuthUser) PrepareUserData() {
 
 // Team has members and provides acess to sites
 type Team struct {
-	Name       string   `json:"name",mapstructure:"name"`
-	Members    []string `json:"members",mapstructure:"members"` // just the emails
-	Sites      []string `json:"sites",mapstructure:"sites"`     // just the domains
-	CreatedOn  int64    `json:"createdon",mapstructure:"createdon"`
-	LastUpdate int64    `json:"lastupdate",mapstructure:"lastupdate"`
-	ID         int      `json:"id",mapstructure:"id"`
+	Name       string   `json:"name" mapstructure:"name"`
+	Members    []string `json:"members" mapstructure:"members"` // just the emails
+	Sites      []string `json:"sites" mapstructure:"sites"`     // just the domains
+	CreatedOn  int64    `json:"createdon" mapstructure:"createdon"`
+	LastUpdate int64    `json:"lastupdate" mapstructure:"lastupdate"`
+	ID         int      `json:"id" mapstructure:"id"`
 }
 
 // Site is the basic unit of auth
@@ -103,5 +103,5 @@ type Site struct {
 	Domain     string `json:"domain"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id",mapstructure:"id"`
+	ID         int    `json:"id" mapstructure:"id"`
 }

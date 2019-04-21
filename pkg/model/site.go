@@ -69,13 +69,17 @@ func AllSites(sites *[]structs.Site) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(siteBucket); b != nil {
 			// c := b.Cursor()
-			b.ForEach(func(k, v []byte) error {
+			if err := b.ForEach(func(k, v []byte) error {
 				log.Debugf("key=%s, value=%s\n", k, v)
 				s := structs.Site{}
-				Site(k, &s)
+				if err := Site(k, &s); err != nil {
+					log.Error(err)
+				}
 				*sites = append(*sites, s)
 				return nil
-			})
+			}); err != nil {
+				log.Error(err)
+			}
 			log.Debugf("sites %v", sites)
 		}
 		return nil
