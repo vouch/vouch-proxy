@@ -42,6 +42,7 @@ type config struct {
 		Domain   string `mapstructure:"domain"`
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
+		MaxAge   int    `mapstructure:"maxage"`
 	}
 	Headers struct {
 		JWT         string `mapstructure:"jwt"`
@@ -342,6 +343,15 @@ func BasicTest() error {
 			Branding.LCName+".session.key",
 			minBase64Length)
 	}
+	if Cfg.Cookie.MaxAge < 0 {
+		return fmt.Errorf("configuration error: cookie maxAge cannot be lower than 0 (currently: %d)", Cfg.Cookie.MaxAge)
+	}
+	if Cfg.JWT.MaxAge <= 0 {
+		return fmt.Errorf("configuration error: JWT maxAge cannot be zero or lower (currently: %d)", Cfg.JWT.MaxAge)
+	}
+	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
+		return fmt.Errorf("configuration error: Cookie maxAge (%d) cannot be larger than the JWT maxAge (%d)", Cfg.Cookie.MaxAge, Cfg.JWT.MaxAge)
+	}
 	return nil
 }
 
@@ -417,6 +427,15 @@ func SetDefaults() {
 	if !viper.IsSet(Branding.LCName + ".cookie.httpOnly") {
 		Cfg.Cookie.HTTPOnly = true
 	}
+	if !viper.IsSet(Branding.LCName + ".cookie.maxAge") {
+		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
+	} else {
+		// it is set!  is it bigger than jwt.maxage?
+		if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
+			log.Warnf("setting `%s.cookie.maxage` to `%s.jwt.maxage` value of %d minutes (curently set to %d minutes)", Branding.LCName, Branding.LCName, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge)
+			Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
+		}
+	}
 
 	// headers defaults
 	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
@@ -460,7 +479,7 @@ func SetDefaults() {
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
-	// TODO: proably change this name, maybe set the domain/port the webapp runs on
+	// TODO: probably change this name, maybe set the domain/port the webapp runs on
 	if !viper.IsSet(Branding.LCName + ".webapp") {
 		Cfg.WebApp = false
 	}
