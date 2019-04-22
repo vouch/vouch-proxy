@@ -10,6 +10,7 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 * [IndieAuth](https://indieauth.spec.indieweb.org/)
 * [Okta](https://developer.okta.com/blog/2018/08/28/nginx-auth-request)
 * [ADFS](https://github.com/vouch/vouch-proxy/pull/68)
+* [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
 * Keycloak
 * [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 * most other OpenID Connect (OIDC) providers
@@ -25,10 +26,15 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure Nginx...
 
+The following nginx config assumes..
+
+* nginx, vouch.yourdomain.com and dev.yourdomain.com are running on the same server
+* you are running both domains behind https and have valid certs for both (if not, change to `listen 80`)
+
 ```{.nginxconf}
 server {
     listen 443 ssl http2;
-    server_name dev.yourdomain.com;
+    server_name protectedapp.yourdomain.com;
     root /var/www/html/;
 
     ssl_certificate /etc/letsencrypt/live/dev.yourdomain.com/fullchain.pem;
@@ -38,10 +44,8 @@ server {
     auth_request /validate;
 
     location = /validate {
-      # Vouch Proxy can run behind the same Nginx reverse proxy
-      # may need to comply to "upstream" server naming
-      proxy_pass http://vouch.yourdomain.com:9090/validate;
-
+      # forward the /validate request to Vouch Proxy
+      proxy_pass http://127.0.0.1:9090/validate;
       # be sure to pass the original host header
       proxy_set_header Host $http_host;
 
@@ -56,6 +60,11 @@ server {
       auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
       auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
       auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+
+      # Vouch Proxy can run behind the same Nginx reverse proxy
+      # may need to comply to "upstream" server naming
+      # proxy_pass http://vouch.yourdomain.com/validate;
+      # proxy_set_header Host $http_host;
     }
 
     # if validate returns `401 not authorized` then forward the request to the error401block
@@ -63,15 +72,18 @@ server {
 
     location @error401 {
         # redirect to Vouch Proxy for login
-        return 302 https://vouch.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
+        return 302 https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
+        # you usually *want* to redirect to Vouch running behind the same Nginx config proteced by https  
+        # but to get started you can just forward the end user to the port that vouch is running on
+        # return 302 http://vouch.yourdomain.com:9090/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 
-    # proxy pass authorized requests to your service
     location / {
-      proxy_pass http://dev.yourdomain.com:8080;
-      #  may need to set
+      # forward authorized requests to your service protectedapp.yourdomain.com
+      proxy_pass http://127.0.0.1:8080;
+      # you may need to set
       #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
-      #  in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
+      # in this bock as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
       # set user header (usually an email)
       proxy_set_header X-Vouch-User $auth_resp_x_vouch_user;
     }
@@ -83,15 +95,17 @@ If Vouch is configured behind the **same** Nginx reverse proxy (perhaps so you c
 
 ```{.nginxconf}
 server {
-    listen 80 default_server;
+    listen 443 ssl http2;
     server_name vouch.yourdomain.com;
+    ssl_certificate /etc/letsencrypt/live/vouch.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vouch.yourdomain.com/privkey.pem;
+
     location / {
-       proxy_pass http://127.0.0.1:9090;
-       # be sure to pass the original host header
-       proxy_set_header Host vouch.yourdomain.com;
+      proxy_pass http://127.0.0.1:9090;
+      # be sure to pass the original host header
+      proxy_set_header Host $http_host;
     }
 }
-
 ```
 
 An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).

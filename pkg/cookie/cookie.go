@@ -9,19 +9,15 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
 
-var defaultMaxAge = cfg.Cfg.JWT.MaxAge * 60
 var log = cfg.Cfg.Logger
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
-	setCookie(w, r, val, defaultMaxAge)
+	setCookie(w, r, val, cfg.Cfg.Cookie.MaxAge*60) // convert minutes to seconds
 }
 
 func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// foreach domain
-	if maxAge == 0 {
-		maxAge = defaultMaxAge
-	}
 	domain := domains.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
 	if cfg.Cfg.Cookie.Domain != "" {
@@ -29,6 +25,8 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
 	// log.Debugf("cookie %s expires %d", cfg.Cfg.Cookie.Name, expires)
+	// Cookies get deleted after the current session (when the browser closes) when no expires or maxage setting is set,
+	// or when expires is set to 0.
 	http.SetCookie(w, &http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
