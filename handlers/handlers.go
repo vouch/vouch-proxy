@@ -46,7 +46,7 @@ const (
 
 var (
 	// Templates
-	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
+	indexTemplate = template.Must(template.ParseFiles("../templates/index.tmpl"))
 
 	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
