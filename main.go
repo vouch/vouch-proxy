@@ -55,23 +55,23 @@ func main() {
 		"listen", listen,
 		"oauth.provider", cfg.GenOAuth.Provider)
 
-	theMux := mux.NewRouter()
+	muxR := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	theMux.HandleFunc("/validate", timelog.TimeLog(authH))
-	theMux.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
+	muxR.HandleFunc("/validate", timelog.TimeLog(authH))
+	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
-	theMux.HandleFunc("/login", timelog.TimeLog(loginH))
+	muxR.HandleFunc("/login", timelog.TimeLog(loginH))
 
 	logoutH := http.HandlerFunc(handlers.LogoutHandler)
-	theMux.HandleFunc("/logout", timelog.TimeLog(logoutH))
+	muxR.HandleFunc("/logout", timelog.TimeLog(logoutH))
 
 	callH := http.HandlerFunc(handlers.CallbackHandler)
-	theMux.HandleFunc("/auth", timelog.TimeLog(callH))
+	muxR.HandleFunc("/auth", timelog.TimeLog(callH))
 
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
-	theMux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
+	muxR.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
 	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
 		path, err := filepath.Abs(staticDir)
@@ -81,20 +81,20 @@ func main() {
 		logger.Debugf("serving static files from %s", path)
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	theMux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
+	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
 	if cfg.Cfg.WebApp {
 		logger.Info("enabling websocket")
 		tran.ExplicitInit()
-		theMux.Handle("/ws", tran.WS)
+		muxR.Handle("/ws", tran.WS)
 	}
 
 	// socketio := tran.NewServer()
-	// theMux.Handle("/socket.io/", cors.AllowAll(socketio))
+	// muxR.Handle("/socket.io/", cors.AllowAll(socketio))
 	// http.Handle("/socket.io/", tran.Server)
 
 	srv := &http.Server{
-		Handler: theMux,
+		Handler: muxR,
 		Addr:    listen,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,

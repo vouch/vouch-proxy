@@ -47,7 +47,7 @@ const (
 
 var (
 	// Templates
-	indexTemplate = template.Must(template.ParseFiles("../templates/index.tmpl"))
+	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
 
 	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
@@ -64,7 +64,7 @@ func init() {
 func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var theUrl = ""
+	var lurl = ""
 	if cfg.GenOAuth.Provider == cfg.Providers.Google {
 		// If the provider is Google, find a matching redirect URL to use for the client
 		domain := domains.Matches(r.Host)
@@ -77,18 +77,18 @@ func loginURL(r *http.Request, state string) string {
 			}
 		}
 		if cfg.OAuthopts != nil {
-			theUrl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+			lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 		} else {
-			theUrl = cfg.OAuthClient.AuthCodeURL(state)
+			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		theUrl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
-		theUrl = cfg.OAuthClient.AuthCodeURL(state)
+		lurl = cfg.OAuthClient.AuthCodeURL(state)
 	}
 
 	// log.Debugf("loginUrl %s", url)
-	return theUrl
+	return lurl
 }
 
 // FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
@@ -519,14 +519,13 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	return nil
 }
 
-func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) error {
+func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err := userinfo.Body.Close()
-		if err != nil {
+		if err := userinfo.Body.Close(); err != nil {
 			rerr = err
 		}
 	}()
@@ -544,14 +543,13 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 	return nil
 }
 
-func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) error {
+func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err := userinfo.Body.Close()
-		if err != nil {
+		if err := userinfo.Body.Close(); err != nil {
 			rerr = err
 		}
 	}()
@@ -572,7 +570,7 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 
 // github
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) error {
+func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
 
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
@@ -581,8 +579,7 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 		return err
 	}
 	defer func() {
-		err := userinfo.Body.Close()
-		if err != nil {
+		if err := userinfo.Body.Close(); err != nil {
 			rerr = err
 		}
 	}()
@@ -614,7 +611,7 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 	return nil
 }
 
-func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) error {
+func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
 
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)
@@ -663,13 +660,12 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims 
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
-
 	defer func() {
-		err := userinfo.Body.Close()
-		if err != nil {
+		if err := userinfo.Body.Close(); err != nil {
 			rerr = err
 		}
 	}()
+
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Infof("indieauth userinfo body: ", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
@@ -695,7 +691,7 @@ type adfsTokenRes struct {
 }
 
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) error {
+func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Errorf("code: %s", code)
 
@@ -723,8 +719,7 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 		return err
 	}
 	defer func() {
-		err := userinfo.Body.Close()
-		if err != nil {
+		if err := userinfo.Body.Close(); err != nil {
 			rerr = err
 		}
 	}()
