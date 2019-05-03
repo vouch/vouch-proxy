@@ -23,6 +23,8 @@ type VouchClaims struct {
 	Username     string   `json:"username"`
 	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	CustomClaims map[string]interface{}
+	PAccessToken string
+	PIdToken     string
 	jwt.StandardClaims
 }
 
@@ -54,13 +56,15 @@ func populateSites() {
 }
 
 // CreateUserTokenString converts user to signed jwt
-func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims) string {
+func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) string {
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
 		u.Username,
 		Sites,
 		customClaims.Claims,
+		ptokens.PAccessToken,
+		ptokens.PIdToken,
 		StandardClaims,
 	}
 
