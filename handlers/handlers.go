@@ -666,8 +666,9 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 	formData.Set("resource", cfg.GenOAuth.RedirectURL)
 	formData.Set("client_id", cfg.GenOAuth.ClientID)
 	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
-	formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
-
+	if cfg.GenOAuth.ClientSecret != "" {
+		formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
+	}
 	req, err := http.NewRequest("POST", cfg.GenOAuth.TokenURL, strings.NewReader(formData.Encode()))
 	if err != nil {
 		return err
