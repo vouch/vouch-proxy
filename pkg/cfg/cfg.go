@@ -224,7 +224,9 @@ func setDevelopmentLogger() {
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
 func InitForTestPurposes() {
-	os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml")
+	if err := os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml"); err != nil {
+		log.Error(err)
+	}
 	// log.Debug("opening config")
 	setDevelopmentLogger()
 	ParseConfig()
@@ -255,17 +257,16 @@ func ParseConfig() {
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		panic(err)
 	}
-	err = UnmarshalKey(Branding.LCName, &Cfg)
-	if err != nil {
-		log.Errorf("Couldn't unmarshal configuration")
+	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
+		log.Error(err)
 	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
 		var oldConfig config
-		err = UnmarshalKey(Branding.OldLCName, &oldConfig)
-		if err != nil {
-			log.Errorf("Couldn't unmarshal configuration")
+		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
+			log.Error(err)
 		}
+
 		if len(oldConfig.Domains) != 0 {
 			log.Errorf(`						
 
@@ -601,6 +602,8 @@ func isTCPPortAvailable(listen string) bool {
 		log.Error(err)
 		return false
 	}
-	conn.Close()
+	if err = conn.Close(); err != nil {
+		log.Error(err)
+	}
 	return true
 }

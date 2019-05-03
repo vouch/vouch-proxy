@@ -55,23 +55,23 @@ func main() {
 		"listen", listen,
 		"oauth.provider", cfg.GenOAuth.Provider)
 
-	mux := mux.NewRouter()
+	theMux := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	mux.HandleFunc("/validate", timelog.TimeLog(authH))
-	mux.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
+	theMux.HandleFunc("/validate", timelog.TimeLog(authH))
+	theMux.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
-	mux.HandleFunc("/login", timelog.TimeLog(loginH))
+	theMux.HandleFunc("/login", timelog.TimeLog(loginH))
 
 	logoutH := http.HandlerFunc(handlers.LogoutHandler)
-	mux.HandleFunc("/logout", timelog.TimeLog(logoutH))
+	theMux.HandleFunc("/logout", timelog.TimeLog(logoutH))
 
 	callH := http.HandlerFunc(handlers.CallbackHandler)
-	mux.HandleFunc("/auth", timelog.TimeLog(callH))
+	theMux.HandleFunc("/auth", timelog.TimeLog(callH))
 
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
-	mux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
+	theMux.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
 	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
 		path, err := filepath.Abs(staticDir)
@@ -81,20 +81,20 @@ func main() {
 		logger.Debugf("serving static files from %s", path)
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	mux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, (http.FileServer(http.Dir("." + staticDir)))))
+	theMux.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
 	if cfg.Cfg.WebApp {
 		logger.Info("enabling websocket")
 		tran.ExplicitInit()
-		mux.Handle("/ws", tran.WS)
+		theMux.Handle("/ws", tran.WS)
 	}
 
 	// socketio := tran.NewServer()
-	// mux.Handle("/socket.io/", cors.AllowAll(socketio))
+	// theMux.Handle("/socket.io/", cors.AllowAll(socketio))
 	// http.Handle("/socket.io/", tran.Server)
 
 	srv := &http.Server{
-		Handler: mux,
+		Handler: theMux,
 		Addr:    listen,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,

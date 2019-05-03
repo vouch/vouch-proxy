@@ -81,13 +81,17 @@ func User(key []byte, u *structs.User) error {
 func AllUsers(users *[]structs.User) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(userBucket); b != nil {
-			b.ForEach(func(k, v []byte) error {
+			if err := b.ForEach(func(k, v []byte) error {
 				log.Debugf("key=%s, value=%s\n", k, v)
 				u := structs.User{}
-				User(k, &u)
+				if err := User(k, &u); err != nil {
+					log.Error(err)
+				}
 				*users = append(*users, u)
 				return nil
-			})
+			}); err != nil {
+				log.Error(err)
+			}
 			log.Debugf("users %v", users)
 			return nil
 		}

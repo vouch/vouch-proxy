@@ -47,7 +47,7 @@ const (
 
 var (
 	// Templates
-	indexTemplate = template.Must(template.ParseFiles("./templates/index.tmpl"))
+	indexTemplate = template.Must(template.ParseFiles("../templates/index.tmpl"))
 
 	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
@@ -64,7 +64,7 @@ func init() {
 func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var url = ""
+	var theUrl = ""
 	if cfg.GenOAuth.Provider == cfg.Providers.Google {
 		// If the provider is Google, find a matching redirect URL to use for the client
 		domain := domains.Matches(r.Host)
@@ -77,18 +77,18 @@ func loginURL(r *http.Request, state string) string {
 			}
 		}
 		if cfg.OAuthopts != nil {
-			url = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+			theUrl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 		} else {
-			url = cfg.OAuthClient.AuthCodeURL(state)
+			theUrl = cfg.OAuthClient.AuthCodeURL(state)
 		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		url = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+		theUrl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else {
-		url = cfg.OAuthClient.AuthCodeURL(state)
+		theUrl = cfg.OAuthClient.AuthCodeURL(state)
 	}
 
 	// log.Debugf("loginUrl %s", url)
-	return url
+	return theUrl
 }
 
 // FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
@@ -255,7 +255,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		s := structs.Site{Domain: r.Host}
 		log.Debugf("site struct: %v", s)
-		model.PutSite(s)
+		if err = model.PutSite(s); err != nil {
+			log.Error(err)
+		}
 	}()
 }
 
@@ -271,7 +273,9 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-	session.Save(r, w)
+	if err = session.Save(r, w); err != nil {
+		log.Error(err)
+	}
 	sessstore.MaxAge(300)
 
 	var requestedURL = r.URL.Query().Get("url")
@@ -286,7 +290,9 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 // just returns 200 '{ "ok": true }'
 func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "{ \"ok\": true }")
+	if _, err := fmt.Fprintf(w, "{ \"ok\": true }"); err != nil {
+		log.Error(err)
+	}
 }
 
 var regExJustAlphaNum, _ = regexp.Compile("[^a-zA-Z0-9]+")
@@ -333,7 +339,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// set session variable for eventual 302 redirecton to orginal request
+	// set session variable for eventual 302 redirecton to original request
 	session.Values["requestedURL"] = requestedURL
 	log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 
@@ -347,7 +353,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values[requestedURL] = failcount
 
 	log.Debug("saving session")
-	session.Save(r, w)
+	if err = session.Save(r, w); err != nil {
+		log.Error(err)
+	}
 
 	if failcount > 2 {
 		var vouchError = r.URL.Query().Get("error")
@@ -457,7 +465,9 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// SUCCESS!! they are authorized
 
 	// store the user in the database
-	model.PutUser(user)
+	if err = model.PutUser(user); err != nil {
+		log.Error(err)
+	}
 
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims)
@@ -469,7 +479,9 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		// clear out the session value
 		session.Values["requestedURL"] = ""
 		session.Values[requestedURL] = 0
-		session.Save(r, w)
+		if err = session.Save(r, w); err != nil {
+			log.Error(err)
+		}
 
 		redirect302(w, r, requestedURL)
 		return
@@ -512,7 +524,12 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 	if err != nil {
 		return err
 	}
-	defer userinfo.Body.Close()
+	defer func() {
+		err := userinfo.Body.Close()
+		if err != nil {
+			rerr = err
+		}
+	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Infof("OpenID userinfo body: ", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
@@ -532,7 +549,12 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 	if err != nil {
 		return err
 	}
-	defer userinfo.Body.Close()
+	defer func() {
+		err := userinfo.Body.Close()
+		if err != nil {
+			rerr = err
+		}
+	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Infof("google userinfo body: ", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
@@ -558,7 +580,12 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
-	defer userinfo.Body.Close()
+	defer func() {
+		err := userinfo.Body.Close()
+		if err != nil {
+			rerr = err
+		}
+	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Infof("github userinfo body: ", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
@@ -602,16 +629,22 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims 
 		return err
 	}
 	// v.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
-	fw, err = w.CreateFormField("redirect_uri")
+	if fw, err = w.CreateFormField("redirect_uri"); err != nil {
+		return err
+	}
 	if _, err = fw.Write([]byte(cfg.GenOAuth.RedirectURL)); err != nil {
 		return err
 	}
 	// v.Set("client_id", cfg.GenOAuth.ClientID)
-	fw, err = w.CreateFormField("client_id")
+	if fw, err = w.CreateFormField("client_id"); err != nil {
+		return err
+	}
 	if _, err = fw.Write([]byte(cfg.GenOAuth.ClientID)); err != nil {
 		return err
 	}
-	w.Close()
+	if err = w.Close(); err != nil {
+		log.Error("error closing writer.")
+	}
 
 	req, err := http.NewRequest("POST", cfg.GenOAuth.AuthURL, &b)
 	if err != nil {
@@ -630,7 +663,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims 
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
-	defer userinfo.Body.Close()
+
+	defer func() {
+		err := userinfo.Body.Close()
+		if err != nil {
+			rerr = err
+		}
+	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
 	log.Infof("indieauth userinfo body: ", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
@@ -683,7 +722,12 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 	if err != nil {
 		return err
 	}
-	defer userinfo.Body.Close()
+	defer func() {
+		err := userinfo.Body.Close()
+		if err != nil {
+			rerr = err
+		}
+	}()
 
 	body, _ := ioutil.ReadAll(userinfo.Body)
 	tokenRes := adfsTokenRes{}
