@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 )
+
+const maxCookieSize = 4000
 
 var log = cfg.Cfg.Logger
 
@@ -43,17 +46,13 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	// Cookies have a max size of 4096 bytes, but to support most browsers, we should stay below 4000 bytes
 	// https://tools.ietf.org/html/rfc6265#section-6.1
 	// http://browsercookielimits.squawky.net/
-	if cookieSize > 4000 {
+	if cookieSize > maxCookieSize {
 		// https://www.lifewire.com/cookie-limit-per-domain-3466809
 		log.Warnf("cookie size: %d.  cookie sizes over ~4093 bytes(depending on the browser and platform) have shown to cause issues or simply aren't supported.", cookieSize)
-		cookieParts := SplitCookie(val, 4000-emptyCookieSize)
+		cookieParts := SplitCookie(val, maxCookieSize-emptyCookieSize)
 		for i, cookiePart := range cookieParts {
-			if i > 0 {
-				cookieName = fmt.Sprintf("%s%d", cfg.Cfg.Cookie.Name, i)
-			} else {
-				cookieName = cfg.Cfg.Cookie.Name
-			}
-			// Cookies are named with adding 1, 2, 3, etc after the original name per part.
+			// Cookies are named 1of3, 2of3, 3of3
+			cookieName = fmt.Sprintf("%s_%dof%d", cfg.Cfg.Cookie.Name, i+1, len(cookieParts))
 			http.SetCookie(w, &http.Cookie{
 				Name:     cookieName,
 				Value:    cookiePart,
@@ -79,37 +78,42 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
+
+	var cookieParts []string
+	var numParts int = -1
+
 	var err error
 	cookies := r.Cookies()
-	var combinedCookie strings.Builder
 	// Get the remaining parts
-	for i := 0; i <= len(cookies); i++ {
-		// search for cookie parts in order
-		for _, cookie := range cookies {
-			// Find the first cookie part
-			if i == 0 {
-				if cookie.Name == cfg.Cfg.Cookie.Name {
-					log.Debugw("cookie",
-						"cookieName", cookie.Name,
-						"cookieValue", cookie.Value,
-					)
-					combinedCookie.WriteString(cookie.Value)
-					break
-				}
-			} else {
-				// Get the remaining parts
-				if cookie.Name == fmt.Sprintf("%s%d", cfg.Cfg.Cookie.Name, i) {
-					log.Debugw("cookie",
-						"cookieName", cookie.Name,
-						"cookieValue", cookie.Value,
-					)
-					combinedCookie.WriteString(cookie.Value)
-					break
-				}
-			}
+	// search for cookie parts in order
+	// this is the hotpath so we're trying to only walk once
+	for _, cookie := range cookies {
+		if cookie.Name == cfg.Cfg.Cookie.Name {
+			return cookie.Value, nil
 		}
+		if strings.HasPrefix(cookie.Name, fmt.Sprintf("%s_", cfg.Cfg.Cookie.Name)) {
+			log.Debugw("cookie",
+				"cookieName", cookie.Name,
+				"cookieValue", cookie.Value,
+			)
+			xOFy := strings.Split(cookie.Name, "_")[1]
+			xyArray := strings.Split(xOFy, "of")
+			if numParts == -1 { // then its uninitialized
+				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
+					return "", fmt.Errorf("multipart cookie fail: %s", err)
+				}
+				cookieParts = make([]string, numParts)
+			}
+			var i int
+			if i, err = strconv.Atoi(xyArray[0]); err != nil {
+				return "", fmt.Errorf("multipart cookie fail: %s", err)
+			}
+			cookieParts[i] = cookie.Value
+		}
+
 	}
-	combinedCookieStr := combinedCookie.String()
+	// combinedCookieStr := combinedCookie.String()
+	combinedCookieStr := strings.Join(cookieParts, "")
 	if combinedCookieStr == "" {
 		return "", errors.New("Cookie token empty")
 	}
