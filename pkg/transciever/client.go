@@ -226,6 +226,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client.readPump()
 }
 
+// An echo function
 func Echo(conn *websocket.Conn) error {
 	messageType, r, err := conn.NextReader()
 	if err != nil {
