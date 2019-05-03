@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -288,6 +289,17 @@ func HealthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{ \"ok\": true }")
 }
 
+var regExJustAlphaNum, _ = regexp.Compile("[^a-zA-Z0-9]+")
+
+func generateStateNonce() (string, error) {
+	state, err := securerandom.URLBase64InBytes(base64Bytes)
+	if err != nil {
+		return "", err
+	}
+	state = regExJustAlphaNum.ReplaceAllString(state, "")
+	return state, nil
+}
+
 // LoginHandler /login
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -300,7 +312,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
 
-	state, err := securerandom.URLBase64OfBytes(base64Bytes)
+	state, err := generateStateNonce()
 	if err != nil {
 		log.Error(err)
 	}
