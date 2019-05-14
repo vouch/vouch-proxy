@@ -6,7 +6,7 @@ package model
 import (
 	"errors"
 	"flag"
-	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -30,7 +30,7 @@ var (
 	userBucket = []byte("users")
 	teamBucket = []byte("teams")
 	siteBucket = []byte("sites")
-	dbpath     = os.Getenv("VOUCH_ROOT") + cfg.Cfg.DB.File
+	dbpath     = filepath.Join(cfg.RootDir, cfg.Cfg.DB.File)
 
 	log = cfg.Cfg.Logger
 )

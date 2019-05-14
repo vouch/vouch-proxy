@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -128,7 +129,8 @@ var (
 	// RequiredOptions must have these fields set for minimum viable config
 	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
 
-	secretFile = os.Getenv("VOUCH_ROOT") + "config/secret"
+	RootDir    string
+	secretFile string
 
 	cmdLineConfig *string
 
@@ -152,6 +154,19 @@ func init() {
 	help := flag.Bool("help", false, "show usage")
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
 	flag.Parse()
+
+	vouchRoot := os.Getenv(Branding.UCName + "_ROOT")
+	if vouchRoot != "" {
+		RootDir, _ = filepath.Abs(vouchRoot)
+	} else {
+		ex, errEx := os.Executable()
+		if errEx != nil {
+			panic(errEx)
+		}
+		RootDir, _ = filepath.Abs(ex)
+	}
+
+	secretFile = filepath.Join(RootDir, "config/secret")
 
 	atom = zap.NewAtomicLevel()
 	encoderCfg := zap.NewProductionEncoderConfig()
@@ -238,19 +253,22 @@ func InitForTestPurposes() {
 func ParseConfig() {
 	log.Debug("opening config")
 
-	if os.Getenv(Branding.UCName+"_CONFIG") != "" {
-		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", os.Getenv(Branding.UCName+"_CONFIG"))
-		viper.SetConfigFile(os.Getenv(Branding.UCName + "_CONFIG"))
+	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
+
+	if configEnv != "" {
+		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
+		configFile, _ := filepath.Abs(configEnv)
+		viper.SetConfigFile(configFile)
 	} else if *cmdLineConfig != "" {
 		log.Infof("config file set on commandline: %s", *cmdLineConfig)
 		viper.AddConfigPath("/")
-		viper.AddConfigPath(os.Getenv(Branding.UCName + "_ROOT"))
-		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+		viper.AddConfigPath(RootDir)
+		viper.AddConfigPath(filepath.Join(RootDir, "config"))
 		viper.SetConfigFile(*cmdLineConfig)
 	} else {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
-		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
+		viper.AddConfigPath(filepath.Join(RootDir, "config"))
 	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
@@ -268,7 +286,7 @@ func ParseConfig() {
 		}
 
 		if len(oldConfig.Domains) != 0 {
-			log.Errorf(`						
+			log.Errorf(`
 
 IMPORTANT!
 
