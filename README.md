@@ -157,11 +157,11 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
 
 Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch)
 
-## Running from source
+## Compiling from source and running the binary
 
 ```bash
-  go get ./...
-  go build
+  ./do.sh goget
+  ./do.sh build
   ./vouch-proxy
 ```
 
