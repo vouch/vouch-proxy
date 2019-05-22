@@ -151,6 +151,7 @@ func ClearCookie(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// SplitCookie separate string into several strings of specified length
 func SplitCookie(longString string, maxLen int) []string {
 	splits := []string{}
 
