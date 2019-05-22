@@ -73,15 +73,16 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	muxR.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
+	// setup static
+	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
 	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
-		path, err := filepath.Abs(staticDir)
 		if err != nil {
-			logger.Errorf("couldn't find static assets at %s", path)
+			logger.Errorf("couldn't find static assets at %s", sPath)
 		}
-		logger.Debugf("serving static files from %s", path)
+		logger.Debugf("serving static files from %s", sPath)
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
+	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
 
 	if cfg.Cfg.WebApp {
 		logger.Info("enabling websocket")
