@@ -228,7 +228,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 
-	log.Debugf("response header %+v", w.Header())
 	if cfg.Cfg.Headers.AccessToken != "" {
 		if claims.PAccessToken != "" {
 			w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.PAccessToken)
@@ -240,8 +239,11 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
+	// fastlog.Debugf("response headers %+v", w.Header())
+	// fastlog.Debug("response header",
+	// 	zap.String(cfg.Cfg.Headers.User, w.Header().Get(cfg.Cfg.Headers.User)))
 	fastlog.Debug("response header",
-		zap.String(cfg.Cfg.Headers.User, w.Header().Get(cfg.Cfg.Headers.User)))
+		zap.Any("all headers", w.Header()))
 
 	// good to go!!
 	if cfg.Cfg.Testing {
@@ -523,6 +525,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
 	ptokens.PIdToken = providerToken.Extra("id_token").(string)
+	log.Debugf("ptokens: %+v", ptokens)
 
 	// make the "third leg" request back to google to exchange the token for the userinfo
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
