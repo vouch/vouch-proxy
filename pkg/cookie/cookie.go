@@ -80,7 +80,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 func Cookie(r *http.Request) (string, error) {
 
 	var cookieParts []string
-	var numParts int = -1
+	var numParts = -1
 
 	var err error
 	cookies := r.Cookies()
@@ -102,13 +102,14 @@ func Cookie(r *http.Request) (string, error) {
 				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
 					return "", fmt.Errorf("multipart cookie fail: %s", err)
 				}
+				log.Debugf("make cookieParts of size %d", numParts)
 				cookieParts = make([]string, numParts)
 			}
 			var i int
 			if i, err = strconv.Atoi(xyArray[0]); err != nil {
 				return "", fmt.Errorf("multipart cookie fail: %s", err)
 			}
-			cookieParts[i] = cookie.Value
+			cookieParts[i-1] = cookie.Value
 		}
 
 	}

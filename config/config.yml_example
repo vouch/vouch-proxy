@@ -83,6 +83,15 @@ vouch:
     querystring: access_token
     redirect: X-Vouch-Requested-URI
 
+    # GENERAL WARNING ABOUT claims AND tokens
+    # all of these config elements can cause performance impacts due to the amount of information being 
+    # moved around.  They will get added to the Vouch cookie and (possibly) make it large.  The Vouch cookie will 
+    # get split up into several cookies. Every request will process the cookies in order to extract and create the 
+    # additional headers which get returned.  But if you need it, you need it.
+    # With large cookies and headers it will require additional nginx config to open up the buffers a bit..
+    # see `large_client_header_buffers` http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+    # and `proxy_buffer_size` http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
+
     # claims - a list of claims that will be stored in the JWT and passed down to applications via headers
     # By default claims are sent down as headers with a prefix of X-Vouch-IdP-Claims-ClaimKey
     # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
