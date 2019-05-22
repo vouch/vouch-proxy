@@ -146,7 +146,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
 
 ```bash
     nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
-    nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com
+    nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com/validate
     nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
     nginx.ingress.kubernetes.io/auth-snippet: |
       # these return values are used by the @error401 call
