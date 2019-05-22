@@ -53,6 +53,8 @@ type config struct {
 		Success     string   `mapstructure:"success"`
 		ClaimHeader string   `mapstructure:"claimheader"`
 		Claims      []string `mapstructure:"claims"`
+		AccessToken string   `mapstructure:"accesstoken"`
+		IDToken     string   `mapstructure:"idtoken"`
 	}
 	DB struct {
 		File string `mapstructure:"file"`
