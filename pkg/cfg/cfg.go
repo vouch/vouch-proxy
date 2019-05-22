@@ -131,14 +131,14 @@ var (
 	// RequiredOptions must have these fields set for minimum viable config
 	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
 
-	RootDir    string
-	secretFile string
+	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
+	RootDir string
 
+	secretFile    string
 	cmdLineConfig *string
-
-	logger *zap.Logger
-	log    *zap.SugaredLogger
-	atom   zap.AtomicLevel
+	logger        *zap.Logger
+	log           *zap.SugaredLogger
+	atom          zap.AtomicLevel
 )
 
 const (
@@ -148,27 +148,6 @@ const (
 )
 
 func init() {
-
-	// can pass loglevel on the command line
-	ll := flag.String("loglevel", "", "enable debug log output")
-	// from config file
-	port := flag.Int("port", -1, "port")
-	help := flag.Bool("help", false, "show usage")
-	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
-	flag.Parse()
-
-	vouchRoot := os.Getenv(Branding.UCName + "_ROOT")
-	if vouchRoot != "" {
-		RootDir, _ = filepath.Abs(vouchRoot)
-	} else {
-		ex, errEx := os.Executable()
-		if errEx != nil {
-			panic(errEx)
-		}
-		RootDir, _ = filepath.Abs(ex)
-	}
-
-	secretFile = filepath.Join(RootDir, "config/secret")
 
 	atom = zap.NewAtomicLevel()
 	encoderCfg := zap.NewProductionEncoderConfig()
@@ -183,6 +162,28 @@ func init() {
 	log = logger.Sugar()
 	Cfg.FastLogger = logger
 	Cfg.Logger = log
+
+	// can pass loglevel on the command line
+	ll := flag.String("loglevel", "", "enable debug log output")
+	// from config file
+	port := flag.Int("port", -1, "port")
+	help := flag.Bool("help", false, "show usage")
+	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
+	flag.Parse()
+
+	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
+	if os.Getenv(Branding.UCName+"_ROOT") != "" {
+		RootDir = os.Getenv(Branding.UCName + "_ROOT")
+		log.Infof("set cfg.RootDir from VOUCH_ROOT env var: %s", RootDir)
+	} else {
+		ex, errEx := os.Executable()
+		if errEx != nil {
+			panic(errEx)
+		}
+		RootDir = filepath.Dir(ex)
+		log.Debugf("cfg.RootDir: %s", RootDir)
+	}
+	secretFile = filepath.Join(RootDir, "config/secret")
 
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
