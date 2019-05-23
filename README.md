@@ -155,7 +155,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
 ```
 
-Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch)
+Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
 
 ## Compiling from source and running the binary
 
