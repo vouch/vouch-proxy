@@ -202,25 +202,6 @@ In January the project was renamed to [vouch/vouch-proxy](https://github.com/vou
 
 Other namespaces have been changed including the docker hub repo [lassoproject/lasso](https://hub.docker.com/r/lassoproject/lasso/) which has become [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy)
 
-### you should change your config to the new name as of `v0.4.0`
-
-Existing configs for both Nginx and Vouch Proxy (lasso) should work fine.  However it would be prudent to make these minor adjustments:
-
-in `config/config.yml`
-
-* change "lasso:" to "vouch:"
-
-and in your Nginx config
-
-* change variable names "http_x_lasso_" to "http_x_vouch_"
-* change the headers "X-Lasso-" to "X-Vouch-"
-
-The examples below have been updated accordingly
-
-Sorry for the inconvenience but we wanted to make this change at this relatively early stage of the project.
-
-This notice will remain in the README through June 2019
-
 ## the flow of login and authentication using Google Oauth
 
 * Bob visits `https://private.oursites.com`
