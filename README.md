@@ -22,6 +22,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 ## Installation
 
 * `cp ./config/config.yml_example ./config/config.yml`
+	* vouch supports environment variables, use the prefix "VOUCH_" with your configuration key, for example `export VOUCH_DOMAINS=example.com` or `export VOUCH_JWT_SECRET=supersecret`
 * create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure Nginx...
