@@ -254,6 +254,12 @@ func ParseConfig() {
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(os.Getenv(Branding.UCName+"_ROOT") + "config")
 	}
+
+	// Default override via environment variables
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.AutomaticEnv()
+	
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
@@ -279,7 +285,6 @@ please update your config file to change '%s:' to '%s:' as per %s
 			Cfg = oldConfig
 		}
 	}
-
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 }
