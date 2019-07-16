@@ -154,8 +154,12 @@ test () {
   fi
 }
 
-loc () {
+stats () {
+  echo -n "lines of code: "
   find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
+
+  echo -n "number of go files: "
+  find . -name '*.go' | wc -l
 }
 
 DB=data/vouch_bolt.db
@@ -178,7 +182,7 @@ usage() {
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
      $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
-     $0 loc                    - lines of code in project
+     $0 stats                  - simple metrics (lines of code in project, number of go files)
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
 
   do is like make
@@ -191,7 +195,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'loc'|'usage'|'bug_report')
+   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report')
    shift
    $ARG $*
    ;;

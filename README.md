@@ -155,7 +155,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
 ```
 
-Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch)
+Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
 
 ## Compiling from source and running the binary
 
@@ -196,6 +196,90 @@ Thanks for the love, please open an issue describing your feature or idea before
 
 Please know that Vouch Proxy is not sponsored and is developed and supported on a volunteer basis.
 
+## Advanced Authorization Using OpenResty
+
+OpenResty® is a full-fledged web platform that integrates the standard Nginx core, LuaJIT, many carefully written Lua libraries, lots of high quality 3rd-party Nginx modules, and most of their external dependencies.
+
+You can replace nginx with [OpenResty](https://openresty.org/en/installation.html) fairly easily.
+
+With OpenResty and Lua it is possible to provide customized and advanced authorization on any header or claims vouch passes down.
+
+Add the following to nginx.conf `http{}` block...
+
+```{.nginxconf}
+  init_by_lua_block {
+    -- Function to find a key in a table
+    function tableHasKey(table,key)
+      return table[key] ~= nil
+    end
+    -- Function to turn a table with only values into a k=>v table
+    function Set (list)
+      local set = {}
+      for _, l in ipairs(list) do set[l] = true end
+        return set
+      end
+  }
+```
+
+Add the following into the `server{}` block of your service and modify the `authorized_users` and `authorized_groups` tables...
+
+```{.nginxconf}
+  server {
+
+    ....
+
+    access_by_lua_block {
+      -- Authorize a user via X-Vouch-User
+      -- Validate a user in nginx, instead of vouch
+      local authorized_users = Set {
+          "my@account.com",
+          "friend@gmail.com"
+          }
+      -- Verify the variable exists
+      if ngx.var.auth_resp_x_vouch_user then
+        -- Check if the found user is in the authorized_users table
+        if not tableHasKey(authorized_users, ngx.var.auth_resp_x_vouch_user) then
+            -- If not, throw a forbidden
+            ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+        else
+            -- Throw forbidden if variable doesn't exist
+            ngx.exit(ngx.HTTP_FORBIDDEN)
+      end
+
+      -- Authorize a user via X-Vouch-IdP-Groups
+      -- Validate that a user is in a group
+      local authorized_groups = Set {
+          "Domain Users",
+          "Website Users"
+          }
+      -- Verify the variable exists
+      if ngx.var.auth_resp_x_vouch_idp_claims_groups then
+        -- Check if the found user is in the allowed_users table
+        local cjson = require("cjson")
+        local groups = cjson.decode(ngx.var.auth_resp_x_vouch_idp_claims_groups)
+        local found = false
+        -- Parse the groups and check if they match any of our authorized groups
+        for i, group in ipairs(groups) do
+            if tableHasKey(authorized_groups, group) then
+              -- If we found an authorized group, say so and break the loop
+              found = true
+              break
+            end
+          end
+        -- If we didn't find out group in our list, then return forbidden
+        if not found then
+            -- If not, throw a forbidden
+            ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+        else
+            -- Throw forbidden if variable doesn't exist
+            ngx.exit(ngx.HTTP_FORBIDDEN)
+      end
+    }
+  }
+```
+
 ## Project renamed to **Vouch Proxy** in January 2019
 
 In January the project was renamed to [vouch/vouch-proxy](https://github.com/vouch/vouch-proxy) from `LassoProject/lasso`.  This is to [avoid a naming conflict](https://github.com/vouch/vouch-proxy/issues/35) with another project.
@@ -221,7 +305,7 @@ Sorry for the inconvenience but we wanted to make this change at this relatively
 
 This notice will remain in the README through June 2019
 
-## the flow of login and authentication using Google Oauth
+## The flow of login and authentication using Google Oauth
 
 * Bob visits `https://private.oursites.com`
 * the Nginx reverse proxy...
