@@ -24,7 +24,7 @@ func TimeLog(nextHandler http.Handler) func(http.ResponseWriter, *http.Request) 
 		start := time.Now()
 
 		// make the call
-		v := response.CaptureWriter{w, 0}
+		v := response.CaptureWriter{ResponseWriter: w, StatusCode: 0}
 		ctx := context.Background()
 		nextHandler.ServeHTTP(&v, r.WithContext(ctx))
 
