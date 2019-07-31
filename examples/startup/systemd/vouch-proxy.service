@@ -1,0 +1,16 @@
+[Unit]
+Description=Vouch Proxy
+After=vouch-proxy.service
+
+[Service]
+Type=simple
+User=vouch-proxy
+WorkingDirectory=/opt/vouch-proxy
+ExecStart=/opt/vouch-proxy/vouch-proxy
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target
