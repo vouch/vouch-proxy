@@ -185,7 +185,7 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 ### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
 
-* first turn on `vouch.testing: true` and set `vouch.logLevel: debug`.  This will slow down the loop.
+* first **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`.  This will slow down the loop.
 * the `Host:` header in the http request, the `oauth.callback_url` and the configured `vouch.domains` must all align so that the cookie that carries the JWT can be placed properly into the browser and then returned on each request
 * it helps to ___think like a cookie___.
   * a cookie is set into a domain.  If you have `siteA.yourdomain.com` and `siteB.yourdomain.com` protected by Vouch Proxy, you want the Vouch Proxy cookie to be set into `.yourdomain.com`
@@ -197,10 +197,10 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 ### Okay, I looked at the issues and have tried some things with my configs but I still can't figure it out
 
-* okay, please file an issue in this manner..
+* use [hasteb.in](https://hasteb.in/), or another **paste service** or a [gist](https://gist.github.com/) to provide your logs and config.  ***DO NOT PUT YOUR LOGS AND CONFIG INTO THE GITHUB ISSUE***.  Using a paste service is important as it will maintain spacing and will provide line numbers so.  We are hunting for needles in haystacks.  Paste services save both of our time and help us to help you.  You're more likely to get good support from us by following this advice.
 * run `./do.sh bug_report yourdomain.com [yourotherdomain.com]` which will create a redacted version of your config and logs
   * and follow the instructions at the end to redact your Nginx config
-* paste those into [hastebin.com](https://hastebin.com/), and save it
+* all of those go into [hasteb.in](https://hasteb.in/) or a [gist](https://gist.github.com/)
 * then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
 * or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
