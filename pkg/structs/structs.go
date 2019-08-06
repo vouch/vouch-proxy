@@ -1,5 +1,10 @@
 package structs
 
+// Temporary struct storing custom claims until JWT creation.
+type CustomClaims struct {
+	Claims map[string]interface{}
+}
+
 // UserI each *User struct must prepare the data for being placed in the JWT
 type UserI interface {
 	PrepareUserData()
@@ -10,12 +15,12 @@ type User struct {
 	// TODO: set Provider here so that we can pass it to db
 	// populated by db (via mapstructure) or from provider (via json)
 	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username",mapstructure:"username"`
-	Name       string `json:"name",mapstructure:"name"`
-	Email      string `json:"email",mapstructure:"email"`
+	Username   string `json:"username" mapstructure:"username"`
+	Name       string `json:"name" mapstructure:"name"`
+	Email      string `json:"email" mapstructure:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id",mapstructure:"id"`
+	ID         int    `json:"id" mapstructure:"id"`
 	// jwt.StandardClaims
 }
 
@@ -26,7 +31,6 @@ func (u *User) PrepareUserData() {
 
 // GoogleUser is a retrieved and authentiacted user from Google.
 // unused!
-
 // TODO: see if these should be pointers to the *User object as per
 // https://golang.org/doc/effective_go.html#embedding
 type GoogleUser struct {
@@ -47,6 +51,23 @@ func (u *GoogleUser) PrepareUserData() {
 	u.Username = u.Email
 }
 
+// ADFSUser Active Directory user record
+type ADFSUser struct {
+	User
+	Sub string `json:"sub"`
+	UPN string `json:"upn"`
+	// UniqueName string `json:"unique_name"`
+	// PwdExp     string `json:"pwd_exp"`
+	// SID        string `json:"sid"`
+	// Groups     string `json:"groups"`
+	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *ADFSUser) PrepareUserData() {
+	u.Username = u.UPN
+}
+
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
@@ -61,23 +82,25 @@ func (u *GitHubUser) PrepareUserData() {
 	u.Username = u.Login
 }
 
+// IndieAuthUser see indieauth.net
 type IndieAuthUser struct {
 	User
 	URL string `json:"me"`
 }
 
+// PrepareUserData implement PersonalData interface
 func (u *IndieAuthUser) PrepareUserData() {
 	u.Username = u.URL
 }
 
 // Team has members and provides acess to sites
 type Team struct {
-	Name       string   `json:"name",mapstructure:"name"`
-	Members    []string `json:"members",mapstructure:"members"` // just the emails
-	Sites      []string `json:"sites",mapstructure:"sites"`     // just the domains
-	CreatedOn  int64    `json:"createdon",mapstructure:"createdon"`
-	LastUpdate int64    `json:"lastupdate",mapstructure:"lastupdate"`
-	ID         int      `json:"id",mapstructure:"id"`
+	Name       string   `json:"name" mapstructure:"name"`
+	Members    []string `json:"members" mapstructure:"members"` // just the emails
+	Sites      []string `json:"sites" mapstructure:"sites"`     // just the domains
+	CreatedOn  int64    `json:"createdon" mapstructure:"createdon"`
+	LastUpdate int64    `json:"lastupdate" mapstructure:"lastupdate"`
+	ID         int      `json:"id" mapstructure:"id"`
 }
 
 // Site is the basic unit of auth
@@ -85,5 +108,10 @@ type Site struct {
 	Domain     string `json:"domain"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id",mapstructure:"id"`
+	ID         int    `json:"id" mapstructure:"id"`
+}
+
+type PTokens struct {
+	PAccessToken string
+	PIdToken     string
 }

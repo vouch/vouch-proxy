@@ -1,5 +1,5 @@
 vouch:
-  logLevel: info
+  logLevel: debug
   listen: 0.0.0.0
   port: 9090
   domains:
@@ -11,7 +11,13 @@ vouch:
   - joe@yourdomain.com
 
   cookie: 
-    name: bnfSSO
+    name: vouchTestingCookie
+
+  session:
+    name: VouchTestingSession
+
+  db: 
+    file: /tmp/vouch-proxy-testing.db
 
 oauth:
   provider: indieauth

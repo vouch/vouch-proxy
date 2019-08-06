@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 
@@ -21,23 +20,33 @@ import (
 
 // VouchClaims jwt Claims specific to vouch
 type VouchClaims struct {
-	Username string   `json:"username"`
-	Sites    []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	Username     string   `json:"username"`
+	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	CustomClaims map[string]interface{}
+	PAccessToken string
+	PIdToken     string
 	jwt.StandardClaims
 }
 
-// StandardClaims jwt.StandardClaims implimentation
+// StandardClaims jwt.StandardClaims implementation
 var StandardClaims jwt.StandardClaims
 
-// Sites just testing
+// CustomClaims implementation
+var CustomClaims map[string]interface{}
+
+// Sites added to VouchClaims
 var Sites []string
+var log = cfg.Cfg.Logger
 
 func init() {
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
-	Sites = make([]string, 0)
+	populateSites()
+}
 
+func populateSites() {
+	Sites = make([]string, 0)
 	// TODO: the Sites that end up in the JWT come from here
 	// if we add fine grain ability (ACL?) to the equation
 	// then we're going to have to add something fancier here
@@ -47,12 +56,15 @@ func init() {
 }
 
 // CreateUserTokenString converts user to signed jwt
-func CreateUserTokenString(u structs.User) string {
+func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) string {
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
 		u.Username,
 		Sites,
+		customClaims.Claims,
+		ptokens.PAccessToken,
+		ptokens.PIdToken,
 		StandardClaims,
 	}
 

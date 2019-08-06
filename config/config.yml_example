@@ -3,13 +3,20 @@
 # you should probably start with one of the other configs in the example directory
 # vouch proxy does a fairly good job of setting its config to sane defaults
 
+# be aware of your indentation, the only top level elements are `vouch` and `oauth`. 
+
 vouch:
   # logLevel: debug
   logLevel: info
+
+  # testing - force all 302 redirects to be rendered as a webpage with a link
+  # if you're having problems, turn on testing
+  testing: true
+
   listen: 0.0.0.0
   port: 9090
 
-  # domains:
+  # domains -
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
   # you usually *don't* want to list every individual website that will be protected
@@ -29,7 +36,7 @@ vouch:
   # You will need to direct people to the Vouch Proxy login page from your application.
   # publicAccess: false
 
-  # whiteList (optional) allows only the listed usernames
+  # whiteList - (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
   whiteList:
   - bob@yourdomain.com
@@ -37,7 +44,7 @@ vouch:
   - joe@yourdomain.com
 
   jwt:
-    # secret: a random string used to cryptographically sign the jwt
+    # secret - a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then..
     # look for the secret in `./config/secret`
@@ -58,11 +65,13 @@ vouch:
     # domain: yourdomain.com
     secure: true
     httpOnly: true
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
+    maxAge: 14400
 
   session:
     # name of session variable stored locally
     name: VouchSession
-    # key: a cryptographic string used to store the session variable
+    # key - a cryptographic string used to store the session variable
     # if the key is not set here then it is generated at startup and stored in memory
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
@@ -74,15 +83,42 @@ vouch:
     querystring: access_token
     redirect: X-Vouch-Requested-URI
 
+    # GENERAL WARNING ABOUT claims AND tokens
+    # all of these config elements can cause performance impacts due to the amount of information being 
+    # moved around.  They will get added to the Vouch cookie and (possibly) make it large.  The Vouch cookie will 
+    # get split up into several cookies. Every request will process the cookies in order to extract and create the 
+    # additional headers which get returned.  But if you need it, you need it.
+    # With large cookies and headers it will require additional nginx config to open up the buffers a bit..
+    # see `large_client_header_buffers` http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+    # and `proxy_buffer_size` http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
+
+    # claims - a list of claims that will be stored in the JWT and passed down to applications via headers
+    # By default claims are sent down as headers with a prefix of X-Vouch-IdP-Claims-ClaimKey
+    # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
+    claims:
+      - groups
+      - given_name
+    # these will result in two headers being passed back to nginx
+    # X-Vouch-IdP-Claims-groups
+    # X-Vouch-IdP-Claims-given_name
+      
+    # claimheader - Customizable claim header prefix (instead of default `X-Vouch-IdP-Claims-`) 
+    # claimheader: My-Custom-Claim-Prefix
+
+    # accesstoken - Pass the user's access token from the provider.  This is useful if you need to pass the IdP token to a downstream
+    # application. This is optional.
+    # accesstoken: X-Vouch-IdP-AccessToken
+    # idtoken - Pass the user's Id token from the provider.  This is useful if you need to pass this token to a downstream
+    # application. This is optional.
+    # idtoken: X-Vouch-IdP-IdToken
+
   db: 
     file: data/vouch_bolt.db
 
-  # testing: force all 302 redirects to be rendered as a webpage with a link
-  testing: true
-  # test_url: add this URL to the page which vouch displays
+  # test_url - add this URL to the page which vouch displays
   test_url: http://yourdomain.com
-  # webapp: WIP for web interface to vouch (mostly logs)
-  webapp: true
+  # webapp - WIP for web interface to vouch (mostly logs)
+  # webapp: true
 
 #
 # OAuth Provider

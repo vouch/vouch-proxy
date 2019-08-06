@@ -3,8 +3,10 @@ package cors
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
+
+var log = cfg.Cfg.Logger
 
 // AllowAll is middle ware to set Access-Control-Allow-Origin: *
 func AllowAll(nextHandler http.Handler) http.HandlerFunc {
