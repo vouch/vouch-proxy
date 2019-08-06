@@ -1,10 +1,10 @@
 # Vouch Proxy
 
-[![GitHub stars](https://img.shields.io/github/stars/vouch/vouch-proxy.svg?style=social&label=Star)](https://github.com/vouch/vouch-proxy)
+[![GitHub stars](https://img.shields.io/github/stars/vouch/vouch-proxy.svg)](https://github.com/vouch/vouch-proxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vouch/vouch-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/vouch/vouch-proxy/blob/master/LICENSE)
 [![Docker pulls](https://img.shields.io/docker/pulls/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/)
-
+[![GitHub version](https://badge.fury.io/gh/vouch%2Fvouch-proxy.svg)](https://badge.fury.io/gh/vouch%2Fvouch-proxy)
 
 an SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
