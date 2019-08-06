@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
@@ -84,14 +83,18 @@ func DeleteTeam(t structs.Team) error {
 func AllTeams(teams *[]structs.Team) error {
 	return Db.View(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(teamBucket); b != nil {
-			b.ForEach(func(k, v []byte) error {
-				log.Debugf("key=%s, value=%s\n", k, v)
+			if err := b.ForEach(func(k, v []byte) error {
+				log.Debugf("AllTeams ForEach key %s", k)
 				t := structs.Team{}
-				Team(k, &t)
+				if err := Team(k, &t); err != nil {
+					log.Error(err)
+				}
 				*teams = append(*teams, t)
 				return nil
-			})
-			log.Debugf("teams %v", teams)
+			}); err != nil {
+				log.Error(err)
+			}
+			log.Debugf("teams %+v", *teams)
 			return nil
 		}
 		return fmt.Errorf("no bucket for %s", teamBucket)
