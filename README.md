@@ -1,7 +1,10 @@
 # Vouch Proxy
-[!["Open Issues"](https://img.shields.io/github/issues-raw/artagel/vouch-proxy.svg)](https://github.com/vouch/vouch-proxy/issues)
-[![Go Report Card](https://goreportcard.com/badge/github.com/artagel/vouchy-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
+
+[![GitHub stars](https://img.shields.io/github/stars/vouch/vouch-proxy.svg?style=social&label=Star)](https://github.com/vouch/vouch-proxy)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vouch/vouch-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/vouch/vouch-proxy/blob/master/LICENSE)
+[![Docker pulls](https://img.shields.io/docker/pulls/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/)
+
 
 an SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
 
@@ -128,6 +131,8 @@ server {
 
 An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
 
+Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
+
 ## Running from Docker
 
 ```bash
@@ -221,7 +226,7 @@ You can replace nginx with [OpenResty](https://openresty.org/en/installation.htm
 
 With OpenResty and Lua it is possible to provide customized and advanced authorization on any header or claims vouch passes down.
 
-Full examples are available in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) area.
+OpenResty and configs for a variety of scenarios are available in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## The flow of login and authentication using Google Oauth
 
