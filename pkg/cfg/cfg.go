@@ -315,6 +315,14 @@ func Get(key string) string {
 
 // BasicTest just a quick sanity check to see if the config is sound
 func BasicTest() error {
+	if GenOAuth.Provider != Providers.Google &&
+       GenOAuth.Provider != Providers.GitHub &&
+       GenOAuth.Provider != Providers.IndieAuth &&
+       GenOAuth.Provider != Providers.ADFS &&
+       GenOAuth.Provider != Providers.OIDC {
+            return errors.New("configuration error: Unkown oauth provider: "+ GenOAuth.Provider)
+    }
+
 	for _, opt := range RequiredOptions {
 		if !viper.IsSet(opt) {
 			return errors.New("configuration error: required configuration option " + opt + " is not set")
@@ -530,6 +538,7 @@ func SetDefaults() {
 			setDefaultsADFS()
 			configureOAuthClient()
 		} else {
+            // IndieAuth, OIDC
 			configureOAuthClient()
 		}
 	}
