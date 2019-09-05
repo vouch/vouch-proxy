@@ -1,0 +1,33 @@
+# vouch config
+# bare minimum to get vouch running with HomeAssistant
+
+vouch:
+  # logLevel: debug
+  logLevel: info
+  
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  allowAllUsers: false
+
+  # whiteList - (optional) allows only the listed usernames
+  # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
+  # using static value for HomeAssistant
+  whiteList:
+  - homeassistant
+
+  # Setting publicAccess: true will accept all requests, even without a cookie. 
+  publicAccess: false
+
+oauth:
+  # HomeAssistant Auth
+  # https://developers.home-assistant.io/docs/en/auth_api.html
+  provider: homeassistant
+  client_id: https://vouch.yourdomain.com
+  callback_url: https://vouch.yourdomain.com/auth
+  auth_url: https://homeassistant.yourdomain.com/auth/authorize
+  token_url: https://homeassistant.yourdomain.com/auth/token

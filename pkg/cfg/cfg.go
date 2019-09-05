@@ -86,11 +86,12 @@ type oauthConfig struct {
 
 // OAuthProviders holds the stings for
 type OAuthProviders struct {
-	Google    string
-	GitHub    string
-	IndieAuth string
-	ADFS      string
-	OIDC      string
+	Google          string
+	GitHub          string
+	IndieAuth       string
+	HomeAssistant   string
+	ADFS            string
+	OIDC            string
 }
 
 type branding struct {
@@ -121,11 +122,12 @@ var (
 
 	// Providers static strings to test against
 	Providers = &OAuthProviders{
-		Google:    "google",
-		GitHub:    "github",
-		IndieAuth: "indieauth",
-		ADFS:      "adfs",
-		OIDC:      "oidc",
+		Google:         "google",
+		GitHub:         "github",
+		IndieAuth:      "indieauth",
+		HomeAssistant:  "homeassistant",
+		ADFS:           "adfs",
+		OIDC:           "oidc",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -330,14 +332,14 @@ func BasicTest() error {
 	case GenOAuth.ClientID == "":
 		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
-	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
+	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
 		// everyone except IndieAuth has a clientSecret
 		// ADFS and OIDC providers also do not require this, but can have it optionally set.
 		return errors.New("configuration error: o`auth.client_secret not found")
 	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
+	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
 	}
