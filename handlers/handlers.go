@@ -524,6 +524,10 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	if err != nil {
 		return err
 	}
+	if cfg.GenOAuth.Provider == cfg.Providers.HomeAssistant {
+		ptokens.PAccessToken = providerToken.Extra("access_token").(string)
+		return getUserInfoFromHomeAssistant(r, user, customClaims)
+	}
 	ptokens.PAccessToken = providerToken.AccessToken
 	ptokens.PIdToken = providerToken.Extra("id_token").(string)
 	log.Debugf("ptokens: %+v", ptokens)
@@ -702,6 +706,13 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims 
 	iaUser.PrepareUserData()
 	user.Username = iaUser.Username
 	log.Debug(user)
+	return nil
+}
+
+// More info: https://developers.home-assistant.io/docs/en/auth_api.html
+func getUserInfoFromHomeAssistant(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
+	// Home assistant does not provide an API to query username, so we statically set it to "homeassistant"
+	user.Username = "homeassistant"
 	return nil
 }
 
