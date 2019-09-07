@@ -518,7 +518,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		return getUserInfoFromIndieAuth(r, user, customClaims)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		return getUserInfoFromADFS(r, user, customClaims)
+		return getUserInfoFromADFS(r, user, customClaims, ptokens)
 	}
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
@@ -713,7 +713,7 @@ type adfsTokenRes struct {
 }
 
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
+func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Debugf("code: %s", code)
 
@@ -746,13 +746,16 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 		}
 	}()
 
-	body, _ := ioutil.ReadAll(userinfo.Body)
+	data, _ := ioutil.ReadAll(userinfo.Body)
 	tokenRes := adfsTokenRes{}
 
-	if err := json.Unmarshal(body, &tokenRes); err != nil {
+	if err := json.Unmarshal(data, &tokenRes); err != nil {
 		log.Errorf("oauth2: cannot fetch token: %v", err)
 		return nil
 	}
+
+	ptokens.PAccessToken = string(tokenRes.AccessToken)
+	ptokens.PIdToken = string(tokenRes.IDToken)
 
 	s := strings.Split(tokenRes.IDToken, ".")
 	if len(s) < 2 {
