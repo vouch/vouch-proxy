@@ -772,7 +772,7 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
 	log.Infof("adfs adfsUser: %+v", adfsUser)
-	if err = mapClaims([]byte(idToken), customClaims); err != nil {
+	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
