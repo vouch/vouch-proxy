@@ -85,6 +85,8 @@ func loginURL(r *http.Request, state string) string {
 		}
 	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
+		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
 		lurl = cfg.OAuthClient.AuthCodeURL(state)
 	}
