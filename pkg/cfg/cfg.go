@@ -91,6 +91,7 @@ type OAuthProviders struct {
 	IndieAuth string
 	ADFS      string
 	OIDC      string
+	OpenStax  string
 }
 
 type branding struct {
@@ -126,6 +127,7 @@ var (
 		IndieAuth: "indieauth",
 		ADFS:      "adfs",
 		OIDC:      "oidc",
+		OpenStax:  "openstax",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -319,7 +321,8 @@ func BasicTest() error {
        GenOAuth.Provider != Providers.GitHub &&
        GenOAuth.Provider != Providers.IndieAuth &&
        GenOAuth.Provider != Providers.ADFS &&
-       GenOAuth.Provider != Providers.OIDC {
+       GenOAuth.Provider != Providers.OIDC &&
+       GenOAuth.Provider != Providers.OpenStax {
             return errors.New("configuration error: Unkown oauth provider: "+ GenOAuth.Provider)
     }
 
@@ -538,7 +541,7 @@ func SetDefaults() {
 			setDefaultsADFS()
 			configureOAuthClient()
 		} else {
-            // IndieAuth, OIDC
+            // IndieAuth, OIDC, OpenStax
 			configureOAuthClient()
 		}
 	}
