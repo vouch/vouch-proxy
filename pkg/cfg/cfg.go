@@ -86,12 +86,13 @@ type oauthConfig struct {
 
 // OAuthProviders holds the stings for
 type OAuthProviders struct {
-	Google          string
-	GitHub          string
-	IndieAuth       string
-	HomeAssistant   string
-	ADFS            string
-	OIDC            string
+	Google        string
+	GitHub        string
+	IndieAuth     string
+	ADFS          string
+	OIDC          string
+	HomeAssistant string
+	OpenStax      string
 }
 
 type branding struct {
@@ -122,12 +123,13 @@ var (
 
 	// Providers static strings to test against
 	Providers = &OAuthProviders{
-		Google:         "google",
-		GitHub:         "github",
-		IndieAuth:      "indieauth",
-		HomeAssistant:  "homeassistant",
-		ADFS:           "adfs",
-		OIDC:           "oidc",
+		Google:        "google",
+		GitHub:        "github",
+		IndieAuth:     "indieauth",
+		ADFS:          "adfs",
+		OIDC:          "oidc",
+		HomeAssistant: "homeassistant",
+		OpenStax:      "openstax",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -317,6 +319,15 @@ func Get(key string) string {
 
 // BasicTest just a quick sanity check to see if the config is sound
 func BasicTest() error {
+	if GenOAuth.Provider != Providers.Google &&
+		GenOAuth.Provider != Providers.GitHub &&
+		GenOAuth.Provider != Providers.IndieAuth &&
+		GenOAuth.Provider != Providers.ADFS &&
+		GenOAuth.Provider != Providers.OIDC &&
+		GenOAuth.Provider != Providers.OpenStax {
+		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
+	}
+
 	for _, opt := range RequiredOptions {
 		if !viper.IsSet(opt) {
 			return errors.New("configuration error: required configuration option " + opt + " is not set")
@@ -532,6 +543,7 @@ func SetDefaults() {
 			setDefaultsADFS()
 			configureOAuthClient()
 		} else {
+			// IndieAuth, OIDC, OpenStax
 			configureOAuthClient()
 		}
 	}
