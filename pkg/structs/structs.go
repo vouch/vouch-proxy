@@ -1,6 +1,6 @@
 package structs
 
-// Temporary struct storing custom claims until JWT creation.
+// CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
 	Claims map[string]interface{}
 }
@@ -27,8 +27,8 @@ type User struct {
 // PrepareUserData implement PersonalData interface
 func (u *User) PrepareUserData() {
 	if u.Username == "" {
-	    u.Username = u.Email
-    }
+		u.Username = u.Email
+	}
 }
 
 // GoogleUser is a retrieved and authentiacted user from Google.
@@ -95,6 +95,32 @@ func (u *IndieAuthUser) PrepareUserData() {
 	u.Username = u.URL
 }
 
+// Contact used for OpenStaxUser
+type Contact struct {
+	Type     string `json:"type"`
+	Value    string `json:"value"`
+	Verified bool   `json:"is_verified"`
+}
+
+//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+type OpenStaxUser struct {
+	User
+	Contacts []Contact `json:"contact_infos"`
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *OpenStaxUser) PrepareUserData() {
+	if u.Email == "" {
+		// assuming first contact of type "EmailAddress"
+		for _, c := range u.Contacts {
+			if c.Type == "EmailAddress" && c.Verified {
+				u.Email = c.Value
+				break
+			}
+		}
+	}
+}
+
 // Team has members and provides acess to sites
 type Team struct {
 	Name       string   `json:"name" mapstructure:"name"`
@@ -113,6 +139,7 @@ type Site struct {
 	ID         int    `json:"id" mapstructure:"id"`
 }
 
+// PTokens provider tokens (from the IdP)
 type PTokens struct {
 	PAccessToken string
 	PIdToken     string
