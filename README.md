@@ -19,6 +19,7 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 * [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
 * Keycloak
 * [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
+* [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
 * most other OpenID Connect (OIDC) providers
 
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
