@@ -526,9 +526,9 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
 	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
-	    client := cfg.OAuthClient.Client(context.TODO(), providerToken)
+		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
-    }
+	}
 	ptokens.PIdToken = providerToken.Extra("id_token").(string)
 	log.Debugf("ptokens: %+v", ptokens)
 
@@ -568,7 +568,6 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 	user.PrepareUserData()
 	return nil
 }
-
 
 func getUserInfoFromOpenStax(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
