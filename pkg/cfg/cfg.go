@@ -3,6 +3,7 @@ package cfg
 import (
 	"errors"
 	"flag"
+	"net/http"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"encoding/json"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -28,6 +30,7 @@ type config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
+	HealthCheck   bool     `mapstructure:"healthCheck"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
@@ -167,6 +170,8 @@ func init() {
 	Cfg.FastLogger = logger
 	Cfg.Logger = log
 
+	// Handle -healthcheck argument
+	healthCheck := flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)")
 	// can pass loglevel on the command line
 	ll := flag.String("loglevel", "", "enable debug log output")
 	// from config file
@@ -221,6 +226,27 @@ func init() {
 	if errT != nil {
 		// log.Fatalf(errT.Error())
 		panic(errT)
+	}
+
+	if *healthCheck {
+		url := fmt.Sprintf( "http://%s:%d/healthcheck", Cfg.Listen, Cfg.Port)
+		log.Debug("Invoking healthcheck on URL ", url)
+		resp, err := http.Get(url)
+		if err == nil {
+			robots, err := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err == nil {
+				var result map[string]interface{}
+				jsonErr := json.Unmarshal(robots, &result)
+				if jsonErr == nil {
+					if result["ok"] == true {
+						os.Exit(0)
+					}
+				}
+			}
+		}
+		log.Error("Healthcheck against ", url, " failed.")
+		os.Exit(1)
 	}
 
 	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
