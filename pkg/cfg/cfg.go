@@ -1,17 +1,17 @@
 package cfg
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
-	"net/http"
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"encoding/json"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -209,6 +209,9 @@ func init() {
 	if *ll == "debug" || Cfg.LogLevel == "debug" {
 		atom.SetLevel(zap.DebugLevel)
 		log.Debug("logLevel set to debug")
+	} else if *healthCheck {
+		// just errors for healthcheck, unless debug is set
+		atom.SetLevel(zap.ErrorLevel)
 	}
 
 	if *help {
@@ -229,7 +232,7 @@ func init() {
 	}
 
 	if *healthCheck {
-		url := fmt.Sprintf( "http://%s:%d/healthcheck", Cfg.Listen, Cfg.Port)
+		url := fmt.Sprintf("http://%s:%d/healthcheck", Cfg.Listen, Cfg.Port)
 		log.Debug("Invoking healthcheck on URL ", url)
 		resp, err := http.Get(url)
 		if err == nil {
