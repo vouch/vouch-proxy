@@ -180,7 +180,7 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
 The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string which can be used to `302` redirect a user to your orignal OAuth provider/IDP/OIDC provider's [revocation_endpoint](https://tools.ietf.org/html/rfc7009)
 
 ```bash
-    https://vouch.oursites.com/login?url=https://oauth2.googleapis.com/revoke
+    https://vouch.oursites.com/logout?url=https://oauth2.googleapis.com/revoke
 ```
 
 logout resources..
