@@ -375,7 +375,7 @@ func BasicTest() error {
 	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
 		// everyone except IndieAuth has a clientSecret
 		// ADFS and OIDC providers also do not require this, but can have it optionally set.
-		return errors.New("configuration error: o`auth.client_secret not found")
+		return errors.New("configuration error: oauth.client_secret not found")
 	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
@@ -581,15 +581,16 @@ func SetDefaults() {
 func setDefaultsGoogle() {
 	log.Info("configuring Google OAuth")
 	GenOAuth.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
+	if len(GenOAuth.Scopes) == 0 {
+		// You have to select a scope from
+		// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
+		GenOAuth.Scopes = []string{"email"}
+	}
 	OAuthClient = &oauth2.Config{
 		ClientID:     GenOAuth.ClientID,
 		ClientSecret: GenOAuth.ClientSecret,
-		Scopes: []string{
-			// You have to select a scope from
-			// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-			"https://www.googleapis.com/auth/userinfo.email",
-		},
-		Endpoint: google.Endpoint,
+		Scopes:       GenOAuth.Scopes,
+		Endpoint:     google.Endpoint,
 	}
 	if GenOAuth.PreferredDomain != "" {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
