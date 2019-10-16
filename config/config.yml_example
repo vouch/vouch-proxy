@@ -136,6 +136,10 @@ oauth:
     - http://vouch.yourdomain.com:9090/auth
     - http://vouch.yourotherdomain.com:9090/auth
   preferredDomain: yourdomain.com
+  # optionally set scopes, defaults to 'email'
+  # https://developers.google.com/identity/protocols/googlescopes#google_sign-in
+  # scopes:
+  #  - email
 
   # GitHub
   # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
