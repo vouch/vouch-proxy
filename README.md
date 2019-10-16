@@ -34,10 +34,10 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
   * be sure to direct the callback URL to the `/auth` endpoint
 * configure Nginx...
 
-The following nginx config assumes..
+The following Nginx config assumes..
 
-* nginx, vouch.yourdomain.com and dev.yourdomain.com are running on the same server
-* you are running both domains behind https and have valid certs for both (if not, change to `listen 80`)
+* Nginx, `vouch.yourdomain.com` and `dev.yourdomain.com` are running on the same server
+* both domains are served as `https` and have valid certs (if not, change to `listen 80`)
 
 ```{.nginxconf}
 server {
@@ -180,7 +180,7 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
 The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string which can be used to `302` redirect a user to your orignal OAuth provider/IDP/OIDC provider's [revocation_endpoint](https://tools.ietf.org/html/rfc7009)
 
 ```bash
-    https://vouch.oursites.com/login?url=https://oauth2.googleapis.com/revoke
+    https://vouch.oursites.com/logout?url=https://oauth2.googleapis.com/revoke
 ```
 
 logout resources..
