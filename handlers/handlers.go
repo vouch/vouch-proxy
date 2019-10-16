@@ -157,10 +157,12 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// if jwt != "" {
 	if jwt == "" {
 		// If the module is configured to allow public access with no authentication, return 200 now
-		if !cfg.Cfg.PublicAccess {
-			error401(w, r, AuthError{Error: "no jwt found in request"})
-		} else {
+		if cfg.Cfg.PublicAccess {
 			w.Header().Add(cfg.Cfg.Headers.User, "")
+			log.Debugf("no jwt found, but public access is '%v', returning ok200", cfg.Cfg.PublicAccess)
+			ok200(w, r)
+		} else {
+			error401(w, r, AuthError{Error: "no jwt found in request"})
 		}
 		return
 	}
