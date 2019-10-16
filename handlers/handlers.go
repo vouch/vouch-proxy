@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -212,7 +213,10 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 				if cv == k {
 					log.Debug("Found matching claim key: ", k)
 					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
-					if val, ok := v.(string); ok {
+					// convert to string
+					val := fmt.Sprint(v)
+					if reflect.TypeOf(val).Kind() == reflect.String {
+						// if val, ok := v.(string); ok {
 						w.Header().Add(customHeader, val)
 						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
 					} else if val, ok := v.([]interface{}); ok {
@@ -223,7 +227,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", strings.Join(strs, ","))
 						w.Header().Add(customHeader, strings.Join(strs, ","))
 					} else {
-						log.Error("Couldn't parse header type.  Please submit an issue.")
+						log.Errorf("Couldn't parse header type for %s %+v.  Please submit an issue.", k, v)
 					}
 				}
 			}
