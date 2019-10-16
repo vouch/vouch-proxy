@@ -68,8 +68,11 @@ func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var lurl = ""
-	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		// If the provider is Google, find a matching redirect URL to use for the client
+	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
+		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
+		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
+	} else {
 		domain := domains.Matches(r.Host)
 		log.Debugf("looking for redirect URL matching  %v", domain)
 		for i, v := range cfg.GenOAuth.RedirectURLs {
@@ -84,14 +87,7 @@ func loginURL(r *http.Request, state string) string {
 		} else {
 			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
-	} else if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
-	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
-	} else {
-		lurl = cfg.OAuthClient.AuthCodeURL(state)
 	}
-
 	// log.Debugf("loginUrl %s", url)
 	return lurl
 }
