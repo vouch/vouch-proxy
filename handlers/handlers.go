@@ -531,7 +531,15 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
-	ptokens.PIdToken = providerToken.Extra("id_token").(string)
+
+	if (providerToken.Extra("id_token") != nil) {
+		// Certain providers (eg. gitea) don't provide an id_token
+		// and it's not neccessary for the authentication phase
+		ptokens.PIdToken = providerToken.Extra("id_token").(string)
+	} else {
+		log.Debugf("id_token missing - may not be supported by this provider")
+	}
+
 	log.Debugf("ptokens: %+v", ptokens)
 
 	// make the "third leg" request back to provider to exchange the token for the userinfo
