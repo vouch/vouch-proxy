@@ -4,14 +4,14 @@
 -- ==============================
 -- Validate that a user is in a group
 local authorized_groups = Set {
-    "Domain Users",
-    "Website Users"
+    "CN=Domain Users,CN=Users,DC=Contoso,DC=com",
+    "CN=Website Users,CN=Users,DC=Contoso,DC=com"
 }
 -- Verify the variable exists
 if ngx.var.auth_resp_x_vouch_idp_claims_groups then
     -- Check if the found user is in the allowed_users table
     local cjson = require("cjson")
-    local groups = cjson.decode(ngx.var.auth_resp_x_vouch_idp_claims_groups)
+    local groups = cjson.decode("[" .. ngx.var.auth_resp_x_vouch_idp_claims_groups .. "]")
     local found = false
     -- Parse the groups and check if they match any of our authorized groups
     for i, group in ipairs(groups) do
