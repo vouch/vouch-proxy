@@ -351,6 +351,7 @@ func BasicTest() error {
 	if GenOAuth.Provider != Providers.Google &&
 		GenOAuth.Provider != Providers.GitHub &&
 		GenOAuth.Provider != Providers.IndieAuth &&
+		GenOAuth.Provider != Providers.HomeAssistant &&
 		GenOAuth.Provider != Providers.ADFS &&
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax {
