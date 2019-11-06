@@ -2,6 +2,7 @@ package response
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
@@ -21,7 +22,7 @@ type CaptureWriter struct {
 func (w *CaptureWriter) Write(b []byte) (int, error) {
 	if w.StatusCode == 0 {
 		w.StatusCode = 200
-		log.Debug("CaptureWriter.Write set w.StatusCode " + string(w.StatusCode))
+		log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
 	}
 	return w.ResponseWriter.Write(b)
 }
@@ -34,7 +35,7 @@ func (w *CaptureWriter) Header() http.Header {
 // WriteHeader calls http.Writer.WriteHeader(code)
 func (w *CaptureWriter) WriteHeader(code int) {
 	w.StatusCode = code
-	log.Debug("CaptureWriter.Write set w.StatusCode " + string(w.StatusCode))
+	log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
 	w.ResponseWriter.WriteHeader(code)
 }
 
