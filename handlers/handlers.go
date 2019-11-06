@@ -537,7 +537,15 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
-	ptokens.PIdToken = providerToken.Extra("id_token").(string)
+
+	if (providerToken.Extra("id_token") != nil) {
+		// Certain providers (eg. gitea) don't provide an id_token
+		// and it's not neccessary for the authentication phase
+		ptokens.PIdToken = providerToken.Extra("id_token").(string)
+	} else {
+		log.Debugf("id_token missing - may not be supported by this provider")
+	}
+
 	log.Debugf("ptokens: %+v", ptokens)
 
 	// make the "third leg" request back to provider to exchange the token for the userinfo
@@ -818,15 +826,28 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 		log.Error(err)
 		return nil
 	}
+	log.Debugf("idToken: %+v", string(idToken))
 
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
 	log.Infof("adfs adfsUser: %+v", adfsUser)
-	if err = mapClaims(data, customClaims); err != nil {
+	// data contains an access token, refresh token, and id token
+	// Please note that in order for custom claims to work you MUST set allatclaims in ADFS to be passed
+	// https://oktotechnologies.ca/2018/08/26/adfs-openidconnect-configuration/
+	if err = mapClaims([]byte(idToken), customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
 	adfsUser.PrepareUserData()
+	var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+	if len(adfsUser.Email) == 0 {
+		// If the email is blank, we will try to determine if the UPN is an email.
+		if rxEmail.MatchString(adfsUser.UPN) {
+			// Set the email from UPN if there is a valid email present.
+			adfsUser.Email = adfsUser.UPN
+		}
+	}
 	user.Username = adfsUser.Username
 	user.Email = adfsUser.Email
 	log.Debugf("User Obj: %+v", user)
