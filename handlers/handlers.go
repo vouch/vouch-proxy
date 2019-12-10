@@ -208,7 +208,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 				// Check for matching claim
 				if cv == k {
 					log.Debug("Found matching claim key: ", k)
-					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
+					customHeader := strings.Replace(strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, ""), ":", "-", -1)
 					// convert to string
 					val := fmt.Sprint(v)
 					if reflect.TypeOf(val).Kind() == reflect.String {
