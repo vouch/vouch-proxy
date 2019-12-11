@@ -20,7 +20,7 @@ type User struct {
 	Email      string `json:"email" mapstructure:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id" mapstructure:"id"`
+	ID         string `json:"id" mapstructure:"id"`
 	// jwt.StandardClaims
 }
 

@@ -3,7 +3,13 @@ set -e
 
 # change dir to where this script is running
 CURDIR=${PWD}
-SCRIPT=$(readlink -f "$0")
+# mac support (brew install coreutils)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SCRIPT=$(greadlink -f "$0")
+# assume standard unix/linux
+else
+  SCRIPT=$(readlink -f "$0")
+fi
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
@@ -52,11 +58,11 @@ drun () {
       docker rm $NAME
    fi
 
-   CMD="docker run --rm -i -t 
-    -p ${HTTPPORT}:${HTTPPORT} 
-    --name $NAME 
-    -v ${SDIR}/config:/config 
-    -v ${SDIR}/data:/data 
+   CMD="docker run --rm -i -t
+    -p ${HTTPPORT}:${HTTPPORT}
+    --name $NAME
+    -v ${SDIR}/config:/config
+    -v ${SDIR}/data:/data
     $IMAGE $* "
 
     echo $CMD
@@ -89,14 +95,14 @@ bug_report() {
   CONFIG=config/config.yml
   REDACT=$*
 
-  if [ -z "$REDACT" ]; then 
+  if [ -z "$REDACT" ]; then
     cat <<EOF
 
     bug_report cleans the ${CONFIG} and the Vouch Proxy logs of secrets and any additional strings (usually domains and email addresses)
 
     usage:
 
-      $0 bug_report redacted_string redacted_string 
+      $0 bug_report redacted_string redacted_string
 
 EOF
     exit 1;

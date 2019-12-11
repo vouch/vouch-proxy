@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -38,7 +39,7 @@ func PutUser(u structs.User) error {
 		} else {
 			u.CreatedOn = u.LastUpdate
 			id, _ := b.NextSequence()
-			u.ID = int(id)
+			u.ID = strconv.Itoa(int(id))
 			log.Debugf("new user.. setting created on to %v", u.CreatedOn)
 		}
 
