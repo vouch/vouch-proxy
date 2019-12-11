@@ -20,9 +20,8 @@ func PutUser(u structs.User) error {
 		if err == nil {
 			userexists = true
 		} else {
-			log.Errorw("PutUser userexists lookup error",
+			log.Warnw("PutUser userexists lookup error (user.id was changed from int to string, gobs might complain)",
 				"error", err.Error(),
-				"userexists", userexists,
 				"u", u,
 				"curu", curu,
 			)
@@ -39,7 +38,7 @@ func PutUser(u structs.User) error {
 		} else {
 			u.CreatedOn = u.LastUpdate
 			id, _ := b.NextSequence()
-			u.ID = strconv.Itoa(int(id))
+			u.ID = strconv.FormatUint(id, 10)
 			log.Debugf("new user.. setting created on to %v", u.CreatedOn)
 		}
 
