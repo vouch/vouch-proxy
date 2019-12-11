@@ -176,7 +176,6 @@ usage() {
      $0 goget                  - get all dependencies
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
-     $0 coverage               - code coverage report
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 coverage               - coverage report
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
