@@ -20,7 +20,8 @@ type User struct {
 	Email      string `json:"email" mapstructure:"email"`
 	CreatedOn  int64  `json:"createdon"`
 	LastUpdate int64  `json:"lastupdate"`
-	ID         int    `json:"id" mapstructure:"id"`
+	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
+	ID int `json:"-" mapstructure:"id"`
 	// jwt.StandardClaims
 }
 
