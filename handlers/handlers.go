@@ -538,7 +538,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
 
-	if (providerToken.Extra("id_token") != nil) {
+	if providerToken.Extra("id_token") != nil {
 		// Certain providers (eg. gitea) don't provide an id_token
 		// and it's not neccessary for the authentication phase
 		ptokens.PIdToken = providerToken.Extra("id_token").(string)
@@ -677,11 +677,53 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 	user.Name = ghUser.Name
 	user.Username = ghUser.Username
 	user.ID = ghUser.ID
+
 	// user = &ghUser.User
+
+	if cfg.Cfg.Org != "" && cfg.Cfg.TeamWhiteList != nil {
+		for _, team := range cfg.Cfg.TeamWhiteList {
+			e, isMember := getTeamMembershipStateFromGitHub(client, user, cfg.Cfg.Org, team, ptoken)
+			if e != nil {
+				return e
+			} else {
+				if isMember {
+					user.TeamMemberships = append(user.TeamMemberships, team)
+				}
+			}
+		}
+	}
 
 	log.Debug("getUserInfoFromGitHub")
 	log.Debug(user)
 	return nil
+}
+
+func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, orgId string, team string, ptoken *oauth2.Token) (rerr error, isMember bool) {
+	replacements := strings.NewReplacer(":org_id", orgId, ":team_slug", team, ":username", user.Username)
+	membershipStateResp, err := client.Get(replacements.Replace(cfg.GenOAuth.UserTeamURL) + ptoken.AccessToken)
+	if err != nil {
+		log.Error(err)
+		return err, false
+	}
+	defer func() {
+		if err := membershipStateResp.Body.Close(); err != nil {
+			rerr = err
+		}
+	}()
+	if membershipStateResp.StatusCode == 200 {
+		data, _ := ioutil.ReadAll(membershipStateResp.Body)
+		log.Infof("github team membership body: ", string(data))
+		ghTeamState := structs.GitHubTeamMembershipState{}
+		if err = json.Unmarshal(data, &ghTeamState); err != nil {
+			log.Error(err)
+			return err, false
+		}
+		log.Debug("getTeamMembershipStateFromGitHub ghTeamState")
+		log.Debug(ghTeamState)
+		return nil, ghTeamState.State == "active"
+	} else {
+		return nil, false
+	}
 }
 
 func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
