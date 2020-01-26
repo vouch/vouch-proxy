@@ -14,12 +14,17 @@ func init() {
 	sort.Sort(ByLengthDesc(domains))
 }
 
+func Refresh() {
+	domains = cfg.Cfg.Domains
+	sort.Sort(ByLengthDesc(domains))
+}
+
 // Matches returns one of the domains we're configured for
 // TODO return all matches
 // Matches return the first match of the
 func Matches(s string) string {
 	for i, v := range domains {
-		if strings.Contains(s, v) {
+		if s == v || strings.HasSuffix(s, "." + v) {
 			log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
 			return v
 		}
@@ -28,9 +33,15 @@ func Matches(s string) string {
 	return ""
 }
 
-// IsUnderManagement check if string contains a vouch managed domain
-func IsUnderManagement(s string) bool {
-	match := Matches(s)
+// IsUnderManagement check if an email is under vouch-managed domain
+func IsUnderManagement(email string) bool {
+	split := strings.Split(email, "@")
+	if len(split) != 2 {
+		log.Warnf("not a valid email: %s", email)
+		return false
+	}
+
+	match := Matches(split[1])
 	if match != "" {
 		return true
 	}
