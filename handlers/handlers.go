@@ -50,16 +50,22 @@ const (
 
 var (
 	// Templates
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+	indexTemplate *template.Template
 
 	// http://www.gorillatoolkit.org/pkg/sessions
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+	sessstore     *sessions.CookieStore
 
-	log     = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
+	log           *zap.SugaredLogger
+	fastlog       *zap.Logger
 )
 
-func init() {
+// Init initializes the handlers package
+func Init() {
+	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+	log     = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
+
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 }
@@ -209,13 +215,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 				if cv == k {
 					log.Debug("Found matching claim key: ", k)
 					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
-					// convert to string
-					val := fmt.Sprint(v)
-					if reflect.TypeOf(val).Kind() == reflect.String {
-						// if val, ok := v.(string); ok {
-						w.Header().Add(customHeader, val)
-						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
-					} else if val, ok := v.([]interface{}); ok {
+					if val, ok := v.([]interface{}); ok {
 						strs := make([]string, len(val))
 						for i, v := range val {
 							strs[i] = fmt.Sprintf("\"%s\"", v)
@@ -223,7 +223,15 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", strings.Join(strs, ","))
 						w.Header().Add(customHeader, strings.Join(strs, ","))
 					} else {
-						log.Errorf("Couldn't parse header type for %s %+v.  Please submit an issue.", k, v)
+						// convert to string
+						val := fmt.Sprint(v)
+						if reflect.TypeOf(val).Kind() == reflect.String {
+							// if val, ok := v.(string); ok {
+							w.Header().Add(customHeader, val)
+							log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
+						} else {
+							log.Errorf("Couldn't parse header type for %s %+v.  Please submit an issue.", k, v)
+						}
 					}
 				}
 			}
@@ -538,7 +546,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
 
-	if (providerToken.Extra("id_token") != nil) {
+	if providerToken.Extra("id_token") != nil {
 		// Certain providers (eg. gitea) don't provide an id_token
 		// and it's not neccessary for the authentication phase
 		ptokens.PIdToken = providerToken.Extra("id_token").(string)

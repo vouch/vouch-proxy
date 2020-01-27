@@ -44,6 +44,7 @@ func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
 }
 
 func main() {
+	handlers.Init()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
