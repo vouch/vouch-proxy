@@ -275,14 +275,18 @@ func setDevelopmentLogger() {
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
 func InitForTestPurposes() {
-	if err := os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml"); err != nil {
+    InitForTestPurposesWithPath("../../config/test_config.yml")
+}
+
+// InitForTestPurposesWithPath initializes the cfg package for test purposes with a custom config path
+func InitForTestPurposesWithPath(path string) {
+	if err := os.Setenv(Branding.UCName+"_CONFIG", path); err != nil {
 		log.Error(err)
 	}
 	// log.Debug("opening config")
 	setDevelopmentLogger()
 	ParseConfig()
 	SetDefaults()
-
 }
 
 // ParseConfig parse the config file
