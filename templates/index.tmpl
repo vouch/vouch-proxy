@@ -1,39 +1,112 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel="icon" type="image/png" href="/static/img/favicon.ico" />
-    <link rel="stylesheet" href="/static/css/main.css" />
-    <title>Vouch Proxy: {{ .Msg }}</title>
-  </head>
-  <body>
-<div class="top">
-  <a href="https://github.com/vouch/vouch-proxy"><img src="/static/img/multicolor_V_500x500.png"/></a>
-  <a href="https://github.com/vouch/vouch-proxy"><span>Vouch Proxy</span></a>
-</div>
-{{ if .Testing }}
-<p class="test">
-<h2>-- test mode --</h2>
-The config file includes <code>testing: true</code>
-<p/>
-All 302 redirects will be captured and presented as links here
-{{ end }}
 
-<h1>{{ .Msg }}</h1>
+<head>
+   <link rel="icon" type="image/png" href="/static/img/favicon.ico" />
+   <!-- <link rel="stylesheet" href="/static/css/main.css" /> -->
+   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+   </script>
+   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+   </script>
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <title>Vouch Proxy: {{ .Msg }}</title>
+</head>
 
-<ul>
-  <li><a href="/login">login</a></li>
-  <li><a href="/logout">logout</a></li>
-  <li><a href="/validate">validate</a></li>
-{{ if .TestURLs }}
-  {{ range $url := .TestURLs}}
-  <li><a href="{{ $url }}">{{ $url }}</a></li>
-  {{ end }}
-{{ end }}
-</ul>
+<body>
+   <style>
+      /* Light mode  (default) */
+      html {
+         position: relative;
+         min-height: 100%;
+      }
 
-For support, please contact your network administrator or whomever configured Nginx to use Vouch Proxy.
-<p/>
-For help with <a href="https://github.com/vouch/vouch-proxy">Vouch Proxy</a> or to file a bug report, please see the project page at <a href="https://github.com/vouch/vouch-proxy">https://github.com/vouch/vouch-proxy</a>
-<p/>
-  </body>
+      body {
+         color: #000000;
+         background-color: #ffffff;
+         margin-bottom: 60px;
+      }
+
+      .footer {
+         position: absolute;
+         bottom: 0;
+         width: 100%;
+         height: 60px;
+         text-align: center;
+         vertical-align: middle;
+      }
+
+      body >.container {
+         /* padding: 60px 15px 0; */
+         padding-top: 60px;
+      }
+
+      .footer >.container {
+         padding-right: 15px;
+         padding-left: 15px;
+      }
+      /* Dark mode */
+      @media (prefers-color-scheme: dark) {
+         body {
+            color: #ffffff;
+            background-color: #000000;
+            margin-bottom: 60px;
+         }
+      }
+   </style>
+   <header>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" style="opacity: 0.7; padding-bottom: 0px; padding-top: 0px;">
+         <a class="navbar-brand" href="https://github.com/vouch/vouch-proxy">
+            <img src="/static/img/multicolor_V_500x500.png" class="d-inline-block align-middle" style="height: 50px;"
+               alt="Logo">
+            Vouch Proxy
+         </a>
+      </nav>
+   </header>
+   <main class="container" role="main">
+      <h2 class="mt-5 text-center">{{ .Msg }}</h2>
+
+      {{ if .Testing }}
+         <p class="lead">
+            <h3>-- Test Mode --</h3>
+            The config file includes <code>testing: true</code>
+         </p>
+         All 302 redirects will be captured and presented as links here
+      {{ end }}
+
+      <div class="row mt-5 mb-3">
+            <div class="col-md-2 offset-md-2">
+               <a class="btn btn-block btn-outline-primary" href="/login" role="button">Login</a>
+            </div>
+            <div class="col-md-2">
+               <a class="btn btn-block btn-outline-primary" href="/login" role="button">Logout</a>
+            </div>
+            <div class="col-md-2">
+               <a class="btn btn-block btn-outline-primary" href="/login" role="button">Validate</a>
+            </div>
+            {{ if .TestURLs }}
+            {{ range $url := .TestURLs}}
+            <div class="col-md-2">
+               <a class="btn btn-block btn-outline-primary" href="{{ $url }}" role="button">Home</a>
+            </div>
+            {{ end }}
+            {{ end }}
+      </div>
+
+   </main>
+
+   <footer class="footer">
+      <div class="container">
+         <span class="text-muted">
+            For support, please contact your network administrator or whomever configured Nginx to use <a href="https://github.com/vouch/vouch-proxy" target="_blank">Vouch Proxy</a>.<br>
+            For help with Vouch Proxy or to file a bug report, please see the project page at <a
+               href="https://github.com/vouch/vouch-proxy" target="_blank">https://github.com/vouch/vouch-proxy</a>.
+         </span>
+      </div>
+   </footer>
+</body>
+
 </html>
