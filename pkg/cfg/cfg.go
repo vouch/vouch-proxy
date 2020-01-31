@@ -34,7 +34,6 @@ type config struct {
 	HealthCheck   bool     `mapstructure:"healthCheck"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
-	Org           string   `mapstructure:"org"`
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
