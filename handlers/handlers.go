@@ -423,7 +423,7 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 		if !ok {
 			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
 		}
-	} else if len(cfg.Cfg.TeamWhiteList) != 0 && cfg.Cfg.Org != "" {
+	} else if len(cfg.Cfg.TeamWhiteList) != 0 {
 		for _, team := range user.TeamMemberships {
 			for _, wl := range cfg.Cfg.TeamWhiteList {
 				if team == wl {
@@ -694,15 +694,29 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 
 	// user = &ghUser.User
 
-	if cfg.Cfg.Org != "" && cfg.Cfg.TeamWhiteList != nil {
-		for _, team := range cfg.Cfg.TeamWhiteList {
-			e, isMember := getTeamMembershipStateFromGitHub(client, user, cfg.Cfg.Org, team, ptoken)
-			if e != nil {
-				return e
-			} else {
-				if isMember {
-					user.TeamMemberships = append(user.TeamMemberships, team)
+	toOrgAndTeam := func(orgAndTeam string) (string, string) {
+		split := strings.Split(orgAndTeam, "/")
+		if len(split) != 2 {
+			return "", ""
+		} else {
+			return split[0], split[1]
+		}
+	}
+
+	if len(cfg.Cfg.TeamWhiteList) != 0 {
+		for _, orgAndTeam := range cfg.Cfg.TeamWhiteList {
+			org, team := toOrgAndTeam(orgAndTeam)
+			if org != "" && team != "" {
+				e, isMember := getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
+				if e != nil {
+					return e
+				} else {
+					if isMember {
+						user.TeamMemberships = append(user.TeamMemberships, org+"/"+team)
+					}
 				}
+			} else {
+				log.Warnf("Invalid org/team format in %s: must be written as <orgId>/<teamSlug>", orgAndTeam)
 			}
 		}
 	}

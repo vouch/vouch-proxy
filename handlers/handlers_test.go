@@ -71,7 +71,6 @@ func setUp() {
 
 	cfg.Cfg.AllowAllUsers = false
 	cfg.Cfg.WhiteList = make([]string, 0)
-	cfg.Cfg.Org = ""
 	cfg.Cfg.TeamWhiteList = make([]string, 0)
 	cfg.Cfg.Domains = []string{"domain1"}
 
@@ -112,11 +111,10 @@ func TestVerifyUserPositiveByEmail(t *testing.T) {
 
 func TestVerifyUserPositiveByTeam(t *testing.T) {
 	setUp()
-	cfg.Cfg.Org = "testorg"
-	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "team2", "team1")
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "org1/team2", "org1/team1")
 
-	user.TeamMemberships = append(user.TeamMemberships, "team3")
-	user.TeamMemberships = append(user.TeamMemberships, "team1")
+	user.TeamMemberships = append(user.TeamMemberships, "org1/team3")
+	user.TeamMemberships = append(user.TeamMemberships, "org1/team1")
 	ok, err := VerifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
@@ -124,8 +122,7 @@ func TestVerifyUserPositiveByTeam(t *testing.T) {
 
 func TestVerifyUserNegativeByTeam(t *testing.T) {
 	setUp()
-	cfg.Cfg.Org = "testorg"
-	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "team1")
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "org1/team1")
 
 	ok, err := VerifyUser(*user)
 	assert.False(t, ok)
@@ -198,9 +195,7 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 	})
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
 
-	cfg.Cfg.Org = "myorg"
-
-	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myteam")
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myorg/myteam")
 
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 
@@ -208,5 +203,5 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "login", user.Username)
-	assert.Equal(t, []string{"myteam"}, user.TeamMemberships)
+	assert.Equal(t, []string{"myorg/myteam"}, user.TeamMemberships)
 }
