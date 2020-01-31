@@ -726,6 +726,31 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 	return nil
 }
 
+func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, orgId string, ptoken *oauth2.Token) (rerr error, isMember bool) {
+	replacements := strings.NewReplacer(":org_id", orgId, ":username", user.Username)
+	orgMembershipResp, err := client.Get(replacements.Replace(cfg.GenOAuth.UserOrgURL) + ptoken.AccessToken)
+	if err != nil {
+		log.Error(err)
+		return err, false
+	}
+
+	if orgMembershipResp.StatusCode == 302 {
+		log.Debug("Need to check public membership")
+		location := orgMembershipResp.Header.Get("Location")
+		if location != "" {
+			orgMembershipResp, err = client.Get(location)
+		}
+	}
+
+	if orgMembershipResp.StatusCode == 204 {
+		return nil, true
+	} else if orgMembershipResp.StatusCode == 404 {
+		return nil, false
+	} else {
+		return nil, false
+	}
+}
+
 func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, orgId string, team string, ptoken *oauth2.Token) (rerr error, isMember bool) {
 	replacements := strings.NewReplacer(":org_id", orgId, ":team_slug", team, ":username", user.Username)
 	membershipStateResp, err := client.Get(replacements.Replace(cfg.GenOAuth.UserTeamURL) + ptoken.AccessToken)
