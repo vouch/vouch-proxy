@@ -2,13 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"golang.org/x/oauth2"
-	"net/http"
-	"regexp"
-
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/structs"
+	"golang.org/x/oauth2"
+	"net/http"
+	"regexp"
 
 	mockhttp "github.com/karupanerura/go-mock-http-response"
 	"github.com/stretchr/testify/assert"
@@ -32,6 +31,7 @@ func (c *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	for _, p := range mockedResponses {
 		if p.matcher(req) {
+			requests = append(requests, req.URL.String())
 			return p.response.MakeResponse(req), nil
 		}
 	}
@@ -55,10 +55,22 @@ func urlEquals(value string) ReqMatcher {
 	}
 }
 
+func assertUrlCalled(t *testing.T, url string) {
+	found := false
+	for _, requested_url := range requests {
+		if requested_url == url {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "Expected %s to have been called", url)
+}
+
 var (
 	user            *structs.User
 	token           = &oauth2.Token{AccessToken: "123"}
 	mockedResponses = []FunResponsePair{}
+	requests        []string
 	client          = &http.Client{Transport: &Transport{}}
 )
 
@@ -77,6 +89,7 @@ func setUp() {
 	domains.Refresh()
 
 	mockedResponses = []FunResponsePair{}
+	requests = make([]string, 0)
 
 	user = &structs.User{Username: "testuser", Email: "test@example.com"}
 }
@@ -190,7 +203,7 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 			LastUpdate: 123,
 			Name:       "name",
 		},
-		Login:   "login",
+		Login:   "myusername",
 		Picture: "avatar-url",
 	})
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
@@ -202,6 +215,9 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 	err := getUserInfoFromGitHub(client, user, &structs.CustomClaims{}, token)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "login", user.Username)
+	assert.Equal(t, "myusername", user.Username)
 	assert.Equal(t, []string{"myorg/myteam"}, user.TeamMemberships)
+
+	expectedTeamMembershipUrl := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername?access_token=" + token.AccessToken
+	assertUrlCalled(t, expectedTeamMembershipUrl)
 }
