@@ -696,23 +696,35 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 
 	toOrgAndTeam := func(orgAndTeam string) (string, string) {
 		split := strings.Split(orgAndTeam, "/")
-		if len(split) != 2 {
-			return "", ""
-		} else {
+		if len(split) == 1 {
+			// only organization given
+			return orgAndTeam, ""
+		} else if len(split) == 2 {
 			return split[0], split[1]
+		} else {
+			return "", ""
 		}
 	}
 
 	if len(cfg.Cfg.TeamWhiteList) != 0 {
 		for _, orgAndTeam := range cfg.Cfg.TeamWhiteList {
 			org, team := toOrgAndTeam(orgAndTeam)
-			if org != "" && team != "" {
-				e, isMember := getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
+			if org != "" {
+				log.Info(org)
+				var (
+					e        error
+					isMember bool
+				)
+				if team != "" {
+					e, isMember = getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
+				} else {
+					e, isMember = getOrgMembershipStateFromGitHub(client, user, org, ptoken)
+				}
 				if e != nil {
 					return e
 				} else {
 					if isMember {
-						user.TeamMemberships = append(user.TeamMemberships, org+"/"+team)
+						user.TeamMemberships = append(user.TeamMemberships, orgAndTeam)
 					}
 				}
 			} else {

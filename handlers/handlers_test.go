@@ -240,15 +240,16 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 	})
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
 
-	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myorg/myteam")
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myOtherOrg", "myorg/myteam")
 
-	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
+	mockResponse(regexMatcher(".*teams.*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
+	mockResponse(regexMatcher(".*members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
 	err := getUserInfoFromGitHub(client, user, &structs.CustomClaims{}, token)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "myusername", user.Username)
-	assert.Equal(t, []string{"myorg/myteam"}, user.TeamMemberships)
+	assert.Equal(t, []string{"myOtherOrg", "myorg/myteam"}, user.TeamMemberships)
 
 	expectedTeamMembershipUrl := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername?access_token=" + token.AccessToken
 	assertUrlCalled(t, expectedTeamMembershipUrl)
