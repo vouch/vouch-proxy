@@ -71,6 +71,8 @@ func setUp() {
 
 	cfg.Cfg.AllowAllUsers = false
 	cfg.Cfg.WhiteList = make([]string, 0)
+	cfg.Cfg.Org = ""
+	cfg.Cfg.TeamWhiteList = make([]string, 0)
 	cfg.Cfg.Domains = []string{"domain1"}
 
 	domains.Refresh()
@@ -106,6 +108,28 @@ func TestVerifyUserPositiveByEmail(t *testing.T) {
 	ok, err := VerifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
+}
+
+func TestVerifyUserPositiveByTeam(t *testing.T) {
+	setUp()
+	cfg.Cfg.Org = "testorg"
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "team2", "team1")
+
+	user.TeamMemberships = append(user.TeamMemberships, "team3")
+	user.TeamMemberships = append(user.TeamMemberships, "team1")
+	ok, err := VerifyUser(*user)
+	assert.True(t, ok)
+	assert.Nil(t, err)
+}
+
+func TestVerifyUserNegativeByTeam(t *testing.T) {
+	setUp()
+	cfg.Cfg.Org = "testorg"
+	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "team1")
+
+	ok, err := VerifyUser(*user)
+	assert.False(t, ok)
+	assert.NotNil(t, err)
 }
 
 func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
