@@ -87,6 +87,7 @@ type oauthConfig struct {
 	Scopes          []string `mapstructure:"scopes"`
 	UserInfoURL     string   `mapstructure:"user_info_url"`
 	UserTeamURL     string   `mapstructure:"user_team_url"`
+	UserOrgURL      string   `mapstructure:"user_org_url"`
 	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
@@ -636,6 +637,9 @@ func setDefaultsGitHub() {
 	}
 	if GenOAuth.UserTeamURL == "" {
 		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+	}
+	if GenOAuth.UserOrgURL == "" {
+		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
 	}
 	if len(GenOAuth.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63
