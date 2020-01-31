@@ -423,6 +423,20 @@ func VerifyUser(u interface{}) (ok bool, err error) {
 		if !ok {
 			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
 		}
+	} else if len(cfg.Cfg.TeamWhiteList) != 0 && cfg.Cfg.Org != "" {
+		for _, team := range user.TeamMemberships {
+			for _, wl := range cfg.Cfg.TeamWhiteList {
+				if team == wl {
+					log.Debugf("found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
+					ok = true
+					break
+				}
+			}
+		}
+
+		if !ok {
+			err = fmt.Errorf("user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+		}
 	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
 		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
 		// } else if !domains.IsUnderManagement(user.HostDomain) {
