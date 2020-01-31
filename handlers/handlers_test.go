@@ -63,7 +63,7 @@ func assertUrlCalled(t *testing.T, url string) {
 			break
 		}
 	}
-	assert.True(t, found, "Expected %s to have been called", url)
+	assert.True(t, found, "Expected %s to have been called, but got only %s", url, requests)
 }
 
 var (
@@ -189,6 +189,38 @@ func TestGetTeamMembershipStateFromGitHubNotAMember(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
+}
+
+func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
+	setUp()
+	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
+
+	err, isMember := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+
+	assert.Nil(t, err)
+	assert.False(t, isMember)
+
+	expectedOrgMembershipUrl := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	assertUrlCalled(t, expectedOrgMembershipUrl)
+}
+
+func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
+	setUp()
+	location := "https://api.github.com/orgs/myorg/public_members/" + user.Username
+
+	mockResponse(regexMatcher(".*orgs/myorg/members.*"), http.StatusFound, map[string]string{"Location": location}, []byte(""))
+	mockResponse(regexMatcher(".*orgs/myorg/public_members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
+
+	err, isMember := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+
+	assert.Nil(t, err)
+	assert.True(t, isMember)
+
+	expectedOrgMembershipUrl := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	assertUrlCalled(t, expectedOrgMembershipUrl)
+
+	expectedOrgPublicMembershipUrl := "https://api.github.com/orgs/myorg/public_members/" + user.Username
+	assertUrlCalled(t, expectedOrgPublicMembershipUrl)
 }
 
 func TestGetUserInfoFromGitHub(t *testing.T) {
