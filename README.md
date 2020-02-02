@@ -17,7 +17,7 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 - [Okta](https://developer.okta.com/blog/2018/08/28/nginx-auth-request)
 - [ADFS](https://github.com/vouch/vouch-proxy/pull/68)
 - [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
-- [Gitea](https://github.com/vouch/vouch-proxy/pull/170)
+- [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
 - Keycloak
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
