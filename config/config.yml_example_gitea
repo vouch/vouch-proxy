@@ -1,0 +1,22 @@
+
+# vouch config
+# bare minimum to get vouch running with Gitea
+
+vouch:
+  domains:
+  - vouch.example
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # allowAllUsers: true
+
+oauth:
+  # replace "gitea.example" with the domain your Gitea instance runs on
+  # create a new OAuth application at:
+  # https://gitea.example/user/settings/applications
+  provider: github
+  client_id: xxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  callback_url: https://vouch.example/auth
+  auth_url: https://gitea.example/login/oauth/authorize
+  token_url: https://gitea.example/login/oauth/access_token
+  user_info_url: https://gitea.example/api/v1/user?token=
