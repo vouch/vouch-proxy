@@ -15,6 +15,16 @@ vouch:
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
   # allowAllUsers: true
 
+  # set teamWhitelist: to list of teams and/or GitHub organizations
+  # When putting an organization id without a slash, it will allow all (public) members from the organization.
+  # The client will try to read the private organization membership using the client credentials, if that's not possible
+  # due to access restriction, it will try to evaluate the publicly visible membership.
+  # Allowing members form a specific team can be configured by qualifying the team with the organization, separated by
+  # a slash.
+  # teamWhitelist:
+  # - myOrg
+  # - myOrg/myTeam
+
 oauth:
   # create a new OAuth application at:
   # https://github.com/settings/applications/new
