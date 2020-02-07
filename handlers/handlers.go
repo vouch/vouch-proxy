@@ -572,7 +572,7 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 		}
 	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenID userinfo body: ", string(data))
+	log.Infof("OpenID userinfo body: %s", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
@@ -596,7 +596,7 @@ func getUserInfoFromOpenStax(client *http.Client, user *structs.User, customClai
 		}
 	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenID userinfo body: ", string(data))
+	log.Infof("OpenStax userinfo body: %s", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
@@ -627,7 +627,7 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 		}
 	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("google userinfo body: ", string(data))
+	log.Infof("google userinfo body: %s", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
@@ -657,7 +657,7 @@ func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims
 		}
 	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("github userinfo body: ", string(data))
+	log.Infof("github userinfo body: %s", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
@@ -740,7 +740,7 @@ func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims 
 	}()
 
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("indieauth userinfo body: ", string(data))
+	log.Infof("indieauth userinfo body: %s", string(data))
 	if err = mapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
