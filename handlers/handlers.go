@@ -2,17 +2,15 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/vouch/vouch-proxy/handlers/adfs"
-	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/handlers/github"
 	"github.com/vouch/vouch-proxy/handlers/google"
 	"github.com/vouch/vouch-proxy/handlers/homeassistant"
 	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/openid"
 	"github.com/vouch/vouch-proxy/handlers/openstax"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"reflect"
@@ -571,33 +569,9 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
 		return github.GetUserInfoFromGitHub(client, user, customClaims, providerToken)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
-		return getUserInfoFromOpenID(client, user, customClaims, providerToken)
+		return openid.GetUserInfoFromOpenID(client, user, customClaims, providerToken)
 	}
 	log.Error("we don't know how to look up the user info")
-	return nil
-}
-
-func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenID userinfo body: %s", string(data))
-	if err = common.MapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err = json.Unmarshal(data, user); err != nil {
-		log.Error(err)
-		return err
-	}
-	user.PrepareUserData()
 	return nil
 }
 
