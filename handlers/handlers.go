@@ -7,6 +7,7 @@ import (
 	"github.com/vouch/vouch-proxy/handlers/adfs"
 	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/handlers/github"
+	"github.com/vouch/vouch-proxy/handlers/homeassistant"
 	"github.com/vouch/vouch-proxy/handlers/indieauth"
 	"html/template"
 	"io/ioutil"
@@ -543,7 +544,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	}
 	if cfg.GenOAuth.Provider == cfg.Providers.HomeAssistant {
 		ptokens.PAccessToken = providerToken.Extra("access_token").(string)
-		return getUserInfoFromHomeAssistant(r, user, customClaims)
+		return homeassistant.GetUserInfoFromHomeAssistant(r, user, customClaims)
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
 	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
@@ -651,13 +652,6 @@ func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims
 	}
 	user.PrepareUserData()
 
-	return nil
-}
-
-// More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func getUserInfoFromHomeAssistant(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
-	// Home assistant does not provide an API to query username, so we statically set it to "homeassistant"
-	user.Username = "homeassistant"
 	return nil
 }
 
