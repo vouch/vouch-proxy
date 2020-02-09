@@ -2,15 +2,14 @@ package github
 
 import (
 	"encoding/json"
+	mockhttp "github.com/karupanerura/go-mock-http-response"
+	"github.com/stretchr/testify/assert"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 	"net/http"
 	"regexp"
-
-	mockhttp "github.com/karupanerura/go-mock-http-response"
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -156,7 +155,7 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 	assertUrlCalled(t, expectedOrgPublicMembershipUrl)
 }
 
-func TestGetUserInfoFromGitHub(t *testing.T) {
+func TestGetUserInfo(t *testing.T) {
 	setUp()
 
 	userInfoContent, _ := json.Marshal(structs.GitHubUser{
@@ -178,7 +177,10 @@ func TestGetUserInfoFromGitHub(t *testing.T) {
 	mockResponse(regexMatcher(".*teams.*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 	mockResponse(regexMatcher(".*members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	err := GetUserInfoFromGitHub(client, user, &structs.CustomClaims{}, token)
+	handler := Handler{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool) (error, *http.Client, *oauth2.Token) {
+		return nil, client, token
+	}}
+	err := handler.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
 
 	assert.Nil(t, err)
 	assert.Equal(t, "myusername", user.Username)

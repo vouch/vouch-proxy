@@ -9,11 +9,13 @@ import (
 	"net/http"
 )
 
+type Handler struct{}
+
 var (
 	log = cfg.Cfg.Logger
 )
 
-func GetUserInfoFromOpenID(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	err, client, _ := common.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		return err

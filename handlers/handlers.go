@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/vouch/vouch-proxy/handlers/adfs"
+	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/handlers/github"
 	"github.com/vouch/vouch-proxy/handlers/google"
 	"github.com/vouch/vouch-proxy/handlers/homeassistant"
@@ -41,6 +42,10 @@ type Index struct {
 type AuthError struct {
 	Error string
 	JWT   string
+}
+
+type Handler interface {
+	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
 
 const (
@@ -527,32 +532,30 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	renderIndex(w, "/auth "+tokenstring)
 }
 
-// TODO: put all getUserInfo logic into its own pkg
-
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
+	return getHandler().GetUserInfo(r, user, customClaims, ptokens)
+}
 
-	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
-	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		return indieauth.GetUserInfoFromIndieAuth(r, user, customClaims, ptokens)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		return adfs.GetUserInfoFromADFS(r, user, customClaims, ptokens)
+func getHandler() Handler {
+	switch cfg.GenOAuth.Provider {
+	case cfg.Providers.IndieAuth:
+		return indieauth.Handler{}
+	case cfg.Providers.ADFS:
+		return adfs.Handler{}
+	case cfg.Providers.HomeAssistant:
+		return homeassistant.Handler{}
+	case cfg.Providers.OpenStax:
+		return openstax.Handler{}
+	case cfg.Providers.Google:
+		return google.Handler{}
+	case cfg.Providers.GitHub:
+		return github.Handler{common.PrepareTokensAndClient}
+	case cfg.Providers.OIDC:
+		return openid.Handler{}
+	default:
+		log.Error("we don't know how to look up the user info")
+		return nil
 	}
-	if cfg.GenOAuth.Provider == cfg.Providers.HomeAssistant {
-		return homeassistant.GetUserInfoFromHomeAssistant(r, user, customClaims, ptokens)
-	}
-	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
-		return openstax.GetUserInfoFromOpenStax(r, user, customClaims, ptokens)
-	}
-
-	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		return google.GetUserInfoFromGoogle(r, user, customClaims, ptokens)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
-		return github.GetUserInfoFromGitHub(r, user, customClaims, ptokens)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
-		return openid.GetUserInfoFromOpenID(r, user, customClaims, ptokens)
-	}
-	log.Error("we don't know how to look up the user info")
-	return nil
 }
 
 // the standard error

@@ -6,8 +6,10 @@ import (
 	"net/http"
 )
 
+type Handler struct{}
+
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func GetUserInfoFromHomeAssistant(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	err, _, providerToken := common.PrepareTokensAndClient(r, ptokens, false)
 	if err != nil {
 		return err
