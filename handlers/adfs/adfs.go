@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+type Handler struct{}
+
 type adfsTokenRes struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
@@ -26,7 +28,7 @@ var (
 )
 
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func GetUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Debugf("code: %s", code)
 
