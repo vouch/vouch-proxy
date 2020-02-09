@@ -30,6 +30,8 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ## Installation
 
+Vouch relies on the ability to share a cookie between the Vouch server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.example.com` where your apps are running on `app1.example.com` and `app2.example.com`.
+
 - `cp ./config/config.yml_example ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
   - be sure to direct the callback URL to the `/auth` endpoint
@@ -195,6 +197,19 @@ logout resources..
 Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky. We want to help you get up and running as quickly as possible. The most common problem is..
 
 ### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
+
+Double check that you are running Vouch and your apps on a common domain that can share cookies. For example, `vouch.example.com` and `app.example.com` can share cookies on the `.example.com` domain. (It will not work if you are trying to use `vouch.example.org` and `app.example.net`.)
+
+You may need to explicitly define the domain that the cookie should be set on. You can do this in the config file by setting the option:
+
+```yaml
+vouch:
+  cookie:
+    # force the domain of the cookie to set
+    domain: example.com
+```
+
+If you continue to have trouble, try the following:
 
 - first **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`. This will slow down the loop.
 - the `Host:` header in the http request, the `oauth.callback_url` and the configured `vouch.domains` must all align so that the cookie that carries the JWT can be placed properly into the browser and then returned on each request
