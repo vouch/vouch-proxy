@@ -17,8 +17,12 @@ var (
 
 // github
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func GetUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-
+func GetUserInfoFromGitHub(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	err, client, ptoken := common.PrepareTokensAndClient(r, ptokens, true)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
 	if err != nil {

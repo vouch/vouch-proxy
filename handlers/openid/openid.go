@@ -5,7 +5,6 @@ import (
 	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 )
@@ -14,7 +13,11 @@ var (
 	log = cfg.Cfg.Logger
 )
 
-func GetUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
+func GetUserInfoFromOpenID(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	err, client, _ := common.PrepareTokensAndClient(r, ptokens, true)
+	if err != nil {
+		return err
+	}
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err
