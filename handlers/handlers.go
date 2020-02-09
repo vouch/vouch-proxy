@@ -9,6 +9,7 @@ import (
 	"github.com/vouch/vouch-proxy/handlers/github"
 	"github.com/vouch/vouch-proxy/handlers/homeassistant"
 	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/openstax"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -549,7 +550,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	ptokens.PAccessToken = providerToken.AccessToken
 	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
 		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
-		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
+		return openstax.GetUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
 
 	if providerToken.Extra("id_token") != nil {
@@ -595,37 +596,6 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 		log.Error(err)
 		return err
 	}
-	user.PrepareUserData()
-	return nil
-}
-
-func getUserInfoFromOpenStax(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenStax userinfo body: %s", string(data))
-	if err = common.MapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	oxUser := structs.OpenStaxUser{}
-	if err = json.Unmarshal(data, &oxUser); err != nil {
-		log.Error(err)
-		return err
-	}
-
-	oxUser.PrepareUserData()
-	user.Email = oxUser.Email
-	user.Name = oxUser.Name
-	user.Username = oxUser.Username
-	user.ID = oxUser.ID
 	user.PrepareUserData()
 	return nil
 }
