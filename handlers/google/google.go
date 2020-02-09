@@ -13,7 +13,11 @@ var (
 	log = cfg.Cfg.Logger
 )
 
-func GetUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
+func GetUserInfoFromGoogle(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	err, client, _ := common.PrepareTokensAndClient(r, ptokens, true)
+	if err != nil {
+		return err
+	}
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
 	if err != nil {
 		return err

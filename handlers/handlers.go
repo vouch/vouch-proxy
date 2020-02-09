@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"github.com/vouch/vouch-proxy/handlers/adfs"
 	"github.com/vouch/vouch-proxy/handlers/github"
@@ -534,42 +533,23 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		return indieauth.GetUserInfoFromIndieAuth(r, user, customClaims)
+		return indieauth.GetUserInfoFromIndieAuth(r, user, customClaims, ptokens)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
 		return adfs.GetUserInfoFromADFS(r, user, customClaims, ptokens)
 	}
-	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
-	if err != nil {
-		return err
-	}
 	if cfg.GenOAuth.Provider == cfg.Providers.HomeAssistant {
-		ptokens.PAccessToken = providerToken.Extra("access_token").(string)
-		return homeassistant.GetUserInfoFromHomeAssistant(r, user, customClaims)
+		return homeassistant.GetUserInfoFromHomeAssistant(r, user, customClaims, ptokens)
 	}
-	ptokens.PAccessToken = providerToken.AccessToken
 	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
-		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
-		return openstax.GetUserInfoFromOpenStax(client, user, customClaims, providerToken)
+		return openstax.GetUserInfoFromOpenStax(r, user, customClaims, ptokens)
 	}
 
-	if providerToken.Extra("id_token") != nil {
-		// Certain providers (eg. gitea) don't provide an id_token
-		// and it's not neccessary for the authentication phase
-		ptokens.PIdToken = providerToken.Extra("id_token").(string)
-	} else {
-		log.Debugf("id_token missing - may not be supported by this provider")
-	}
-
-	log.Debugf("ptokens: %+v", ptokens)
-
-	// make the "third leg" request back to provider to exchange the token for the userinfo
-	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		return google.GetUserInfoFromGoogle(client, user, customClaims)
+		return google.GetUserInfoFromGoogle(r, user, customClaims, ptokens)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
-		return github.GetUserInfoFromGitHub(client, user, customClaims, providerToken)
+		return github.GetUserInfoFromGitHub(r, user, customClaims, ptokens)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
-		return openid.GetUserInfoFromOpenID(client, user, customClaims, providerToken)
+		return openid.GetUserInfoFromOpenID(r, user, customClaims, ptokens)
 	}
 	log.Error("we don't know how to look up the user info")
 	return nil

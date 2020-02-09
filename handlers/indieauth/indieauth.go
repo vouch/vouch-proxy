@@ -15,7 +15,7 @@ var (
 	log = cfg.Cfg.Logger
 )
 
-func GetUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
+func GetUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)
