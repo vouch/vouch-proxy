@@ -7,6 +7,7 @@ import (
 	"github.com/vouch/vouch-proxy/handlers/adfs"
 	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/handlers/github"
+	"github.com/vouch/vouch-proxy/handlers/google"
 	"github.com/vouch/vouch-proxy/handlers/homeassistant"
 	"github.com/vouch/vouch-proxy/handlers/indieauth"
 	"github.com/vouch/vouch-proxy/handlers/openstax"
@@ -566,7 +567,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 	// make the "third leg" request back to provider to exchange the token for the userinfo
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		return getUserInfoFromGoogle(client, user, customClaims)
+		return google.GetUserInfoFromGoogle(client, user, customClaims)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
 		return github.GetUserInfoFromGitHub(client, user, customClaims, providerToken)
 	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
@@ -597,31 +598,6 @@ func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims
 		return err
 	}
 	user.PrepareUserData()
-	return nil
-}
-
-func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("google userinfo body: %s", string(data))
-	if err = common.MapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err = json.Unmarshal(data, user); err != nil {
-		log.Error(err)
-		return err
-	}
-	user.PrepareUserData()
-
 	return nil
 }
 
