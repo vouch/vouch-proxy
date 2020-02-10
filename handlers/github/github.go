@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
@@ -123,11 +124,14 @@ func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, or
 	}
 
 	if orgMembershipResp.StatusCode == 204 {
+		log.Debug("getOrgMembershipStateFromGitHub isMember: true")
 		return nil, true
 	} else if orgMembershipResp.StatusCode == 404 {
+		log.Debug("getOrgMembershipStateFromGitHub isMember: false")
 		return nil, false
 	} else {
-		return nil, false
+		log.Errorf("getOrgMembershipStateFromGitHub: unexpected status code %d", orgMembershipResp.StatusCode)
+		return errors.New("Unexpected response status " + orgMembershipResp.Status), false
 	}
 }
 
@@ -154,7 +158,11 @@ func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, o
 		log.Debug("getTeamMembershipStateFromGitHub ghTeamState")
 		log.Debug(ghTeamState)
 		return nil, ghTeamState.State == "active"
-	} else {
+	} else if membershipStateResp.StatusCode == 404 {
+		log.Debug("getTeamMembershipStateFromGitHub isMember: false")
 		return nil, false
+	} else {
+		log.Errorf("getTeamMembershipStateFromGitHub: unexpected status code %d", membershipStateResp.StatusCode)
+		return errors.New("Unexpected response status " + membershipStateResp.Status), false
 	}
 }
