@@ -645,6 +645,10 @@ func setDefaultsGitHub() {
 		// https://github.com/vouch/vouch-proxy/issues/63
 		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
 		GenOAuth.Scopes = []string{"read:user"}
+
+		if len(Cfg.TeamWhiteList) > 0 {
+			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
+		}
 	}
 }
 
