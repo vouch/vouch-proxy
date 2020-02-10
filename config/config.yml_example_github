@@ -24,6 +24,7 @@ vouch:
   # teamWhitelist:
   # - myOrg
   # - myOrg/myTeam
+  # In case both vouch.teamWhitelist AND oauth.scopes is configured, make sure read:org scope is included
 
 oauth:
   # create a new OAuth application at:
