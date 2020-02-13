@@ -30,7 +30,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ## Installation
 
-Vouch relies on the ability to share a cookie between the Vouch server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.example.com` where your apps are running on `app1.example.com` and `app2.example.com`.
+Vouch relies on the ability to share a cookie between the Vouch server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.youdomain.com` where your apps are running on `app1.youdomain.com` and `app2.youdomain.com`.
 
 - `cp ./config/config.yml_example ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
@@ -198,7 +198,7 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 ### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
 
-Double check that you are running Vouch and your apps on a common domain that can share cookies. For example, `vouch.example.com` and `app.example.com` can share cookies on the `.example.com` domain. (It will not work if you are trying to use `vouch.example.org` and `app.example.net`.)
+Double check that you are running Vouch and your apps on a common domain that can share cookies. For example, `vouch.youdomain.com` and `app.youdomain.com` can share cookies on the `.youdomain.com` domain. (It will not work if you are trying to use `vouch.yourdomain.org` and `app.yourdomain.net`.)
 
 You may need to explicitly define the domain that the cookie should be set on. You can do this in the config file by setting the option:
 
@@ -206,7 +206,7 @@ You may need to explicitly define the domain that the cookie should be set on. Y
 vouch:
   cookie:
     # force the domain of the cookie to set
-    domain: example.com
+    domain: youdomain.com
 ```
 
 If you continue to have trouble, try the following:
