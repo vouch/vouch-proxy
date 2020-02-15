@@ -31,6 +31,10 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
+	sameSite := http.SameSiteDefaultMode
+	if cfg.Cfg.Cookie.SameSite != 0 {
+		sameSite = http.SameSite(cfg.Cfg.Cookie.SameSite)
+	}
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
@@ -39,6 +43,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		MaxAge:   maxAge,
 		Secure:   cfg.Cfg.Cookie.Secure,
 		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+		SameSite: sameSite,
 	}
 	cookieSize := len(cookie.String())
 	cookie.Value = ""
@@ -61,6 +66,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 				MaxAge:   maxAge,
 				Secure:   cfg.Cfg.Cookie.Secure,
 				HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+				SameSite: sameSite,
 			})
 		}
 	} else {
@@ -72,6 +78,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 			MaxAge:   maxAge,
 			Secure:   cfg.Cfg.Cookie.Secure,
 			HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+			SameSite: sameSite,
 		})
 	}
 }
