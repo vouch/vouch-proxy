@@ -67,6 +67,10 @@ vouch:
     httpOnly: true
     # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
     maxAge: 14400
+    # Set SameSite attribute to restrict browser behaviour when submitting the cookie in a request from a different website.
+    # Valid values 1:{no value}, 2:Lax, 3:Strict, 4:None
+    # If not specified, the cookie will not contain a SameSite attribute value.
+    sameSite: 1
 
   session:
     # name of session variable stored locally
