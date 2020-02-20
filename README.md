@@ -136,6 +136,8 @@ server {
 
 An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
 
+If you're protecting an API with Vouch Proxy you may need to configure Nginx to handle `OPTIONS` requests in the `/validate` block [issue #216](https://github.com/vouch/vouch-proxy/issues/216).
+
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## Running from Docker
