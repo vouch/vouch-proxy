@@ -128,6 +128,27 @@ func (u *OpenStaxUser) PrepareUserData() {
 	}
 }
 
+// Ocs used for NextcloudUser
+type Ocs struct {
+	Data struct {
+		UserId string `json:"id"`
+		Email  string `json:"email"`
+	} `json:"data"`
+}
+
+// User of Nextcloud retreived from ocs endpoint
+type NextcloudUser struct {
+	User
+	Ocs Ocs `json:"ocs"`
+}
+
+func (u *NextcloudUser) PrepareUserData() {
+	if u.Username == "" {
+		u.Username = u.Ocs.Data.UserId
+		u.Email = u.Ocs.Data.Email
+	}
+}
+
 // Team has members and provides acess to sites
 type Team struct {
 	Name       string   `json:"name" mapstructure:"name"`

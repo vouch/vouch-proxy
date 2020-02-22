@@ -8,6 +8,7 @@ import (
 	"github.com/vouch/vouch-proxy/handlers/google"
 	"github.com/vouch/vouch-proxy/handlers/homeassistant"
 	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/nextcloud"
 	"github.com/vouch/vouch-proxy/handlers/openid"
 	"github.com/vouch/vouch-proxy/handlers/openstax"
 	"html/template"
@@ -550,6 +551,8 @@ func getHandler() Handler {
 		return google.Handler{}
 	case cfg.Providers.GitHub:
 		return github.Handler{common.PrepareTokensAndClient}
+	case cfg.Providers.Nextcloud:
+		return nextcloud.Handler{}
 	case cfg.Providers.OIDC:
 		return openid.Handler{}
 	default:
