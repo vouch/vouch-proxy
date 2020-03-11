@@ -538,7 +538,7 @@ func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.Cust
 		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
 	}
 
-	if (providerToken.Extra("id_token") != nil) {
+	if providerToken.Extra("id_token") != nil {
 		// Certain providers (eg. gitea) don't provide an id_token
 		// and it's not neccessary for the authentication phase
 		ptokens.PIdToken = providerToken.Extra("id_token").(string)
@@ -808,8 +808,7 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 	tokenRes := adfsTokenRes{}
 
 	if err := json.Unmarshal(data, &tokenRes); err != nil {
-		log.Errorf("oauth2: cannot fetch token: %v", err)
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS oauth2: cannot fetch token: %+v", err)
 	}
 
 	ptokens.PAccessToken = string(tokenRes.AccessToken)
@@ -817,16 +816,14 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 
 	s := strings.Split(tokenRes.IDToken, ".")
 	if len(s) < 2 {
-		log.Error("jws: invalid token received")
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS jws: invalid token received")
 	}
 
 	idToken, err := base64.RawURLEncoding.DecodeString(s[1])
 	if err != nil {
-		log.Error(err)
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS decode token: %+v", err)
 	}
-	log.Debugf("idToken: %+v", string(idToken))
+	log.Debugf("getUserInfoFromADFS idToken: %+v", string(idToken))
 
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
@@ -835,7 +832,6 @@ func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *stru
 	// Please note that in order for custom claims to work you MUST set allatclaims in ADFS to be passed
 	// https://oktotechnologies.ca/2018/08/26/adfs-openidconnect-configuration/
 	if err = mapClaims([]byte(idToken), customClaims); err != nil {
-		log.Error(err)
 		return err
 	}
 	adfsUser.PrepareUserData()
