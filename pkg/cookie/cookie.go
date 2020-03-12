@@ -31,10 +31,22 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
+
 	sameSite := http.SameSiteDefaultMode
-	if cfg.Cfg.Cookie.SameSite != 0 {
-		sameSite = http.SameSite(cfg.Cfg.Cookie.SameSite)
+	if cfg.Cfg.Cookie.SameSite != "" {
+		switch strings.ToLower(cfg.Cfg.Cookie.SameSite) {
+		case "lax":
+			sameSite = http.SameSiteLaxMode
+		case "strict":
+			sameSite = http.SameSiteStrictMode
+		case "none":
+			if cfg.Cfg.Cookie.Secure == false {
+				log.Error("SameSite cookie attribute with sameSite=none should also be specified with secure=true.")
+			}
+			sameSite = http.SameSiteNoneMode
+		}
 	}
+
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
