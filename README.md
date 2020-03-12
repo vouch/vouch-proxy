@@ -151,7 +151,7 @@ docker run -d \
     voucher/vouch-proxy
 ```
 
-The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` which is based on [scratch](https://docs.docker.com/samples/library/scratch/) there is an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` as well as versioned images as `voucher/vouch-proxy:x.y.z` and `voucher/vouch-proxy:x.y.z_alpine`.
+The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` (based on [scratch](https://docs.docker.com/samples/library/scratch/)) there are versioned images as `voucher/vouch-proxy:x.y.z` and an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` for the current version.
 
 [https://hub.docker.com/r/voucher/vouch-proxy/builds/](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
 
