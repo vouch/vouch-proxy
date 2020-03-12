@@ -23,6 +23,8 @@ type User struct {
 	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
 	ID int `json:"-" mapstructure:"id"`
 	// jwt.StandardClaims
+
+	TeamMemberships []string
 }
 
 // PrepareUserData implement PersonalData interface
@@ -77,6 +79,10 @@ type GitHubUser struct {
 	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
 	// jwt.StandardClaims
+}
+
+type GitHubTeamMembershipState struct {
+	State string `json:"state"`
 }
 
 // PrepareUserData implement PersonalData interface
