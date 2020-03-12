@@ -23,8 +23,15 @@ func Refresh() {
 // TODO return all matches
 // Matches return the first match of the
 func Matches(s string) string {
+	if strings.Contains(s, ":") {
+		// then we have a port and we just want to check the host
+		split := strings.Split(s, ":")
+		log.Debugf("removing port from %s to test domain %s", s, split[0])
+		s = split[0]
+	}
+
 	for i, v := range domains {
-		if s == v || strings.HasSuffix(s, "." + v) {
+		if s == v || strings.HasSuffix(s, "."+v) {
 			log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
 			return v
 		}
