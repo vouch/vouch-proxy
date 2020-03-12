@@ -67,10 +67,11 @@ vouch:
     httpOnly: true
     # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
     maxAge: 14400
-    # Set SameSite attribute to restrict browser behaviour when submitting the cookie in a request from a different website.
-    # Valid values 1:{no value}, 2:Lax, 3:Strict, 4:None
-    # If not specified, the cookie will not contain a SameSite attribute value.
-    sameSite: 1
+    # Set SameSite attribute to restrict browser behaviour browser to send this cookie along with cross-site requests.
+    # Possible attribute values lax, strict, none.
+    # If attribute not specified then cross-site behaviour will depend on the browser used. If sameSite=none then secure must be set to true
+    # More context: https://github.com/vouch/vouch-proxy/issues/210
+    # sameSite: lax
 
   session:
     # name of session variable stored locally
