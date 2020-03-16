@@ -2,20 +2,22 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/vouch/vouch-proxy/handlers/adfs"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/handlers/github"
-	"github.com/vouch/vouch-proxy/handlers/google"
-	"github.com/vouch/vouch-proxy/handlers/homeassistant"
-	"github.com/vouch/vouch-proxy/handlers/indieauth"
-	"github.com/vouch/vouch-proxy/handlers/openid"
-	"github.com/vouch/vouch-proxy/handlers/openstax"
 	"html/template"
 	"net/http"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/adfs"
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/handlers/github"
+	"github.com/vouch/vouch-proxy/handlers/google"
+	"github.com/vouch/vouch-proxy/handlers/homeassistant"
+	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/nextcloud"
+	"github.com/vouch/vouch-proxy/handlers/openid"
+	"github.com/vouch/vouch-proxy/handlers/openstax"
 
 	"go.uber.org/zap"
 
@@ -44,6 +46,7 @@ type AuthError struct {
 	JWT   string
 }
 
+// Handler each Provider must support GetuserInfo
 type Handler interface {
 	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
@@ -549,7 +552,9 @@ func getHandler() Handler {
 	case cfg.Providers.Google:
 		return google.Handler{}
 	case cfg.Providers.GitHub:
-		return github.Handler{common.PrepareTokensAndClient}
+		return github.Handler{PrepareTokensAndClient: common.PrepareTokensAndClient}
+	case cfg.Providers.Nextcloud:
+		return nextcloud.Handler{}
 	case cfg.Providers.OIDC:
 		return openid.Handler{}
 	default:
