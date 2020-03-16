@@ -32,7 +32,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
 
-	sameSite := http.SameSiteDefaultMode
+	sameSite := http.SameSite(0)
 	if cfg.Cfg.Cookie.SameSite != "" {
 		switch strings.ToLower(cfg.Cfg.Cookie.SameSite) {
 		case "lax":
