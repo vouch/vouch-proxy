@@ -156,7 +156,7 @@ test () {
 
 stats () {
   echo -n "lines of code: "
-  find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
+  find . -name '*.go' | xargs wc -l | grep total
 
   echo -n "number of go files: "
   find . -name '*.go' | wc -l

@@ -23,6 +23,8 @@ type User struct {
 	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
 	ID int `json:"-" mapstructure:"id"`
 	// jwt.StandardClaims
+
+	TeamMemberships []string
 }
 
 // PrepareUserData implement PersonalData interface
@@ -79,6 +81,10 @@ type GitHubUser struct {
 	// jwt.StandardClaims
 }
 
+type GitHubTeamMembershipState struct {
+	State string `json:"state"`
+}
+
 // PrepareUserData implement PersonalData interface
 func (u *GitHubUser) PrepareUserData() {
 	// always use the u.Login as the u.Username
@@ -119,6 +125,27 @@ func (u *OpenStaxUser) PrepareUserData() {
 				break
 			}
 		}
+	}
+}
+
+// Ocs used for NextcloudUser
+type Ocs struct {
+	Data struct {
+		UserId string `json:"id"`
+		Email  string `json:"email"`
+	} `json:"data"`
+}
+
+// User of Nextcloud retreived from ocs endpoint
+type NextcloudUser struct {
+	User
+	Ocs Ocs `json:"ocs"`
+}
+
+func (u *NextcloudUser) PrepareUserData() {
+	if u.Username == "" {
+		u.Username = u.Ocs.Data.UserId
+		u.Email = u.Ocs.Data.Email
 	}
 }
 
