@@ -23,3 +23,19 @@ func TestConfigParsing(t *testing.T) {
 	assert.NotEmpty(t, Cfg.JWT.MaxAge)
 
 }
+
+func TestSetGitHubDefaults(t *testing.T) {
+	InitForTestPurposesWithProvider("github")
+
+	assert.Equal(t, []string{"read:user"}, GenOAuth.Scopes)
+}
+
+func TestSetGitHubDefaultsWithTeamWhitelist(t *testing.T) {
+	InitForTestPurposesWithProvider("github")
+	Cfg.TeamWhiteList = append(Cfg.TeamWhiteList, "org/team")
+	GenOAuth.Scopes = []string{}
+
+	setDefaultsGitHub()
+	assert.Contains(t, GenOAuth.Scopes, "read:user")
+	assert.Contains(t, GenOAuth.Scopes, "read:org")
+}

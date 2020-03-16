@@ -22,6 +22,7 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
+- [Nextcloud](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html)
 - most other OpenID Connect (OIDC) providers
 
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
@@ -136,6 +137,8 @@ server {
 
 An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
 
+If you're protecting an API with Vouch Proxy you may need to configure Nginx to handle `OPTIONS` requests in the `/validate` block [issue #216](https://github.com/vouch/vouch-proxy/issues/216).
+
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## Running from Docker
@@ -149,7 +152,7 @@ docker run -d \
     voucher/vouch-proxy
 ```
 
-The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` which is based on [scratch](https://docs.docker.com/samples/library/scratch/) there is an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` as well as versioned images as `voucher/vouch-proxy:x.y.z` and `voucher/vouch-proxy:x.y.z_alpine`.
+The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` (based on [scratch](https://docs.docker.com/samples/library/scratch/)) there are versioned images as `voucher/vouch-proxy:x.y.z` and an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` for the current version.
 
 [https://hub.docker.com/r/voucher/vouch-proxy/builds/](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
 

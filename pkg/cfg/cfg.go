@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -33,6 +34,7 @@ type config struct {
 	HealthCheck   bool     `mapstructure:"healthCheck"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
+	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
@@ -85,6 +87,8 @@ type oauthConfig struct {
 	RedirectURLs    []string `mapstructure:"callback_urls"`
 	Scopes          []string `mapstructure:"scopes"`
 	UserInfoURL     string   `mapstructure:"user_info_url"`
+	UserTeamURL     string   `mapstructure:"user_team_url"`
+	UserOrgURL      string   `mapstructure:"user_org_url"`
 	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
@@ -97,6 +101,7 @@ type OAuthProviders struct {
 	OIDC          string
 	HomeAssistant string
 	OpenStax      string
+	Nextcloud     string
 }
 
 type branding struct {
@@ -134,6 +139,7 @@ var (
 		OIDC:          "oidc",
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
+		Nextcloud:     "nextcloud",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -276,13 +282,25 @@ func setDevelopmentLogger() {
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
 func InitForTestPurposes() {
-	if err := os.Setenv(Branding.UCName+"_CONFIG", "../../config/test_config.yml"); err != nil {
+	InitForTestPurposesWithProvider("")
+}
+
+func InitForTestPurposesWithProvider(provider string) {
+	_, b, _, _ := runtime.Caller(0)
+	basepath := filepath.Dir(b)
+	if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(basepath, "../../config/test_config.yml")); err != nil {
 		log.Error(err)
 	}
 	// log.Debug("opening config")
 	setDevelopmentLogger()
 	ParseConfig()
 	SetDefaults()
+
+	// Needed to override the provider, which is otherwise set via yml
+	if provider != "" {
+		GenOAuth.Provider = provider
+		setProviderDefaults()
+	}
 
 }
 
@@ -355,7 +373,8 @@ func BasicTest() error {
 		GenOAuth.Provider != Providers.HomeAssistant &&
 		GenOAuth.Provider != Providers.ADFS &&
 		GenOAuth.Provider != Providers.OIDC &&
-		GenOAuth.Provider != Providers.OpenStax {
+		GenOAuth.Provider != Providers.OpenStax &&
+		GenOAuth.Provider != Providers.Nextcloud {
 		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
 	}
 
@@ -564,19 +583,23 @@ func SetDefaults() {
 	// OAuth defaults and client configuration
 	err := UnmarshalKey("oauth", &GenOAuth)
 	if err == nil {
-		if GenOAuth.Provider == Providers.Google {
-			setDefaultsGoogle()
-			// setDefaultsGoogle also configures the OAuthClient
-		} else if GenOAuth.Provider == Providers.GitHub {
-			setDefaultsGitHub()
-			configureOAuthClient()
-		} else if GenOAuth.Provider == Providers.ADFS {
-			setDefaultsADFS()
-			configureOAuthClient()
-		} else {
-			// IndieAuth, OIDC, OpenStax
-			configureOAuthClient()
-		}
+		setProviderDefaults()
+	}
+}
+
+func setProviderDefaults() {
+	if GenOAuth.Provider == Providers.Google {
+		setDefaultsGoogle()
+		// setDefaultsGoogle also configures the OAuthClient
+	} else if GenOAuth.Provider == Providers.GitHub {
+		setDefaultsGitHub()
+		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.ADFS {
+		setDefaultsADFS()
+		configureOAuthClient()
+	} else {
+		// IndieAuth, OIDC, OpenStax, Nextcloud
+		configureOAuthClient()
 	}
 }
 
@@ -616,10 +639,20 @@ func setDefaultsGitHub() {
 	if GenOAuth.UserInfoURL == "" {
 		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
 	}
+	if GenOAuth.UserTeamURL == "" {
+		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+	}
+	if GenOAuth.UserOrgURL == "" {
+		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+	}
 	if len(GenOAuth.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63
 		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
 		GenOAuth.Scopes = []string{"read:user"}
+
+		if len(Cfg.TeamWhiteList) > 0 {
+			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
+		}
 	}
 }
 
