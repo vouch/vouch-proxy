@@ -59,7 +59,7 @@ vouch:
     compress: true
 
   cookie: 
-    # name of cookie to store the jwt
+    # name of cookie to store the jwt. Must not include '_' as that is used during split operations.
     name: VouchCookie
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
