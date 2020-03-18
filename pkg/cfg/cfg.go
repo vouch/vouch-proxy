@@ -100,6 +100,7 @@ type OAuthProviders struct {
 	OIDC          string
 	HomeAssistant string
 	OpenStax      string
+	Nextcloud     string
 }
 
 type branding struct {
@@ -137,6 +138,7 @@ var (
 		OIDC:          "oidc",
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
+		Nextcloud:     "nextcloud",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -370,7 +372,8 @@ func BasicTest() error {
 		GenOAuth.Provider != Providers.HomeAssistant &&
 		GenOAuth.Provider != Providers.ADFS &&
 		GenOAuth.Provider != Providers.OIDC &&
-		GenOAuth.Provider != Providers.OpenStax {
+		GenOAuth.Provider != Providers.OpenStax &&
+		GenOAuth.Provider != Providers.Nextcloud {
 		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
 	}
 
@@ -594,7 +597,7 @@ func setProviderDefaults() {
 		setDefaultsADFS()
 		configureOAuthClient()
 	} else {
-		// IndieAuth, OIDC, OpenStax
+		// IndieAuth, OIDC, OpenStax, Nextcloud
 		configureOAuthClient()
 	}
 }
