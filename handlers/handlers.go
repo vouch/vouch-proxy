@@ -2,20 +2,22 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/vouch/vouch-proxy/handlers/adfs"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/handlers/github"
-	"github.com/vouch/vouch-proxy/handlers/google"
-	"github.com/vouch/vouch-proxy/handlers/homeassistant"
-	"github.com/vouch/vouch-proxy/handlers/indieauth"
-	"github.com/vouch/vouch-proxy/handlers/openid"
-	"github.com/vouch/vouch-proxy/handlers/openstax"
 	"html/template"
 	"net/http"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/adfs"
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/handlers/github"
+	"github.com/vouch/vouch-proxy/handlers/google"
+	"github.com/vouch/vouch-proxy/handlers/homeassistant"
+	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/nextcloud"
+	"github.com/vouch/vouch-proxy/handlers/openid"
+	"github.com/vouch/vouch-proxy/handlers/openstax"
 
 	"go.uber.org/zap"
 
@@ -44,6 +46,7 @@ type AuthError struct {
 	JWT   string
 }
 
+// Handler each Provider must support GetuserInfo
 type Handler interface {
 	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
@@ -401,55 +404,52 @@ func renderIndex(w http.ResponseWriter, msg string) {
 }
 
 // VerifyUser validates that the domains match for the user
-// func VerifyUser(u structs.User) (ok bool, err error) {
-func VerifyUser(u interface{}) (ok bool, err error) {
-	// (w http.ResponseWriter, req http.Request)
-	// is Hd google specific? probably yes
-	// TODO rewrite / abstract this validation
-	ok = false
+func VerifyUser(u interface{}) (bool, error) {
 
-	// TODO: how do we manage the user?
 	user := u.(structs.User)
 
-	if cfg.Cfg.AllowAllUsers {
-		ok = true
-		log.Debugf("skipping verify user since cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
-		// if we're not allowing all users, and we have domains configured and this email isn't in one of those domains...
-	} else if len(cfg.Cfg.WhiteList) != 0 {
+	switch {
+
+	// AllowAllUsers
+	case cfg.Cfg.AllowAllUsers:
+		log.Debugf("VerifyUser: Success! skipping verification, cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
+		return true, nil
+
+	// WhiteList
+	case len(cfg.Cfg.WhiteList) != 0:
 		for _, wl := range cfg.Cfg.WhiteList {
 			if user.Username == wl {
-				log.Debugf("found user.Username in WhiteList: %s", user.Username)
-				ok = true
-				break
+				log.Debugf("VerifyUser: Success! found user.Username in WhiteList: %s", user.Username)
+				return true, nil
 			}
 		}
+		return false, fmt.Errorf("VerifyUser: user.Username not found in WhiteList: %s", user.Username)
 
-		if !ok {
-			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
-		}
-	} else if len(cfg.Cfg.TeamWhiteList) != 0 {
+	// TeamWhiteList
+	case len(cfg.Cfg.TeamWhiteList) != 0:
 		for _, team := range user.TeamMemberships {
 			for _, wl := range cfg.Cfg.TeamWhiteList {
 				if team == wl {
-					log.Debugf("found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
-					ok = true
-					break
+					log.Debugf("VerifyUser: Success! found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
+					return true, nil
 				}
 			}
 		}
+		return false, fmt.Errorf("VerifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
 
-		if !ok {
-			err = fmt.Errorf("user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+	// Domains
+	case len(cfg.Cfg.Domains) != 0:
+		if domains.IsUnderManagement(user.Email) {
+			log.Debugf("VerifyUser: Success! Email %s found within a "+cfg.Branding.CcName+" managed domain", user.Email)
+			return true, nil
 		}
-	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
-		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
-		// } else if !domains.IsUnderManagement(user.HostDomain) {
-		// 	err = fmt.Errorf("HostDomain %s is not within a vouch managed domain", u.HostDomain)
-	} else {
-		ok = true
-		log.Debug("no domains configured")
+		return false, fmt.Errorf("VerifyUser: Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
+
+	// nothing configured, allow everyone through
+	default:
+		log.Warn("VerifyUser: no domains, whitelist, teamWhitelist or AllowAllUsers configured, any successful auth to the IdP authorizes access")
+		return true, nil
 	}
-	return ok, err
 }
 
 // CallbackHandler /auth
@@ -549,7 +549,9 @@ func getHandler() Handler {
 	case cfg.Providers.Google:
 		return google.Handler{}
 	case cfg.Providers.GitHub:
-		return github.Handler{common.PrepareTokensAndClient}
+		return github.Handler{PrepareTokensAndClient: common.PrepareTokensAndClient}
+	case cfg.Providers.Nextcloud:
+		return nextcloud.Handler{}
 	case cfg.Providers.OIDC:
 		return openid.Handler{}
 	default:
