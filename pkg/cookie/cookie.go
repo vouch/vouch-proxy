@@ -79,7 +79,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
 
-	var cookieParts []string
+	cookieParts := make([]string, 0)
 	var numParts = -1
 
 	var err error
@@ -91,12 +91,13 @@ func Cookie(r *http.Request) (string, error) {
 		if cookie.Name == cfg.Cfg.Cookie.Name {
 			return cookie.Value, nil
 		}
-		if strings.HasPrefix(cookie.Name, fmt.Sprintf("%s_", cfg.Cfg.Cookie.Name)) {
+		cookieUnder := fmt.Sprintf("%s_", cfg.Cfg.Cookie.Name)
+		if strings.HasPrefix(cookie.Name, cookieUnder) {
 			log.Debugw("cookie",
 				"cookieName", cookie.Name,
 				"cookieValue", cookie.Value,
 			)
-			xOFy := strings.Split(cookie.Name, "_")[1]
+			xOFy := strings.Replace(cookie.Name, cookieUnder, "", 1)
 			xyArray := strings.Split(xOFy, "of")
 			if numParts == -1 { // then its uninitialized
 				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
@@ -116,7 +117,7 @@ func Cookie(r *http.Request) (string, error) {
 	// combinedCookieStr := combinedCookie.String()
 	combinedCookieStr := strings.Join(cookieParts, "")
 	if combinedCookieStr == "" {
-		return "", errors.New("Cookie token empty")
+		return "", errors.New("cookie token empty")
 	}
 
 	log.Debugw("combined cookie",
@@ -153,7 +154,7 @@ func ClearCookie(w http.ResponseWriter, r *http.Request) {
 
 // SplitCookie separate string into several strings of specified length
 func SplitCookie(longString string, maxLen int) []string {
-	splits := []string{}
+	splits := make([]string, 0)
 
 	var l, r int
 	for l, r = 0, maxLen; r < len(longString); l, r = r, r+maxLen {
