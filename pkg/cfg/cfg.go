@@ -24,8 +24,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// config vouch jwt cookie configuration
-type config struct {
+// Config vouch configuration
+type Config struct {
 	Logger        *zap.SugaredLogger
 	FastLogger    *zap.Logger
 	LogLevel      string   `mapstructure:"logLevel"`
@@ -116,7 +116,7 @@ var (
 	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// Cfg the main exported config variable
-	Cfg config
+	Cfg Config
 
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
@@ -334,7 +334,7 @@ func ParseConfig() {
 	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
-		var oldConfig config
+		var oldConfig Config
 		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
 			log.Error(err)
 		}
