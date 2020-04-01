@@ -9,14 +9,16 @@ import (
 	"net/http"
 )
 
-type Handler struct{}
+// Provider provider specific functions
+type Provider struct{}
 
 var (
 	log = cfg.Cfg.Logger
 )
 
-func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	err, client, _ := common.PrepareTokensAndClient(r, ptokens, false)
+// GetUserInfo provider specific call to get userinfomation
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	client, _, err := common.PrepareTokensAndClient(r, ptokens, false)
 	if err != nil {
 		return err
 	}

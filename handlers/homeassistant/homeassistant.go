@@ -6,11 +6,13 @@ import (
 	"net/http"
 )
 
-type Handler struct{}
+// Provider provider specific functions
+type Provider struct{}
 
+// GetUserInfo provider specific call to get userinfomation
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	err, _, providerToken := common.PrepareTokensAndClient(r, ptokens, false)
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	_, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false)
 	if err != nil {
 		return err
 	}

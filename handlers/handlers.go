@@ -46,8 +46,8 @@ type AuthError struct {
 	JWT   string
 }
 
-// Handler each Provider must support GetuserInfo
-type Handler interface {
+// Provider each Provider must support GetuserInfo
+type Provider interface {
 	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
 
@@ -95,7 +95,7 @@ func loginURL(r *http.Request, state string) string {
 			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
 	}
-	// log.Debugf("loginUrl %s", url)
+	// log.Debugf("loginURL %s", url)
 	return lurl
 }
 
@@ -533,27 +533,27 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
-	return getHandler().GetUserInfo(r, user, customClaims, ptokens)
+	return getProvider().GetUserInfo(r, user, customClaims, ptokens)
 }
 
-func getHandler() Handler {
+func getProvider() Provider {
 	switch cfg.GenOAuth.Provider {
 	case cfg.Providers.IndieAuth:
-		return indieauth.Handler{}
+		return indieauth.Provider{}
 	case cfg.Providers.ADFS:
-		return adfs.Handler{}
+		return adfs.Provider{}
 	case cfg.Providers.HomeAssistant:
-		return homeassistant.Handler{}
+		return homeassistant.Provider{}
 	case cfg.Providers.OpenStax:
-		return openstax.Handler{}
+		return openstax.Provider{}
 	case cfg.Providers.Google:
-		return google.Handler{}
+		return google.Provider{}
 	case cfg.Providers.GitHub:
-		return github.Handler{PrepareTokensAndClient: common.PrepareTokensAndClient}
+		return github.Provider{PrepareTokensAndClient: common.PrepareTokensAndClient}
 	case cfg.Providers.Nextcloud:
-		return nextcloud.Handler{}
+		return nextcloud.Provider{}
 	case cfg.Providers.OIDC:
-		return openid.Handler{}
+		return openid.Provider{}
 	default:
 		log.Error("we don't know how to look up the user info")
 		return nil
