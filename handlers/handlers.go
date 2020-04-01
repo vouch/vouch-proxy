@@ -28,7 +28,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/model"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 )
@@ -267,27 +266,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
 
-	// update user last access in a go routine
-	// user := structs.User{}
-	// err = model.User([]byte(email), &user)
-	// if err != nil {
-	// 	// no email in jwt, or no email in db
-	// 	error401(w, r, err.Error())
-	// 	return
-	// }
-	// if user.Email == "" {
-	// 	error401(w, r, "no email found in db")
-	// 	return
-	// }
-
-	// put the site
-	go func() {
-		s := structs.Site{Domain: r.Host}
-		log.Debugf("site struct: %v", s)
-		if err = model.PutSite(s); err != nil {
-			log.Error(err)
-		}
-	}()
 }
 
 // LogoutHandler /logout
@@ -505,11 +483,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SUCCESS!! they are authorized
-
-	// store the user in the database
-	if err = model.PutUser(user); err != nil {
-		log.Error(err)
-	}
 
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims, ptokens)

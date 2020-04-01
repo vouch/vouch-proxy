@@ -16,7 +16,6 @@ import (
 	"github.com/vouch/vouch-proxy/handlers"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
-	tran "github.com/vouch/vouch-proxy/pkg/transciever"
 )
 
 // version and semver get overwritten by build with
@@ -44,6 +43,7 @@ func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
 }
 
 func main() {
+	cfg.Configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
@@ -75,7 +75,7 @@ func main() {
 
 	// setup static
 	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
-	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
+	if fastlog.Core().Enabled(zap.DebugLevel) {
 		if err != nil {
 			logger.Errorf("couldn't find static assets at %s", sPath)
 		}
@@ -83,16 +83,6 @@ func main() {
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
 	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
-
-	if cfg.Cfg.WebApp {
-		logger.Info("enabling websocket")
-		tran.ExplicitInit()
-		muxR.Handle("/ws", tran.WS)
-	}
-
-	// socketio := tran.NewServer()
-	// muxR.Handle("/socket.io/", cors.AllowAll(socketio))
-	// http.Handle("/socket.io/", tran.Server)
 
 	srv := &http.Server{
 		Handler: muxR,

@@ -62,9 +62,6 @@ type config struct {
 		AccessToken string   `mapstructure:"accesstoken"`
 		IDToken     string   `mapstructure:"idtoken"`
 	}
-	DB struct {
-		File string `mapstructure:"file"`
-	}
 	Session struct {
 		Name string `mapstructure:"name"`
 		Key  string `mapstructure:"key"`
@@ -547,11 +544,6 @@ func SetDefaults() {
 	}
 	if !viper.IsSet(Branding.LCName + ".headers.claimheader") {
 		Cfg.Headers.ClaimHeader = "X-" + Branding.CcName + "-IdP-Claims-"
-	}
-
-	// db defaults
-	if !viper.IsSet(Branding.LCName + ".db.file") {
-		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
 	}
 
 	// session
