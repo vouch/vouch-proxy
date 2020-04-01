@@ -97,7 +97,7 @@ func TestGetTeamMembershipStateFromGitHubActive(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 
-	err, isMember := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
@@ -107,7 +107,7 @@ func TestGetTeamMembershipStateFromGitHubInactive(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"inactive\"}"))
 
-	err, isMember := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -117,7 +117,7 @@ func TestGetTeamMembershipStateFromGitHubNotAMember(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	err, isMember := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -127,7 +127,7 @@ func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	err, isMember := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -143,7 +143,7 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 	mockResponse(regexMatcher(".*orgs/myorg/members.*"), http.StatusFound, map[string]string{"Location": location}, []byte(""))
 	mockResponse(regexMatcher(".*orgs/myorg/public_members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	err, isMember := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
