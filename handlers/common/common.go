@@ -13,10 +13,11 @@ var (
 	log = cfg.Cfg.Logger
 )
 
-func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bool) (error, *http.Client, *oauth2.Token) {
+// PrepareTokensAndClient setup the client, usually for a UserInfo request
+func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bool) (*http.Client, *oauth2.Token, error) {
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
-		return err, nil, nil
+		return nil, nil, err
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
 
@@ -33,11 +34,11 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bo
 	log.Debugf("ptokens: %+v", ptokens)
 
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
-	return err, client, providerToken
+	return client, providerToken, err
 }
 
+// MapClaims populate CustomClaims from userInfo for each configure claims header
 func MapClaims(claims []byte, customClaims *structs.CustomClaims) error {
-	// Create a struct that contains the claims that we want to store from the config.
 	var f interface{}
 	err := json.Unmarshal(claims, &f)
 	if err != nil {
