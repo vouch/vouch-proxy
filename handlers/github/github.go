@@ -12,18 +12,19 @@ import (
 	"strings"
 )
 
-type Handler struct {
-	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (error, *http.Client, *oauth2.Token)
+// Provider provider specific functions
+type Provider struct {
+	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (*http.Client, *oauth2.Token, error)
 }
 
 var (
 	log = cfg.Cfg.Logger
 )
 
-// github
+// GetUserInfo github user info, calls github api for org and teams
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func (me Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	err, client, ptoken := me.PrepareTokensAndClient(r, ptokens, true)
+func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	client, ptoken, err := me.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err

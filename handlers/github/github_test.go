@@ -54,10 +54,10 @@ func urlEquals(value string) ReqMatcher {
 	}
 }
 
-func assertUrlCalled(t *testing.T, url string) {
+func assertURLCalled(t *testing.T, url string) {
 	found := false
-	for _, requested_url := range requests {
-		if requested_url == url {
+	for _, requestedURL := range requests {
+		if requestedURL == url {
 			found = true
 			break
 		}
@@ -132,8 +132,8 @@ func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
 	assert.Nil(t, err)
 	assert.False(t, isMember)
 
-	expectedOrgMembershipUrl := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
-	assertUrlCalled(t, expectedOrgMembershipUrl)
+	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	assertURLCalled(t, expectedOrgMembershipURL)
 }
 
 func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
@@ -148,11 +148,11 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, isMember)
 
-	expectedOrgMembershipUrl := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
-	assertUrlCalled(t, expectedOrgMembershipUrl)
+	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	assertURLCalled(t, expectedOrgMembershipURL)
 
-	expectedOrgPublicMembershipUrl := "https://api.github.com/orgs/myorg/public_members/" + user.Username
-	assertUrlCalled(t, expectedOrgPublicMembershipUrl)
+	expectedOrgPublicMembershipURL := "https://api.github.com/orgs/myorg/public_members/" + user.Username
+	assertURLCalled(t, expectedOrgPublicMembershipURL)
 }
 
 func TestGetUserInfo(t *testing.T) {
@@ -177,15 +177,15 @@ func TestGetUserInfo(t *testing.T) {
 	mockResponse(regexMatcher(".*teams.*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 	mockResponse(regexMatcher(".*members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	handler := Handler{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool) (error, *http.Client, *oauth2.Token) {
-		return nil, client, token
+	provider := Provider{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool) (*http.Client, *oauth2.Token, error) {
+		return client, token, nil
 	}}
-	err := handler.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
+	err := provider.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
 
 	assert.Nil(t, err)
 	assert.Equal(t, "myusername", user.Username)
 	assert.Equal(t, []string{"myOtherOrg", "myorg/myteam"}, user.TeamMemberships)
 
-	expectedTeamMembershipUrl := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername?access_token=" + token.AccessToken
-	assertUrlCalled(t, expectedTeamMembershipUrl)
+	expectedTeamMembershipURL := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername?access_token=" + token.AccessToken
+	assertURLCalled(t, expectedTeamMembershipURL)
 }

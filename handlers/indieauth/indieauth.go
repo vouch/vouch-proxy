@@ -11,13 +11,15 @@ import (
 	"net/http"
 )
 
-type Handler struct{}
+// Provider provider specific functions
+type Provider struct{}
 
 var (
 	log = cfg.Cfg.Logger
 )
 
-func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+// GetUserInfo provider specific call to get userinfomation
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)

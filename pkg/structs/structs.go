@@ -81,6 +81,7 @@ type GitHubUser struct {
 	// jwt.StandardClaims
 }
 
+// GitHubTeamMembershipState for GitHub team api call
 type GitHubTeamMembershipState struct {
 	State string `json:"state"`
 }
@@ -131,20 +132,21 @@ func (u *OpenStaxUser) PrepareUserData() {
 // Ocs used for NextcloudUser
 type Ocs struct {
 	Data struct {
-		UserId string `json:"id"`
+		UserID string `json:"id"`
 		Email  string `json:"email"`
 	} `json:"data"`
 }
 
-// User of Nextcloud retreived from ocs endpoint
+// NextcloudUser User of Nextcloud retreived from ocs endpoint
 type NextcloudUser struct {
 	User
 	Ocs Ocs `json:"ocs"`
 }
 
+// PrepareUserData NextcloudUser
 func (u *NextcloudUser) PrepareUserData() {
 	if u.Username == "" {
-		u.Username = u.Ocs.Data.UserId
+		u.Username = u.Ocs.Data.UserID
 		u.Email = u.Ocs.Data.Email
 	}
 }
