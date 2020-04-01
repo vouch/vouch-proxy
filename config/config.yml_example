@@ -112,13 +112,8 @@ vouch:
     # application. This is optional.
     # idtoken: X-Vouch-IdP-IdToken
 
-  db: 
-    file: data/vouch_bolt.db
-
   # test_url - add this URL to the page which vouch displays
   test_url: http://yourdomain.com
-  # webapp - WIP for web interface to vouch (mostly logs)
-  # webapp: true
 
 #
 # OAuth Provider

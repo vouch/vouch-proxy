@@ -162,11 +162,6 @@ stats () {
   find . -name '*.go' | wc -l
 }
 
-DB=data/vouch_bolt.db
-browsebolt() {
-	${GOPATH}/bin/boltbrowser $DB
-}
-
 usage() {
    cat <<EOF
    usage:
@@ -179,7 +174,6 @@ usage() {
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 coverage               - coverage report
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
-     $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 stats                  - simple metrics (lines of code in project, number of go files)
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
@@ -194,7 +188,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report')
    shift
    $ARG $*
    ;;
