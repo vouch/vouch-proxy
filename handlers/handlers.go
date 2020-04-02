@@ -47,6 +47,7 @@ type AuthError struct {
 
 // Provider each Provider must support GetuserInfo
 type Provider interface {
+	Configure()
 	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
 
@@ -55,19 +56,26 @@ const (
 )
 
 var (
-	// Templates
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
-
-	// http://www.gorillatoolkit.org/pkg/sessions
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
-
-	log     = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
+	indexTemplate *template.Template
+	sessstore     *sessions.CookieStore
+	log           *zap.SugaredLogger
+	fastlog       *zap.Logger
+	provider      Provider
 )
 
-func init() {
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
+	// http://www.gorillatoolkit.org/pkg/sessions
+	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
+
+	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+
+	provider = getProvider()
+	provider.Configure()
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -506,7 +514,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
-	return getProvider().GetUserInfo(r, user, customClaims, ptokens)
+	return provider.GetUserInfo(r, user, customClaims, ptokens)
 }
 
 func getProvider() Provider {
@@ -528,7 +536,8 @@ func getProvider() Provider {
 	case cfg.Providers.OIDC:
 		return openid.Provider{}
 	default:
-		log.Error("we don't know how to look up the user info")
+		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
+		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
 		return nil
 	}
 }

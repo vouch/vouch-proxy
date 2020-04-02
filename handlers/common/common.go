@@ -3,18 +3,24 @@ package common
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"net/http"
 )
 
-var (
+var log *zap.SugaredLogger
+
+// configure see main.go configure()
+func configure() {
 	log = cfg.Cfg.Logger
-)
+}
 
 // PrepareTokensAndClient setup the client, usually for a UserInfo request
 func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bool) (*http.Client, *oauth2.Token, error) {
+	configure()
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
 		return nil, nil, err

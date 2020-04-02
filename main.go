@@ -10,6 +10,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/vouch/vouch-proxy/pkg/response"
+
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+
+	"github.com/vouch/vouch-proxy/pkg/domains"
+
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
@@ -27,8 +34,8 @@ var (
 	semver    = "undefined"
 	branch    = "undefined"
 	staticDir = "/static/"
-	logger    = cfg.Cfg.Logger
-	fastlog   = cfg.Cfg.FastLogger
+	logger    *zap.SugaredLogger
+	fastlog   *zap.Logger
 )
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
@@ -42,8 +49,28 @@ func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func main() {
+// configure() is essentially init()
+// for most other projects you would think of this as init()
+// this epic issue related to the flag.parse change of behavior for go 1.13 explains some of what's going on here
+// https://github.com/golang/go/issues/31859
+// essentially, flag.parse() must be called in vouch-proxy's main() and *not* in init()
+// this has a cascading effect on the zap logger since the log level can be set on the command line
+// configure() explicitly calls package configure functions (domains.Configure() etc) mostly to set the logger
+// without this setup testing and logging are screwed up
+func configure() {
 	cfg.Configure()
+	logger = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
+	domains.Configure()
+	jwtmanager.Configure()
+	cookie.Configure()
+	handlers.Configure()
+	timelog.Configure()
+	response.Configure()
+}
+
+func main() {
+	configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,

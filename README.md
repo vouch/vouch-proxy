@@ -31,7 +31,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ## Installation
 
-Vouch relies on the ability to share a cookie between the Vouch server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.youdomain.com` where your apps are running on `app1.youdomain.com` and `app2.youdomain.com`.
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` where your apps are running on `app1.yourdomain.com` and `app2.yourdomain.com`.
 
 - `cp ./config/config.yml_example ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
@@ -201,7 +201,7 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 ### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
 
-Double check that you are running Vouch and your apps on a common domain that can share cookies. For example, `vouch.youdomain.com` and `app.youdomain.com` can share cookies on the `.youdomain.com` domain. (It will not work if you are trying to use `vouch.yourdomain.org` and `app.yourdomain.net`.)
+Double check that you are running Vouch Proxy and your apps on a common domain that can share cookies. For example, `vouch.yourdomain.com` and `app.yourdomain.com` can share cookies on the `.yourdomain.com` domain. (It will not work if you are trying to use `vouch.yourdomain.org` and `app.yourdomain.net`.)
 
 You may need to explicitly define the domain that the cookie should be set on. You can do this in the config file by setting the option:
 
@@ -209,12 +209,13 @@ You may need to explicitly define the domain that the cookie should be set on. Y
 vouch:
   cookie:
     # force the domain of the cookie to set
-    domain: youdomain.com
+    domain: yourdomain.com
 ```
 
 If you continue to have trouble, try the following:
 
-- first **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`. This will slow down the loop.
+- **turn on `vouch.testing: true`**. This will slow down the loop.
+- set `vouch.logLevel: debug`.
 - the `Host:` header in the http request, the `oauth.callback_url` and the configured `vouch.domains` must all align so that the cookie that carries the JWT can be placed properly into the browser and then returned on each request
 - it helps to **_think like a cookie_**.
 
@@ -225,8 +226,11 @@ If you continue to have trouble, try the following:
 
 - please see the [issues which have been closed that mention redirect](https://github.com/vouch/vouch-proxy/issues?utf8=%E2%9C%93&q=is%3Aissue+redirect+)
 
-### Okay, I looked at the issues and have tried some things with my configs but I still can't figure it out
+### Okay, I looked at the issues and have tried some things with my configs but it's still not working
 
+Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the following fashion..
+
+- **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`.
 - use [hasteb.in](https://hasteb.in/), or another **paste service** or a [gist](https://gist.github.com/) to provide your logs and config. **_DO NOT PUT YOUR LOGS AND CONFIG INTO THE GITHUB ISSUE_**. Using a paste service is important as it will maintain spacing and will provide line numbers and formatting. We are hunting for needles in haystacks with setups with several moving parts, these features help considerably. Paste services save your time and our time and help us to help you quickly. You're more likely to get good support from us in a timely manner by following this advice.
 - run `./do.sh bug_report yourdomain.com [yourotherdomain.com]` which will create a redacted version of your config and logs
   - and follow the instructions at the end to redact your Nginx config

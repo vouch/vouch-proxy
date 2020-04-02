@@ -3,15 +3,17 @@ package adfs
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 )
 
 // Provider provider specific functions
@@ -24,9 +26,12 @@ type adfsTokenRes struct {
 	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
 }
 
-var (
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func (Provider) Configure() {
 	log = cfg.Cfg.Logger
-)
+}
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
