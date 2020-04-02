@@ -5,18 +5,15 @@ import (
 	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"go.uber.org/zap"
 )
 
-var domains = cfg.Cfg.Domains
-var log = cfg.Cfg.Logger
+var log *zap.SugaredLogger
 
-func init() {
-	sort.Sort(ByLengthDesc(domains))
-}
-
-func Refresh() {
-	domains = cfg.Cfg.Domains
-	sort.Sort(ByLengthDesc(domains))
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
+	sort.Sort(ByLengthDesc(cfg.Cfg.Domains))
 }
 
 // Matches returns one of the domains we're configured for
@@ -30,13 +27,13 @@ func Matches(s string) string {
 		s = split[0]
 	}
 
-	for i, v := range domains {
+	for i, v := range cfg.Cfg.Domains {
 		if s == v || strings.HasSuffix(s, "."+v) {
 			log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
 			return v
 		}
 	}
-	log.Warnf("domain %s not found in any domains %v", s, domains)
+	log.Warnf("domain %s not found in any domains %v", s, cfg.Cfg.Domains)
 	return ""
 }
 

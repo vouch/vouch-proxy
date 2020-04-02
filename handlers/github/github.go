@@ -3,13 +3,15 @@ package github
 import (
 	"encoding/json"
 	"errors"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 )
 
 // Provider provider specific functions
@@ -17,9 +19,12 @@ type Provider struct {
 	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (*http.Client, *oauth2.Token, error)
 }
 
-var (
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func (Provider) Configure() {
 	log = cfg.Cfg.Logger
-)
+}
 
 // GetUserInfo github user info, calls github api for org and teams
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/

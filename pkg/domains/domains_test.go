@@ -10,7 +10,7 @@ import (
 func init() {
 	cfg.InitForTestPurposes()
 	cfg.Cfg.Domains = []string{"vouch.github.io", "sub.test.mydomain.com", "test.mydomain.com"}
-	Refresh()
+	Configure()
 }
 
 func TestIsUnderManagement(t *testing.T) {

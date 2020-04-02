@@ -1,13 +1,23 @@
 package homeassistant
 
 import (
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/structs"
 	"net/http"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 )
 
 // Provider provider specific functions
 type Provider struct{}
+
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func (Provider) Configure() {
+	log = cfg.Cfg.Logger
+}
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html

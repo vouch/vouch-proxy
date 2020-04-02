@@ -24,8 +24,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// config vouch jwt cookie configuration
-type config struct {
+// Config vouch jwt cookie configuration
+type Config struct {
 	Logger        *zap.SugaredLogger
 	FastLogger    *zap.Logger
 	LogLevel      string   `mapstructure:"logLevel"`
@@ -113,7 +113,7 @@ var (
 	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// Cfg the main exported config variable
-	Cfg config
+	Cfg *Config
 
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
@@ -158,9 +158,10 @@ const (
 )
 
 func init() {
-
 	atom = zap.NewAtomicLevel()
 	encoderCfg := zap.NewProductionEncoderConfig()
+
+	Cfg = &Config{}
 
 	logger = zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderCfg),
@@ -172,6 +173,14 @@ func init() {
 	log = logger.Sugar()
 	Cfg.FastLogger = logger
 	Cfg.Logger = log
+	// 	Cfg.FastLogger = zap.L()
+	// 	Cfg.Logger = zap.S()
+	// 	log = Cfg.Logger
+	log.Info("logger set")
+}
+
+// Configure called at the very top of main()
+func Configure() {
 
 	// Handle -healthcheck argument
 	healthCheck := flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)")
@@ -181,7 +190,7 @@ func init() {
 	port := flag.Int("port", -1, "port")
 	help := flag.Bool("help", false, "show usage")
 	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
-	flag.Parse()
+	// flag.Parse()
 
 	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
 	if os.Getenv(Branding.UCName+"_ROOT") != "" {
@@ -261,16 +270,19 @@ func init() {
 	}
 
 	log.Debugf("viper settings %+v", viper.AllSettings())
+
 }
 
 func setDevelopmentLogger() {
 	// then configure the logger for development output
-	logger = logger.WithOptions(
+	clone := logger.WithOptions(
 		zap.WrapCore(
+			// func(zapcore.Core) zapcore.Core {
 			func(zapcore.Core) zapcore.Core {
 				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
 			}))
-	log = logger.Sugar()
+	// zap.ReplaceGlobals(clone)
+	log = clone.Sugar()
 	Cfg.FastLogger = log.Desugar()
 	Cfg.Logger = log
 	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
@@ -281,6 +293,7 @@ func InitForTestPurposes() {
 	InitForTestPurposesWithProvider("")
 }
 
+// InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	_, b, _, _ := runtime.Caller(0)
 	basepath := filepath.Dir(b)
@@ -288,9 +301,10 @@ func InitForTestPurposesWithProvider(provider string) {
 		log.Error(err)
 	}
 	// log.Debug("opening config")
-	setDevelopmentLogger()
-	ParseConfig()
-	SetDefaults()
+	// ParseConfig()
+	// SetDefaults()
+	// Configure()
+	// setDevelopmentLogger()
 
 	// Needed to override the provider, which is otherwise set via yml
 	if provider != "" {
@@ -331,8 +345,8 @@ func ParseConfig() {
 	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
-		var oldConfig config
-		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
+		var oldConfig *Config
+		if err = UnmarshalKey(Branding.OldLCName, oldConfig); err != nil {
 			log.Error(err)
 		}
 
