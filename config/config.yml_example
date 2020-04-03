@@ -38,8 +38,10 @@ vouch:
 
   # whiteList - (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
+  # note that a username (host local portion) according to the RFC is case sensitive, so whitelist a few permutations
   whiteList:
   - bob@yourdomain.com
+  - Bob@yourdomain.com
   - alice@yourdomain.com
   - joe@yourdomain.com
 
