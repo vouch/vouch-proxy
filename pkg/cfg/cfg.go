@@ -6,8 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -264,10 +262,9 @@ func Configure() {
 		os.Exit(1)
 	}
 
-	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
-	if !isTCPPortAvailable(listen) {
-		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
-	}
+	log.Debugf("viper settings %+v", viper.AllSettings())
+
+}
 
 	log.Debugf("viper settings %+v", viper.AllSettings())
 
@@ -700,15 +697,3 @@ func getOrGenerateJWTSecret() string {
 	return string(b)
 }
 
-func isTCPPortAvailable(listen string) bool {
-	log.Debug("checking availability of tcp port: " + listen)
-	conn, err := net.Listen("tcp", listen)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	if err = conn.Close(); err != nil {
-		log.Error(err)
-	}
-	return true
-}

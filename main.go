@@ -72,6 +72,7 @@ func configure() {
 func main() {
 	configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+	checkTCPPortAvailable(listen)
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
 		"version", version,
@@ -120,6 +121,18 @@ func main() {
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	logger.Fatal(srv.ListenAndServe())
 
+}
+
+func checkTCPPortAvailable(listen string) {
+	logger.Debug("checking availability of tcp port: " + listen)
+	conn, err := net.Listen("tcp", listen)
+	if err != nil {
+		logger.Error(err)
+		logger.Fatal(errors.New(listen + " is not available (is " + cfg.Branding.CcName + " already running?)"))
+	}
+	if err = conn.Close(); err != nil {
+		logger.Error(err)
+	}
 }
