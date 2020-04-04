@@ -4,8 +4,12 @@ package main
 // github.com/vouch/vouch-proxy
 
 import (
+	"errors"
+	"flag"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -36,6 +40,7 @@ var (
 	staticDir = "/static/"
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
+	help      = flag.Bool("help", false, "show usage")
 )
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
@@ -58,7 +63,14 @@ func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
 // configure() explicitly calls package configure functions (domains.Configure() etc) mostly to set the logger
 // without this setup testing and logging are screwed up
 func configure() {
+	flag.Parse()
+
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 	cfg.Configure()
+
 	logger = cfg.Cfg.Logger
 	fastlog = cfg.Cfg.FastLogger
 	domains.Configure()
