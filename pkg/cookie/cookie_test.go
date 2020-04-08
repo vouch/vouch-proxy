@@ -9,7 +9,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
-func TestSplitCookie(t *testing.T) {
+func TestsplitCookie(t *testing.T) {
 	type args struct {
 		longString string
 		maxLen     int
@@ -23,8 +23,8 @@ func TestSplitCookie(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SplitCookie(tt.args.longString, tt.args.maxLen); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SplitCookie() = %v, want %v", got, tt.want)
+			if got := splitCookie(tt.args.longString, tt.args.maxLen); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("splitCookie() = %v, want %v", got, tt.want)
 			}
 		})
 	}

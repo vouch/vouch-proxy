@@ -49,7 +49,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	if cookieSize > maxCookieSize {
 		// https://www.lifewire.com/cookie-limit-per-domain-3466809
 		log.Warnf("cookie size: %d.  cookie sizes over ~4093 bytes(depending on the browser and platform) have shown to cause issues or simply aren't supported.", cookieSize)
-		cookieParts := SplitCookie(val, maxCookieSize-emptyCookieSize)
+		cookieParts := splitCookie(val, maxCookieSize-emptyCookieSize)
 		for i, cookiePart := range cookieParts {
 			// Cookies are named 1of3, 2of3, 3of3
 			cookieName = fmt.Sprintf("%s_%dof%d", cfg.Cfg.Cookie.Name, i+1, len(cookieParts))
@@ -152,8 +152,8 @@ func ClearCookie(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SplitCookie separate string into several strings of specified length
-func SplitCookie(longString string, maxLen int) []string {
+// splitCookie separate string into several strings of specified length
+func splitCookie(longString string, maxLen int) []string {
 	splits := make([]string, 0)
 
 	var l, r int
