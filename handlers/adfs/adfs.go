@@ -3,18 +3,21 @@ package adfs
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 )
 
-type Handler struct{}
+// Provider provider specific functions
+type Provider struct{}
 
 type adfsTokenRes struct {
 	AccessToken string `json:"access_token"`
@@ -23,12 +26,16 @@ type adfsTokenRes struct {
 	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
 }
 
-var (
-	log = cfg.Cfg.Logger
-)
+var log *zap.SugaredLogger
 
+// Configure see main.go configure()
+func (Provider) Configure() {
+	log = cfg.Cfg.Logger
+}
+
+// GetUserInfo provider specific call to get userinfomation
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Debugf("code: %s", code)
 

@@ -4,11 +4,23 @@ package main
 // github.com/vouch/vouch-proxy
 
 import (
+	"errors"
+	"flag"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/vouch/vouch-proxy/pkg/healthcheck"
+	"github.com/vouch/vouch-proxy/pkg/response"
+
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+
+	"github.com/vouch/vouch-proxy/pkg/domains"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -16,7 +28,6 @@ import (
 	"github.com/vouch/vouch-proxy/handlers"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
-	tran "github.com/vouch/vouch-proxy/pkg/transciever"
 )
 
 // version and semver get overwritten by build with
@@ -28,8 +39,9 @@ var (
 	semver    = "undefined"
 	branch    = "undefined"
 	staticDir = "/static/"
-	logger    = cfg.Cfg.Logger
-	fastlog   = cfg.Cfg.FastLogger
+	logger    *zap.SugaredLogger
+	fastlog   *zap.Logger
+	help      = flag.Bool("help", false, "show usage")
 )
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
@@ -43,8 +55,43 @@ func (fw *fwdToZapWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// configure() is essentially init()
+// for most other projects you would think of this as init()
+// this epic issue related to the flag.parse change of behavior for go 1.13 explains some of what's going on here
+// https://github.com/golang/go/issues/31859
+// essentially, flag.parse() must be called in vouch-proxy's main() and *not* in init()
+// this has a cascading effect on the zap logger since the log level can be set on the command line
+// configure() explicitly calls package configure functions (domains.Configure() etc) mostly to set the logger
+// without this setup testing and logging are screwed up
+func configure() {
+	flag.Parse()
+
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	cfg.Configure()
+	healthcheck.CheckAndExitIfIsHealthCheck()
+
+	cfg.TestConfiguration()
+
+	logger = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
+
+	domains.Configure()
+	jwtmanager.Configure()
+	cookie.Configure()
+	handlers.Configure()
+	timelog.Configure()
+	response.Configure()
+}
+
 func main() {
+	configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+	checkTCPPortAvailable(listen)
+
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
 		"version", version,
@@ -75,7 +122,7 @@ func main() {
 
 	// setup static
 	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
-	if logger.Desugar().Core().Enabled(zap.DebugLevel) {
+	if fastlog.Core().Enabled(zap.DebugLevel) {
 		if err != nil {
 			logger.Errorf("couldn't find static assets at %s", sPath)
 		}
@@ -83,16 +130,6 @@ func main() {
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
 	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
-
-	if cfg.Cfg.WebApp {
-		logger.Info("enabling websocket")
-		tran.ExplicitInit()
-		muxR.Handle("/ws", tran.WS)
-	}
-
-	// socketio := tran.NewServer()
-	// muxR.Handle("/socket.io/", cors.AllowAll(socketio))
-	// http.Handle("/socket.io/", tran.Server)
 
 	srv := &http.Server{
 		Handler: muxR,
@@ -103,6 +140,18 @@ func main() {
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	logger.Fatal(srv.ListenAndServe())
 
+}
+
+func checkTCPPortAvailable(listen string) {
+	logger.Debug("checking availability of tcp port: " + listen)
+	conn, err := net.Listen("tcp", listen)
+	if err != nil {
+		logger.Error(err)
+		logger.Fatal(errors.New(listen + " is not available (is " + cfg.Branding.CcName + " already running?)"))
+	}
+	if err = conn.Close(); err != nil {
+		logger.Error(err)
+	}
 }

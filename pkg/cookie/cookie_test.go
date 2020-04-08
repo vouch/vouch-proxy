@@ -9,6 +9,11 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
+func init() {
+	cfg.InitForTestPurposes()
+	Configure()
+}
+
 func TestSplitCookie(t *testing.T) {
 	type args struct {
 		longString string

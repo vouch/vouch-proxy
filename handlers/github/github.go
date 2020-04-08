@@ -3,27 +3,33 @@ package github
 import (
 	"encoding/json"
 	"errors"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 )
 
-type Handler struct {
-	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (error, *http.Client, *oauth2.Token)
+// Provider provider specific functions
+type Provider struct {
+	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (*http.Client, *oauth2.Token, error)
 }
 
-var (
-	log = cfg.Cfg.Logger
-)
+var log *zap.SugaredLogger
 
-// github
+// Configure see main.go configure()
+func (Provider) Configure() {
+	log = cfg.Cfg.Logger
+}
+
+// GetUserInfo github user info, calls github api for org and teams
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func (me Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	err, client, ptoken := me.PrepareTokensAndClient(r, ptokens, true)
+func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+	client, ptoken, err := me.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
@@ -80,22 +86,20 @@ func (me Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims 
 			org, team := toOrgAndTeam(orgAndTeam)
 			if org != "" {
 				log.Info(org)
-				var (
-					e        error
-					isMember bool
-				)
+				var err error
+				isMember := false
 				if team != "" {
-					e, isMember = getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
+					isMember, err = getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
 				} else {
-					e, isMember = getOrgMembershipStateFromGitHub(client, user, org, ptoken)
+					isMember, err = getOrgMembershipStateFromGitHub(client, user, org, ptoken)
 				}
-				if e != nil {
-					return e
-				} else {
-					if isMember {
-						user.TeamMemberships = append(user.TeamMemberships, orgAndTeam)
-					}
+				if err != nil {
+					return err
 				}
+				if isMember {
+					user.TeamMemberships = append(user.TeamMemberships, orgAndTeam)
+				}
+
 			} else {
 				log.Warnf("Invalid org/team format in %s: must be written as <orgId>/<teamSlug>", orgAndTeam)
 			}
@@ -107,12 +111,12 @@ func (me Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims 
 	return nil
 }
 
-func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, orgId string, ptoken *oauth2.Token) (rerr error, isMember bool) {
-	replacements := strings.NewReplacer(":org_id", orgId, ":username", user.Username)
+func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, orgID string, ptoken *oauth2.Token) (isMember bool, rerr error) {
+	replacements := strings.NewReplacer(":org_id", orgID, ":username", user.Username)
 	orgMembershipResp, err := client.Get(replacements.Replace(cfg.GenOAuth.UserOrgURL) + ptoken.AccessToken)
 	if err != nil {
 		log.Error(err)
-		return err, false
+		return false, err
 	}
 
 	if orgMembershipResp.StatusCode == 302 {
@@ -125,22 +129,22 @@ func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, or
 
 	if orgMembershipResp.StatusCode == 204 {
 		log.Debug("getOrgMembershipStateFromGitHub isMember: true")
-		return nil, true
+		return true, nil
 	} else if orgMembershipResp.StatusCode == 404 {
 		log.Debug("getOrgMembershipStateFromGitHub isMember: false")
-		return nil, false
+		return false, nil
 	} else {
 		log.Errorf("getOrgMembershipStateFromGitHub: unexpected status code %d", orgMembershipResp.StatusCode)
-		return errors.New("Unexpected response status " + orgMembershipResp.Status), false
+		return false, errors.New("Unexpected response status " + orgMembershipResp.Status)
 	}
 }
 
-func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, orgId string, team string, ptoken *oauth2.Token) (rerr error, isMember bool) {
-	replacements := strings.NewReplacer(":org_id", orgId, ":team_slug", team, ":username", user.Username)
+func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, orgID string, team string, ptoken *oauth2.Token) (isMember bool, rerr error) {
+	replacements := strings.NewReplacer(":org_id", orgID, ":team_slug", team, ":username", user.Username)
 	membershipStateResp, err := client.Get(replacements.Replace(cfg.GenOAuth.UserTeamURL) + ptoken.AccessToken)
 	if err != nil {
 		log.Error(err)
-		return err, false
+		return false, err
 	}
 	defer func() {
 		if err := membershipStateResp.Body.Close(); err != nil {
@@ -153,16 +157,15 @@ func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, o
 		ghTeamState := structs.GitHubTeamMembershipState{}
 		if err = json.Unmarshal(data, &ghTeamState); err != nil {
 			log.Error(err)
-			return err, false
+			return false, err
 		}
-		log.Debug("getTeamMembershipStateFromGitHub ghTeamState")
-		log.Debug(ghTeamState)
-		return nil, ghTeamState.State == "active"
+		log.Debugf("getTeamMembershipStateFromGitHub ghTeamState %s", ghTeamState)
+		return ghTeamState.State == "active", nil
 	} else if membershipStateResp.StatusCode == 404 {
 		log.Debug("getTeamMembershipStateFromGitHub isMember: false")
-		return nil, false
+		return false, err
 	} else {
 		log.Errorf("getTeamMembershipStateFromGitHub: unexpected status code %d", membershipStateResp.StatusCode)
-		return errors.New("Unexpected response status " + membershipStateResp.Status), false
+		return false, errors.New("Unexpected response status " + membershipStateResp.Status)
 	}
 }
