@@ -9,7 +9,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
-func TestsplitCookie(t *testing.T) {
+func TestSplitCookie(t *testing.T) {
 	type args struct {
 		longString string
 		maxLen     int
