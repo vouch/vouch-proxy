@@ -296,7 +296,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/logout")
 	cookie.ClearCookie(w, r)
 
-	log.Debug("saving session")
+	log.Debug("deleting session")
 	sessstore.MaxAge(-1)
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
