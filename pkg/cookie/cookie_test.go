@@ -1,11 +1,15 @@
 package cookie
 
 import (
+	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
-func TestSplitCookie(t *testing.T) {
+func TestsplitCookie(t *testing.T) {
 	type args struct {
 		longString string
 		maxLen     int
@@ -19,9 +23,32 @@ func TestSplitCookie(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SplitCookie(tt.args.longString, tt.args.maxLen); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SplitCookie() = %v, want %v", got, tt.want)
+			if got := splitCookie(tt.args.longString, tt.args.maxLen); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("splitCookie() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCookie(t *testing.T) {
+	cfg.Cfg.Cookie.Name = "_alpha_beta"
+	ckValue1 := "charlie"
+	ckValue2 := "delta"
+	expectedValue := fmt.Sprintf("%s%s", ckValue1, ckValue2)
+	r := &http.Request{
+		Header: map[string][]string{
+			"Cookie": {
+				fmt.Sprintf("%s_1of2=%s", cfg.Cfg.Cookie.Name, ckValue1),
+				fmt.Sprintf("%s_2of2=%s", cfg.Cfg.Cookie.Name, ckValue2),
+			},
+		},
+	}
+	r.Cookies()
+	s, err := Cookie(r)
+	if err != nil {
+		t.Error(err)
+	}
+	if expectedValue != s {
+		t.Errorf("expected \"%s\" received \"%s\"", expectedValue, s)
 	}
 }
