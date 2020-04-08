@@ -49,6 +49,7 @@ type config struct {
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 		MaxAge   int    `mapstructure:"maxage"`
+		SameSite string `mapstructure:"sameSite"`
 	}
 
 	Headers struct {
