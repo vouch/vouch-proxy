@@ -2,15 +2,16 @@ package github
 
 import (
 	"encoding/json"
+	"net/http"
+	"regexp"
+	"testing"
+
 	mockhttp "github.com/karupanerura/go-mock-http-response"
 	"github.com/stretchr/testify/assert"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
-	"net/http"
-	"regexp"
-	"testing"
 )
 
 type ReqMatcher func(*http.Request) bool
@@ -73,11 +74,8 @@ var (
 	client          = &http.Client{Transport: &Transport{}}
 )
 
-func init() {
-	setUp()
-}
-
 func setUp() {
+	log = cfg.Cfg.Logger
 	cfg.InitForTestPurposesWithProvider("github")
 
 	cfg.Cfg.AllowAllUsers = false
@@ -85,7 +83,7 @@ func setUp() {
 	cfg.Cfg.TeamWhiteList = make([]string, 0)
 	cfg.Cfg.Domains = []string{"domain1"}
 
-	domains.Refresh()
+	domains.Configure()
 
 	mockedResponses = []FunResponsePair{}
 	requests = make([]string, 0)
