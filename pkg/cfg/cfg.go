@@ -1,7 +1,6 @@
 package cfg
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -24,18 +23,18 @@ import (
 
 // Config vouch jwt cookie configuration
 type Config struct {
-	Logger        *zap.SugaredLogger
-	FastLogger    *zap.Logger
-	LogLevel      string   `mapstructure:"logLevel"`
-	Listen        string   `mapstructure:"listen"`
-	Port          int      `mapstructure:"port"`
-	HealthCheck   bool     `mapstructure:"healthCheck"`
-	Domains       []string `mapstructure:"domains"`
-	WhiteList     []string `mapstructure:"whitelist"`
-	TeamWhiteList []string `mapstructure:"teamWhitelist"`
-	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
-	PublicAccess  bool     `mapstructure:"publicAccess"`
-	JWT           struct {
+	Logger         *zap.SugaredLogger
+	FastLogger     *zap.Logger
+	AtomicLogLevel zap.AtomicLevel
+	LogLevel       string   `mapstructure:"logLevel"`
+	Listen         string   `mapstructure:"listen"`
+	Port           int      `mapstructure:"port"`
+	Domains        []string `mapstructure:"domains"`
+	WhiteList      []string `mapstructure:"whitelist"`
+	TeamWhiteList  []string `mapstructure:"teamWhitelist"`
+	AllowAllUsers  bool     `mapstructure:"allowAllUsers"`
+	PublicAccess   bool     `mapstructure:"publicAccess"`
+	JWT            struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
@@ -67,7 +66,6 @@ type Config struct {
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
 	Testing  bool     `mapstructure:"testing"`
-	WebApp   bool     `mapstructure:"webapp"`
 }
 
 // oauth config items endoint for access
@@ -110,9 +108,6 @@ var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
 
-	// Cfg the main exported config variable
-	Cfg *Config
-
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
 	// perhaps by https://golang.org/doc/effective_go.html#embedding
@@ -142,12 +137,30 @@ var (
 	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
 	RootDir string
 
-	secretFile    string
-	cmdLineConfig *string
-	logger        *zap.Logger
-	log           *zap.SugaredLogger
-	atom          zap.AtomicLevel
+	secretFile string
+	logger     *zap.Logger
+	log        *zap.SugaredLogger
+
+	// CmdLine command line arguments
+	CmdLine = &cmdLineFlags{
+		IsHealthCheck: flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)"),
+		logLevel:      flag.String("loglevel", "", "enable debug log output"),
+		port:          flag.Int("port", -1, "port"),
+		configFile:    flag.String("config", "", "specify alternate config.yml file as command line arg"),
+	}
+
+	// Cfg the main exported config variable
+	Cfg = &Config{}
+	// IsHealthCheck see main.go
+	IsHealthCheck = false
 )
+
+type cmdLineFlags struct {
+	IsHealthCheck *bool
+	logLevel      *string
+	port          *int
+	configFile    *string
+}
 
 const (
 	// for a Base64 string we need 44 characters to get 32bytes (6 bits per char)
@@ -156,15 +169,12 @@ const (
 )
 
 func init() {
-	atom = zap.NewAtomicLevel()
+	Cfg.AtomicLogLevel = zap.NewAtomicLevel()
 	encoderCfg := zap.NewProductionEncoderConfig()
-
-	Cfg = &Config{}
-
 	logger = zap.New(zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderCfg),
 		zapcore.Lock(os.Stdout),
-		atom,
+		Cfg.AtomicLogLevel,
 	))
 
 	defer logger.Sync() // flushes buffer, if any
@@ -174,22 +184,62 @@ func init() {
 	// 	Cfg.FastLogger = zap.L()
 	// 	Cfg.Logger = zap.S()
 	// 	log = Cfg.Logger
-	log.Info("logger set")
+	// log.Info("logger set")
+
 }
 
 // Configure called at the very top of main()
 func Configure() {
 
-	// Handle -healthcheck argument
-	healthCheck := flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)")
-	// can pass loglevel on the command line
-	ll := flag.String("loglevel", "", "enable debug log output")
-	// from config file
-	port := flag.Int("port", -1, "port")
-	help := flag.Bool("help", false, "show usage")
-	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
-	// flag.Parse()
+	if *CmdLine.logLevel == "debug" {
+		setLogLevelDebug()
+	}
 
+	setRootDir()
+	secretFile = filepath.Join(RootDir, "config/secret")
+
+	// bail if we're testing
+	if flag.Lookup("test.v") != nil {
+		setLogLevelDebug()
+		log.Debug("`go test` detected, not loading regular config")
+		return
+	}
+
+	parseConfig()
+	if Cfg.LogLevel == "debug" {
+		setLogLevelDebug()
+	}
+	setDefaults()
+
+	if *CmdLine.port != -1 {
+		Cfg.Port = *CmdLine.port
+	}
+
+}
+
+// TestConfiguration Confirm the Configuration is valid
+func TestConfiguration() {
+	if Cfg.Testing {
+		setDevelopmentLogger()
+		setLogLevelDebug()
+	}
+
+	errT := basicTest()
+	if errT != nil {
+		// log.Fatalf(errT.Error())
+		log.Panic(errT)
+	}
+
+	log.Debugf("viper settings %+v", viper.AllSettings())
+}
+
+// TODO: fix all setLogLevel requests https://github.com/vouch/vouch-proxy/issues/192
+func setLogLevelDebug() {
+	Cfg.AtomicLogLevel.SetLevel(zap.DebugLevel)
+	log.Debug("logLevel set to debug")
+}
+
+func setRootDir() {
 	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
 	if os.Getenv(Branding.UCName+"_ROOT") != "" {
 		RootDir = os.Getenv(Branding.UCName + "_ROOT")
@@ -197,77 +247,11 @@ func Configure() {
 	} else {
 		ex, errEx := os.Executable()
 		if errEx != nil {
-			panic(errEx)
+			log.Panic(errEx)
 		}
 		RootDir = filepath.Dir(ex)
 		log.Debugf("cfg.RootDir: %s", RootDir)
 	}
-	secretFile = filepath.Join(RootDir, "config/secret")
-
-	// bail if we're testing
-	if flag.Lookup("test.v") != nil {
-		fmt.Println("`go test` detected, not loading regular config")
-		return
-	}
-
-	ParseConfig()
-
-	if Cfg.Testing {
-		setDevelopmentLogger()
-	}
-
-	if *ll == "debug" || Cfg.LogLevel == "debug" {
-		atom.SetLevel(zap.DebugLevel)
-		log.Debug("logLevel set to debug")
-	} else if *healthCheck {
-		// just errors for healthcheck, unless debug is set
-		atom.SetLevel(zap.ErrorLevel)
-	}
-
-	if *help {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	SetDefaults()
-
-	if *port != -1 {
-		Cfg.Port = *port
-	}
-
-	errT := BasicTest()
-	if errT != nil {
-		// log.Fatalf(errT.Error())
-		panic(errT)
-	}
-
-	if *healthCheck {
-		url := fmt.Sprintf("http://%s:%d/healthcheck", Cfg.Listen, Cfg.Port)
-		log.Debug("Invoking healthcheck on URL ", url)
-		resp, err := http.Get(url)
-		if err == nil {
-			robots, err := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err == nil {
-				var result map[string]interface{}
-				jsonErr := json.Unmarshal(robots, &result)
-				if jsonErr == nil {
-					if result["ok"] == true {
-						os.Exit(0)
-					}
-				}
-			}
-		}
-		log.Error("Healthcheck against ", url, " failed.")
-		os.Exit(1)
-	}
-
-	log.Debugf("viper settings %+v", viper.AllSettings())
-
-}
-
-	log.Debugf("viper settings %+v", viper.AllSettings())
-
 }
 
 func setDevelopmentLogger() {
@@ -276,7 +260,7 @@ func setDevelopmentLogger() {
 		zap.WrapCore(
 			// func(zapcore.Core) zapcore.Core {
 			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
+				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), Cfg.AtomicLogLevel)
 			}))
 	// zap.ReplaceGlobals(clone)
 	log = clone.Sugar()
@@ -297,10 +281,11 @@ func InitForTestPurposesWithProvider(provider string) {
 	if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(basepath, "../../config/test_config.yml")); err != nil {
 		log.Error(err)
 	}
-	// log.Debug("opening config")
-	// ParseConfig()
-	// SetDefaults()
 	// Configure()
+	// log.Debug("opening config")
+	setRootDir()
+	parseConfig()
+	setDefaults()
 	// setDevelopmentLogger()
 
 	// Needed to override the provider, which is otherwise set via yml
@@ -311,8 +296,8 @@ func InitForTestPurposesWithProvider(provider string) {
 
 }
 
-// ParseConfig parse the config file
-func ParseConfig() {
+// parseConfig parse the config file
+func parseConfig() {
 	log.Debug("opening config")
 
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
@@ -321,12 +306,12 @@ func ParseConfig() {
 		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
 		configFile, _ := filepath.Abs(configEnv)
 		viper.SetConfigFile(configFile)
-	} else if *cmdLineConfig != "" {
-		log.Infof("config file set on commandline: %s", *cmdLineConfig)
+	} else if *CmdLine.configFile != "" {
+		log.Infof("config file set on commandline: %s", *CmdLine.configFile)
 		viper.AddConfigPath("/")
 		viper.AddConfigPath(RootDir)
 		viper.AddConfigPath(filepath.Join(RootDir, "config"))
-		viper.SetConfigFile(*cmdLineConfig)
+		viper.SetConfigFile(*CmdLine.configFile)
 	} else {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
@@ -335,7 +320,7 @@ func ParseConfig() {
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
-		panic(err)
+		log.Panic(err)
 	}
 	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
@@ -372,8 +357,8 @@ func Get(key string) string {
 	return viper.GetString(key)
 }
 
-// BasicTest just a quick sanity check to see if the config is sound
-func BasicTest() error {
+// basicTest just a quick sanity check to see if the config is sound
+func basicTest() error {
 	if GenOAuth.Provider != Providers.Google &&
 		GenOAuth.Provider != Providers.GitHub &&
 		GenOAuth.Provider != Providers.IndieAuth &&
@@ -473,8 +458,8 @@ func checkCallbackConfig(url string) error {
 	return nil
 }
 
-// SetDefaults set default options for some items
-func SetDefaults() {
+// setDefaults set default options for some items
+func setDefaults() {
 
 	// this should really be done by Viper up in parseConfig but..
 	// nested defaults is currently *broken*
@@ -493,9 +478,16 @@ func SetDefaults() {
 	if !viper.IsSet(Branding.LCName + ".listen") {
 		Cfg.Listen = "0.0.0.0"
 	}
+
 	if !viper.IsSet(Branding.LCName + ".port") {
 		Cfg.Port = 9090
 	}
+
+	// bare minimum for healthcheck acheived
+	if *CmdLine.IsHealthCheck {
+		return
+	}
+
 	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
 		Cfg.AllowAllUsers = false
 	}
@@ -576,10 +568,6 @@ func SetDefaults() {
 	}
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
-	}
-	// TODO: probably change this name, maybe set the domain/port the webapp runs on
-	if !viper.IsSet(Branding.LCName + ".webapp") {
-		Cfg.WebApp = false
 	}
 
 	// OAuth defaults and client configuration
@@ -696,4 +684,3 @@ func getOrGenerateJWTSecret() string {
 	}
 	return string(b)
 }
-

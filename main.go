@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/vouch/vouch-proxy/pkg/healthcheck"
 	"github.com/vouch/vouch-proxy/pkg/response"
 
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -69,10 +70,15 @@ func configure() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
 	cfg.Configure()
+	healthcheck.CheckAndExitIfIsHealthCheck()
+
+	cfg.TestConfiguration()
 
 	logger = cfg.Cfg.Logger
 	fastlog = cfg.Cfg.FastLogger
+
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
@@ -85,6 +91,7 @@ func main() {
 	configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	checkTCPPortAvailable(listen)
+
 	logger.Infow("starting "+cfg.Branding.CcName,
 		// "semver":    semver,
 		"version", version,
