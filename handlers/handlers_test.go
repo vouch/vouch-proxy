@@ -1,22 +1,19 @@
 package handlers
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
-	"testing"
 )
 
 var (
 	user  *structs.User
 	token = &oauth2.Token{AccessToken: "123"}
 )
-
-func init() {
-	setUp()
-}
 
 func setUp() {
 	cfg.InitForTestPurposes()
@@ -26,7 +23,9 @@ func setUp() {
 	cfg.Cfg.TeamWhiteList = make([]string, 0)
 	cfg.Cfg.Domains = []string{"domain1"}
 
-	domains.Refresh()
+	Configure()
+
+	domains.Configure()
 
 	user = &structs.User{Username: "testuser", Email: "test@example.com"}
 }
@@ -52,7 +51,7 @@ func TestVerifyUserPositiveAllowAllUsers(t *testing.T) {
 func TestVerifyUserPositiveByEmail(t *testing.T) {
 	setUp()
 	cfg.Cfg.Domains = append(cfg.Cfg.Domains, "example.com")
-	domains.Refresh()
+	domains.Configure()
 
 	ok, err := VerifyUser(*user)
 	assert.True(t, ok)

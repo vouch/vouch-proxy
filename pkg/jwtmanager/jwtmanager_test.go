@@ -36,6 +36,7 @@ func init() {
 	// log.SetLevel(log.DebugLevel)
 
 	cfg.InitForTestPurposes()
+	Configure()
 
 	lc = VouchClaims{
 		u1.Username,

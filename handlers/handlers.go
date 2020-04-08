@@ -28,7 +28,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/model"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 )
@@ -46,8 +45,9 @@ type AuthError struct {
 	JWT   string
 }
 
-// Handler each Provider must support GetuserInfo
-type Handler interface {
+// Provider each Provider must support GetuserInfo
+type Provider interface {
+	Configure()
 	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
 }
 
@@ -56,19 +56,27 @@ const (
 )
 
 var (
-	// Templates
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
-
-	// http://www.gorillatoolkit.org/pkg/sessions
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
-
-	log     = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
+	indexTemplate *template.Template
+	sessstore     *sessions.CookieStore
+	log           *zap.SugaredLogger
+	fastlog       *zap.Logger
+	provider      Provider
 )
 
-func init() {
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
+	fastlog = cfg.Cfg.FastLogger
+	// http://www.gorillatoolkit.org/pkg/sessions
+	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
+
+	log.Debugf("handlers.Configure() attempting to parse templates with cfg.RootDir: %s", cfg.RootDir)
+	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+
+	provider = getProvider()
+	provider.Configure()
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -95,7 +103,7 @@ func loginURL(r *http.Request, state string) string {
 			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
 	}
-	// log.Debugf("loginUrl %s", url)
+	// log.Debugf("loginURL %s", url)
 	return lurl
 }
 
@@ -267,27 +275,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
 
-	// update user last access in a go routine
-	// user := structs.User{}
-	// err = model.User([]byte(email), &user)
-	// if err != nil {
-	// 	// no email in jwt, or no email in db
-	// 	error401(w, r, err.Error())
-	// 	return
-	// }
-	// if user.Email == "" {
-	// 	error401(w, r, "no email found in db")
-	// 	return
-	// }
-
-	// put the site
-	go func() {
-		s := structs.Site{Domain: r.Host}
-		log.Debugf("site struct: %v", s)
-		if err = model.PutSite(s); err != nil {
-			log.Error(err)
-		}
-	}()
 }
 
 // LogoutHandler /logout
@@ -506,11 +493,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS!! they are authorized
 
-	// store the user in the database
-	if err = model.PutUser(user); err != nil {
-		log.Error(err)
-	}
-
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims, ptokens)
 	cookie.SetCookie(w, r, tokenstring)
@@ -533,29 +515,30 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
-	return getHandler().GetUserInfo(r, user, customClaims, ptokens)
+	return provider.GetUserInfo(r, user, customClaims, ptokens)
 }
 
-func getHandler() Handler {
+func getProvider() Provider {
 	switch cfg.GenOAuth.Provider {
 	case cfg.Providers.IndieAuth:
-		return indieauth.Handler{}
+		return indieauth.Provider{}
 	case cfg.Providers.ADFS:
-		return adfs.Handler{}
+		return adfs.Provider{}
 	case cfg.Providers.HomeAssistant:
-		return homeassistant.Handler{}
+		return homeassistant.Provider{}
 	case cfg.Providers.OpenStax:
-		return openstax.Handler{}
+		return openstax.Provider{}
 	case cfg.Providers.Google:
-		return google.Handler{}
+		return google.Provider{}
 	case cfg.Providers.GitHub:
-		return github.Handler{PrepareTokensAndClient: common.PrepareTokensAndClient}
+		return github.Provider{PrepareTokensAndClient: common.PrepareTokensAndClient}
 	case cfg.Providers.Nextcloud:
-		return nextcloud.Handler{}
+		return nextcloud.Provider{}
 	case cfg.Providers.OIDC:
-		return openid.Handler{}
+		return openid.Provider{}
 	default:
-		log.Error("we don't know how to look up the user info")
+		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
+		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
 		return nil
 	}
 }

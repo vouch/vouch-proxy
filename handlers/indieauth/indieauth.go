@@ -3,21 +3,28 @@ package indieauth
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 )
 
-type Handler struct{}
+// Provider provider specific functions
+type Provider struct{}
 
-var (
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func (Provider) Configure() {
 	log = cfg.Cfg.Logger
-)
+}
 
-func (Handler) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+// GetUserInfo provider specific call to get userinfomation
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)

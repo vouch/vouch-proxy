@@ -3,16 +3,12 @@ package cfg
 import (
 	"testing"
 
-	// "github.com/vouch/vouch-proxy/pkg/structs"
 	"github.com/stretchr/testify/assert"
 )
 
-func init() {
-	// log.SetLevel(log.DebugLevel)
-	InitForTestPurposes()
-}
-
 func TestConfigParsing(t *testing.T) {
+	InitForTestPurposes()
+	Configure()
 
 	// UnmarshalKey(Branding.LCName, &cfg)
 	log.Debugf("cfgPort %d", Cfg.Port)
@@ -26,7 +22,6 @@ func TestConfigParsing(t *testing.T) {
 
 func TestSetGitHubDefaults(t *testing.T) {
 	InitForTestPurposesWithProvider("github")
-
 	assert.Equal(t, []string{"read:user"}, GenOAuth.Scopes)
 }
 

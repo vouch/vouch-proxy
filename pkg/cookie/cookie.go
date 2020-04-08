@@ -11,11 +11,17 @@ import (
 	// "github.com/vouch/vouch-proxy/pkg/structs"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
+	"go.uber.org/zap"
 )
 
 const maxCookieSize = 4000
 
-var log = cfg.Cfg.Logger
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
+}
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
