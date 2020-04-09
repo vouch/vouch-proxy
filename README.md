@@ -148,7 +148,6 @@ docker run -d \
     -p 9090:9090 \
     --name vouch-proxy \
     -v ${PWD}/config:/config \
-    -v ${PWD}/data:/data \
     voucher/vouch-proxy
 ```
 
@@ -292,7 +291,6 @@ OpenResty and configs for a variety of scenarios are available in the [examples]
   - if the \$STATE nonce from the url matches the session variable "state"
   - make a "third leg" request of google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
   - if the email address matches the domain oursites.com (it does)
-    - create a user in our database with key bob@oursites.com
     - issue bob a JWT in the form of a cookie named "oursitesSSO"
     - retrieve the session variable $requestedURL and 302 redirect bob back to $requestedURL
 

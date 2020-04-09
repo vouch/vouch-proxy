@@ -56,7 +56,6 @@ drun () {
     -p ${HTTPPORT}:${HTTPPORT} 
     --name $NAME 
     -v ${SDIR}/config:/config 
-    -v ${SDIR}/data:/data 
     $IMAGE $* "
 
     echo $CMD
