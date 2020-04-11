@@ -23,7 +23,7 @@ var log *zap.SugaredLogger
 
 // Configure see main.go configure()
 func (Provider) Configure() {
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 }
 
 // GetUserInfo github user info, calls github api for org and teams

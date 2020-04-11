@@ -16,7 +16,7 @@ var log *zap.Logger
 
 // Configure see main.go configure()
 func Configure() {
-	log = cfg.Cfg.FastLogger
+	log = cfg.Logging.FastLogger
 }
 
 // CaptureWriter extends http.ResponseWriter

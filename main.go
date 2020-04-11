@@ -76,8 +76,8 @@ func configure() {
 
 	cfg.TestConfiguration()
 
-	logger = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
+	logger = cfg.Logging.Logger
+	fastlog = cfg.Logging.FastLogger
 
 	domains.Configure()
 	jwtmanager.Configure()

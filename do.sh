@@ -141,7 +141,7 @@ coverage() {
   go tool cover -html=coverage.out -o coverage.html
 }
 
-test () {
+test() {
   if [ -z "$VOUCH_CONFIG" ]; then
     export VOUCH_CONFIG="$SDIR/config/test_config.yml"
   fi
@@ -151,6 +151,19 @@ test () {
   else
     go test -v -race $EXTRA_TEST_ARGS ./...
   fi
+}
+
+test_logging() {
+  build
+  echo "-loglevel info | grep debug"
+  ./vouch-proxy -loglevel info | grep debug &
+  kill $!
+  echo "-loglevel warn | grep info"
+  ./vouch-proxy -loglevel warn | grep info &
+  kill $!
+  echo "-loglevel error | grep warn"
+  ./vouch-proxy -loglevel error | grep warn &
+  kill $!
 }
 
 stats () {
@@ -171,6 +184,7 @@ usage() {
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
+     $0 test_logging           - test the logging output
      $0 coverage               - coverage report
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
      $0 gogo [gocmd]           - run, build, any go cmd
@@ -187,7 +201,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging')
    shift
    $ARG $*
    ;;
