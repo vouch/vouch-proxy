@@ -328,8 +328,8 @@ func parseConfig() {
 	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
-		var oldConfig *Config
-		if err = UnmarshalKey(Branding.OldLCName, oldConfig); err != nil {
+		var oldConfig = &Config{}
+		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
 			log.Error(err)
 		}
 
