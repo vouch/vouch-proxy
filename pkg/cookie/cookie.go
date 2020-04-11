@@ -11,11 +11,17 @@ import (
 	// "github.com/vouch/vouch-proxy/pkg/structs"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/domains"
+	"go.uber.org/zap"
 )
 
 const maxCookieSize = 4000
 
-var log = cfg.Cfg.Logger
+var log *zap.SugaredLogger
+
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
+}
 
 // SetCookie http
 func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
@@ -31,6 +37,22 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
+
+	sameSite := http.SameSite(0)
+	if cfg.Cfg.Cookie.SameSite != "" {
+		switch strings.ToLower(cfg.Cfg.Cookie.SameSite) {
+		case "lax":
+			sameSite = http.SameSiteLaxMode
+		case "strict":
+			sameSite = http.SameSiteStrictMode
+		case "none":
+			if cfg.Cfg.Cookie.Secure == false {
+				log.Error("SameSite cookie attribute with sameSite=none should also be specified with secure=true.")
+			}
+			sameSite = http.SameSiteNoneMode
+		}
+	}
+
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
@@ -39,6 +61,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		MaxAge:   maxAge,
 		Secure:   cfg.Cfg.Cookie.Secure,
 		HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+		SameSite: sameSite,
 	}
 	cookieSize := len(cookie.String())
 	cookie.Value = ""
@@ -49,7 +72,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	if cookieSize > maxCookieSize {
 		// https://www.lifewire.com/cookie-limit-per-domain-3466809
 		log.Warnf("cookie size: %d.  cookie sizes over ~4093 bytes(depending on the browser and platform) have shown to cause issues or simply aren't supported.", cookieSize)
-		cookieParts := SplitCookie(val, maxCookieSize-emptyCookieSize)
+		cookieParts := splitCookie(val, maxCookieSize-emptyCookieSize)
 		for i, cookiePart := range cookieParts {
 			// Cookies are named 1of3, 2of3, 3of3
 			cookieName = fmt.Sprintf("%s_%dof%d", cfg.Cfg.Cookie.Name, i+1, len(cookieParts))
@@ -61,6 +84,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 				MaxAge:   maxAge,
 				Secure:   cfg.Cfg.Cookie.Secure,
 				HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+				SameSite: sameSite,
 			})
 		}
 	} else {
@@ -72,6 +96,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 			MaxAge:   maxAge,
 			Secure:   cfg.Cfg.Cookie.Secure,
 			HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
+			SameSite: sameSite,
 		})
 	}
 }
@@ -79,7 +104,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
 
-	var cookieParts []string
+	cookieParts := make([]string, 0)
 	var numParts = -1
 
 	var err error
@@ -91,12 +116,13 @@ func Cookie(r *http.Request) (string, error) {
 		if cookie.Name == cfg.Cfg.Cookie.Name {
 			return cookie.Value, nil
 		}
-		if strings.HasPrefix(cookie.Name, fmt.Sprintf("%s_", cfg.Cfg.Cookie.Name)) {
+		cookieUnder := fmt.Sprintf("%s_", cfg.Cfg.Cookie.Name)
+		if strings.HasPrefix(cookie.Name, cookieUnder) {
 			log.Debugw("cookie",
 				"cookieName", cookie.Name,
 				"cookieValue", cookie.Value,
 			)
-			xOFy := strings.Split(cookie.Name, "_")[1]
+			xOFy := strings.Replace(cookie.Name, cookieUnder, "", 1)
 			xyArray := strings.Split(xOFy, "of")
 			if numParts == -1 { // then its uninitialized
 				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
@@ -116,7 +142,7 @@ func Cookie(r *http.Request) (string, error) {
 	// combinedCookieStr := combinedCookie.String()
 	combinedCookieStr := strings.Join(cookieParts, "")
 	if combinedCookieStr == "" {
-		return "", errors.New("Cookie token empty")
+		return "", errors.New("cookie token empty")
 	}
 
 	log.Debugw("combined cookie",
@@ -151,9 +177,9 @@ func ClearCookie(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SplitCookie separate string into several strings of specified length
-func SplitCookie(longString string, maxLen int) []string {
-	splits := []string{}
+// splitCookie separate string into several strings of specified length
+func splitCookie(longString string, maxLen int) []string {
+	splits := make([]string, 0)
 
 	var l, r int
 	for l, r = 0, maxLen; r < len(longString); l, r = r, r+maxLen {

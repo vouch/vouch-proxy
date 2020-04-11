@@ -10,7 +10,7 @@ import (
 func init() {
 	cfg.InitForTestPurposes()
 	cfg.Cfg.Domains = []string{"vouch.github.io", "sub.test.mydomain.com", "test.mydomain.com"}
-	Refresh()
+	Configure()
 }
 
 func TestIsUnderManagement(t *testing.T) {
@@ -28,13 +28,13 @@ func TestIsUnderManagement(t *testing.T) {
 func TestMatches(t *testing.T) {
 	// Full email should not be accepted
 	assert.Equal(t, "", Matches("test@vouch.github.io"))
-	
+
 	assert.Equal(t, "vouch.github.io", Matches("vouch.github.io"))
 	assert.Equal(t, "vouch.github.io", Matches("sub.vouch.github.io"))
 	assert.Equal(t, "", Matches("a-different-vouch.github.io"))
 
 	assert.Equal(t, "", Matches("mydomain.com"))
-	
+
 	assert.Equal(t, "test.mydomain.com", Matches("test.mydomain.com"))
 	assert.Equal(t, "sub.test.mydomain.com", Matches("sub.test.mydomain.com"))
 	assert.Equal(t, "sub.test.mydomain.com", Matches("subsub.sub.test.mydomain.com"))

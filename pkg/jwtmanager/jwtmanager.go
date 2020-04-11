@@ -12,6 +12,7 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
+	"go.uber.org/zap"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -36,9 +37,11 @@ var CustomClaims map[string]interface{}
 
 // Sites added to VouchClaims
 var Sites []string
-var log = cfg.Cfg.Logger
+var log *zap.SugaredLogger
 
-func init() {
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Cfg.Logger
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
