@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -23,18 +22,15 @@ import (
 
 // Config vouch jwt cookie configuration
 type Config struct {
-	Logger         *zap.SugaredLogger
-	FastLogger     *zap.Logger
-	AtomicLogLevel zap.AtomicLevel
-	LogLevel       string   `mapstructure:"logLevel"`
-	Listen         string   `mapstructure:"listen"`
-	Port           int      `mapstructure:"port"`
-	Domains        []string `mapstructure:"domains"`
-	WhiteList      []string `mapstructure:"whitelist"`
-	TeamWhiteList  []string `mapstructure:"teamWhitelist"`
-	AllowAllUsers  bool     `mapstructure:"allowAllUsers"`
-	PublicAccess   bool     `mapstructure:"publicAccess"`
-	JWT            struct {
+	LogLevel      string   `mapstructure:"logLevel"`
+	Listen        string   `mapstructure:"listen"`
+	Port          int      `mapstructure:"port"`
+	Domains       []string `mapstructure:"domains"`
+	WhiteList     []string `mapstructure:"whitelist"`
+	TeamWhiteList []string `mapstructure:"teamWhitelist"`
+	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
+	PublicAccess  bool     `mapstructure:"publicAccess"`
+	JWT           struct {
 		MaxAge   int    `mapstructure:"maxAge"`
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
@@ -139,15 +135,14 @@ var (
 	RootDir string
 
 	secretFile string
-	logger     *zap.Logger
-	log        *zap.SugaredLogger
 
 	// CmdLine command line arguments
 	CmdLine = &cmdLineFlags{
 		IsHealthCheck: flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)"),
-		logLevel:      flag.String("loglevel", "", "enable debug log output"),
 		port:          flag.Int("port", -1, "port"),
 		configFile:    flag.String("config", "", "specify alternate config.yml file as command line arg"),
+		// https://github.com/uber-go/zap/blob/master/flag.go
+		logLevel: zap.LevelFlag("loglevel", Logging.DefaultLogLevel, "set log level to one of: panic, error, warn, info, debug"),
 	}
 
 	// Cfg the main exported config variable
@@ -158,9 +153,9 @@ var (
 
 type cmdLineFlags struct {
 	IsHealthCheck *bool
-	logLevel      *string
 	port          *int
 	configFile    *string
+	logLevel      *zapcore.Level
 }
 
 const (
@@ -169,31 +164,11 @@ const (
 	base64Bytes     = 32
 )
 
-func init() {
-	Cfg.AtomicLogLevel = zap.NewAtomicLevel()
-	encoderCfg := zap.NewProductionEncoderConfig()
-	logger = zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		Cfg.AtomicLogLevel,
-	))
-
-	defer logger.Sync() // flushes buffer, if any
-	log = logger.Sugar()
-	Cfg.FastLogger = logger
-	Cfg.Logger = log
-	// 	Cfg.FastLogger = zap.L()
-	// 	Cfg.Logger = zap.S()
-	// 	log = Cfg.Logger
-	// log.Info("logger set")
-
-}
-
 // Configure called at the very top of main()
 func Configure() {
 
-	if *CmdLine.logLevel == "debug" {
-		setLogLevelDebug()
+	if *CmdLine.logLevel != zapcore.DebugLevel {
+		Logging.setLogLevel(*CmdLine.logLevel) // defaults to Logging.DefaultLogLevel which is zap.InfoLevel
 	}
 
 	setRootDir()
@@ -201,15 +176,13 @@ func Configure() {
 
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
-		setLogLevelDebug()
+		Logging.setLogLevel(zap.DebugLevel)
 		log.Debug("`go test` detected, not loading regular config")
 		return
 	}
 
 	parseConfig()
-	if Cfg.LogLevel == "debug" {
-		setLogLevelDebug()
-	}
+	Logging.configure()
 	setDefaults()
 
 	if *CmdLine.port != -1 {
@@ -221,8 +194,8 @@ func Configure() {
 // TestConfiguration Confirm the Configuration is valid
 func TestConfiguration() {
 	if Cfg.Testing {
-		setDevelopmentLogger()
-		setLogLevelDebug()
+		Logging.setDevelopmentLogger()
+		Logging.setLogLevel(zap.DebugLevel)
 	}
 
 	errT := basicTest()
@@ -232,12 +205,6 @@ func TestConfiguration() {
 	}
 
 	log.Debugf("viper settings %+v", viper.AllSettings())
-}
-
-// TODO: fix all setLogLevel requests https://github.com/vouch/vouch-proxy/issues/192
-func setLogLevelDebug() {
-	Cfg.AtomicLogLevel.SetLevel(zap.DebugLevel)
-	log.Debug("logLevel set to debug")
 }
 
 func setRootDir() {
@@ -253,21 +220,6 @@ func setRootDir() {
 		RootDir = filepath.Dir(ex)
 		log.Debugf("cfg.RootDir: %s", RootDir)
 	}
-}
-
-func setDevelopmentLogger() {
-	// then configure the logger for development output
-	clone := logger.WithOptions(
-		zap.WrapCore(
-			// func(zapcore.Core) zapcore.Core {
-			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), Cfg.AtomicLogLevel)
-			}))
-	// zap.ReplaceGlobals(clone)
-	log = clone.Sugar()
-	Cfg.FastLogger = log.Desugar()
-	Cfg.Logger = log
-	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
 }
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
@@ -459,7 +411,7 @@ func checkCallbackConfig(url string) error {
 	return nil
 }
 
-// setDefaults set default options for some items
+// setDefaults set default options for most items
 func setDefaults() {
 
 	// this should really be done by Viper up in parseConfig but..
@@ -471,10 +423,6 @@ func setDefaults() {
 	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
 	// viper.SetDefault("Cookie.Name", "Vouch")
 
-	// logging
-	if !viper.IsSet(Branding.LCName + ".logLevel") {
-		Cfg.LogLevel = "info"
-	}
 	// network defaults
 	if !viper.IsSet(Branding.LCName + ".listen") {
 		Cfg.Listen = "0.0.0.0"
