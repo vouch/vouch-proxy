@@ -3,6 +3,7 @@ package adfs
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -72,8 +73,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	tokenRes := adfsTokenRes{}
 
 	if err := json.Unmarshal(data, &tokenRes); err != nil {
-		log.Errorf("oauth2: cannot fetch token: %v", err)
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS oauth2: cannot fetch token: %+v", err)
 	}
 
 	ptokens.PAccessToken = string(tokenRes.AccessToken)
@@ -81,16 +81,14 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 
 	s := strings.Split(tokenRes.IDToken, ".")
 	if len(s) < 2 {
-		log.Error("jws: invalid token received")
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS jws: invalid token received")
 	}
 
 	idToken, err := base64.RawURLEncoding.DecodeString(s[1])
 	if err != nil {
-		log.Error(err)
-		return nil
+		return fmt.Errorf("getUserInfoFromADFS decode token: %+v", err)
 	}
-	log.Debugf("idToken: %+v", string(idToken))
+	log.Debugf("getUserInfoFromADFS idToken: %+v", string(idToken))
 
 	adfsUser := structs.ADFSUser{}
 	json.Unmarshal([]byte(idToken), &adfsUser)
@@ -99,7 +97,6 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	// Please note that in order for custom claims to work you MUST set allatclaims in ADFS to be passed
 	// https://oktotechnologies.ca/2018/08/26/adfs-openidconnect-configuration/
 	if err = common.MapClaims([]byte(idToken), customClaims); err != nil {
-		log.Error(err)
 		return err
 	}
 	adfsUser.PrepareUserData()
