@@ -53,23 +53,25 @@ func init() {
 
 }
 
-func (L logging) setLogLevel(lvl zapcore.Level) {
+func (logging) setLogLevel(lvl zapcore.Level) {
 	// https://github.com/uber-go/zap/blob/master/zapcore/level.go#L59
-	L.LogLevel = lvl
-	log.Infof("setting LogLevel to %s", lvl)
-	L.AtomicLogLevel.SetLevel(lvl)
+	if Logging.LogLevel != lvl {
+		Logging.LogLevel = lvl
+		log.Infof("setting LogLevel to %s", lvl)
+		Logging.AtomicLogLevel.SetLevel(lvl)
+	}
 }
 
-func (L logging) setLogLevelString(str string) {
+func (logging) setLogLevelString(str string) {
 	if err := CmdLine.logLevel.Set(str); err != nil {
 		log.Fatal(err)
 	}
-	L.setLogLevel(*CmdLine.logLevel)
+	Logging.setLogLevel(*CmdLine.logLevel)
 }
 
-func (L logging) setDevelopmentLogger() {
+func (logging) setDevelopmentLogger() {
 	// then configure the logger for development output
-	clone := L.FastLogger.WithOptions(
+	clone := Logging.FastLogger.WithOptions(
 		zap.WrapCore(
 			// func(zapcore.Core) zapcore.Core {
 			func(zapcore.Core) zapcore.Core {
@@ -77,14 +79,16 @@ func (L logging) setDevelopmentLogger() {
 			}))
 	// zap.ReplaceGlobals(clone)
 	log = clone.Sugar()
-	L.FastLogger = log.Desugar()
-	L.Logger = log
+	// Logging.FastLogger = log.Desugar()
+	// Logging.Logger = log
+	Logging.FastLogger = log.Desugar()
+	Logging.Logger = log
 	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
 }
 
 var configured = false
 
-func (L logging) configure() {
+func (logging) configure() {
 	// logging
 
 	if configured {
@@ -98,7 +102,7 @@ func (L logging) configure() {
 	}
 
 	if Cfg.LogLevel != Logging.LogLevel.String() {
-		// log.Errorf("L.configure() Logging.LogLevel %s Cfg.LogLevel %s", Logging.LogLevel.String(), Cfg.LogLevel)
+		// log.Errorf("Logging.configure() Logging.LogLevel %s Cfg.LogLevel %s", Logging.LogLeveLogging.String(), Cfg.LogLevel)
 		Logging.setLogLevelString(Cfg.LogLevel)
 	}
 
@@ -110,7 +114,7 @@ func (L logging) configure() {
 	configured = true
 }
 
-func (L logging) configureFromCmdline() {
+func (logging) configureFromCmdline() {
 
 	if *CmdLine.logLevel != cmdLineLoggingDefault {
 		Logging.setLogLevel(*CmdLine.logLevel) // defaults to Logging.DefaultLogLevel which is zap.InfoLevel
@@ -120,7 +124,7 @@ func (L logging) configureFromCmdline() {
 }
 
 // in support of `./do.sh test_logging`
-func (L logging) cmdlineTestLogs() {
+func (logging) cmdlineTestLogs() {
 	Logging.Logger.Error("error")
 	Logging.Logger.Warn("warn")
 	Logging.Logger.Info("info")

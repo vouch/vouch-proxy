@@ -234,6 +234,7 @@ test_logging() {
 
   done
   echo "passed"
+  killall vouch-proxy
   exit 0
 }
 
