@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -142,7 +141,8 @@ var (
 		port:          flag.Int("port", -1, "port"),
 		configFile:    flag.String("config", "", "specify alternate config.yml file as command line arg"),
 		// https://github.com/uber-go/zap/blob/master/flag.go
-		logLevel: zap.LevelFlag("loglevel", Logging.DefaultLogLevel, "set log level to one of: panic, error, warn, info, debug"),
+		logLevel: zap.LevelFlag("loglevel", cmdLineLoggingDefault, "set log level to one of: panic, error, warn, info, debug"),
+		logTest:  flag.Bool("logtest", false, "print a series of log messages and exit (used for testing)"),
 	}
 
 	// Cfg the main exported config variable
@@ -156,6 +156,7 @@ type cmdLineFlags struct {
 	port          *int
 	configFile    *string
 	logLevel      *zapcore.Level
+	logTest       *bool
 }
 
 const (
@@ -167,9 +168,7 @@ const (
 // Configure called at the very top of main()
 func Configure() {
 
-	if *CmdLine.logLevel != zapcore.DebugLevel {
-		Logging.setLogLevel(*CmdLine.logLevel) // defaults to Logging.DefaultLogLevel which is zap.InfoLevel
-	}
+	Logging.configureFromCmdline()
 
 	setRootDir()
 	secretFile = filepath.Join(RootDir, "config/secret")
@@ -200,7 +199,6 @@ func TestConfiguration() {
 
 	errT := basicTest()
 	if errT != nil {
-		// log.Fatalf(errT.Error())
 		log.Panic(errT)
 	}
 
@@ -211,7 +209,7 @@ func setRootDir() {
 	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
 	if os.Getenv(Branding.UCName+"_ROOT") != "" {
 		RootDir = os.Getenv(Branding.UCName + "_ROOT")
-		log.Infof("set cfg.RootDir from VOUCH_ROOT env var: %s", RootDir)
+		log.Warnf("set cfg.RootDir from VOUCH_ROOT env var: %s", RootDir)
 	} else {
 		ex, errEx := os.Executable()
 		if errEx != nil {
@@ -229,14 +227,14 @@ func InitForTestPurposes() {
 
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(b)
-	if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(basepath, "../../config/test_config.yml")); err != nil {
+	setRootDir()
+	// _, b, _, _ := runtime.Caller(0)
+	// basepath := filepath.Dir(b)
+	if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(RootDir, "config/testing/test_config.yml")); err != nil {
 		log.Error(err)
 	}
 	// Configure()
-	// log.Debug("opening config")
-	setRootDir()
+	// setRootDir()
 	parseConfig()
 	setDefaults()
 	// setDevelopmentLogger()
@@ -251,12 +249,10 @@ func InitForTestPurposesWithProvider(provider string) {
 
 // parseConfig parse the config file
 func parseConfig() {
-	log.Debug("opening config")
-
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 
 	if configEnv != "" {
-		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
+		log.Warnf("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
 		configFile, _ := filepath.Abs(configEnv)
 		viper.SetConfigFile(configFile)
 	} else if *CmdLine.configFile != "" {

@@ -29,6 +29,8 @@ var (
 	}
 )
 
+const cmdLineLoggingDefault = -2
+
 func init() {
 	Logging.AtomicLogLevel = zap.NewAtomicLevel()
 	// zap needs to start at zapcore.DebugLevel so that it can then be decreased to a lesser level
@@ -54,9 +56,8 @@ func init() {
 func (L logging) setLogLevel(lvl zapcore.Level) {
 	// https://github.com/uber-go/zap/blob/master/zapcore/level.go#L59
 	L.LogLevel = lvl
-	log.Debugf("setting LogLevel to %s", lvl)
+	log.Infof("setting LogLevel to %s", lvl)
 	L.AtomicLogLevel.SetLevel(lvl)
-	log.Debugf("set LogLevel to %s", lvl)
 }
 
 func (L logging) setLogLevelString(str string) {
@@ -81,15 +82,49 @@ func (L logging) setDevelopmentLogger() {
 	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
 }
 
+var configured = false
+
 func (L logging) configure() {
 	// logging
-	if *CmdLine.logLevel != -1 {
-		if !viper.IsSet(Branding.LCName + ".logLevel") {
-			Cfg.LogLevel = fmt.Sprintf("%s", Logging.DefaultLogLevel)
-		}
 
-		if Cfg.LogLevel != Logging.LogLevel.String() {
-			Logging.setLogLevelString(Cfg.LogLevel)
-		}
+	if configured {
+		return
 	}
+
+	// then we weren't configured via command line, check the config file
+	if !viper.IsSet(Branding.LCName + ".logLevel") {
+		// then we weren't configured via the config file, set the default
+		Cfg.LogLevel = fmt.Sprintf("%s", Logging.DefaultLogLevel)
+	}
+
+	if Cfg.LogLevel != Logging.LogLevel.String() {
+		// log.Errorf("L.configure() Logging.LogLevel %s Cfg.LogLevel %s", Logging.LogLevel.String(), Cfg.LogLevel)
+		Logging.setLogLevelString(Cfg.LogLevel)
+	}
+
+	// if we're supposed to run tests, run tests and exit
+	if *CmdLine.logTest {
+		Logging.cmdlineTestLogs()
+	}
+
+	configured = true
+}
+
+func (L logging) configureFromCmdline() {
+
+	if *CmdLine.logLevel != cmdLineLoggingDefault {
+		Logging.setLogLevel(*CmdLine.logLevel) // defaults to Logging.DefaultLogLevel which is zap.InfoLevel
+		log.Error("logging configured from cmdline")
+		configured = true
+	}
+}
+
+// in support of `./do.sh test_logging`
+func (L logging) cmdlineTestLogs() {
+	Logging.Logger.Error("error")
+	Logging.Logger.Warn("warn")
+	Logging.Logger.Info("info")
+	Logging.Logger.Debug("debug")
+	// Logging.Logger.Panic("panic")
+	os.Exit(0)
 }
