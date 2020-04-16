@@ -1,0 +1,9 @@
+vouch:
+  logLevel: debug
+  allowAllUsers: true
+
+oauth:
+  provider: indieauth
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth
