@@ -9,28 +9,22 @@ jobs:
   Publish-to-docker:
     runs-on: ubuntu-latest
     env:
-      DOCKER_TAG: latest-multi
+      DOCKER_TAG: latest-arm
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         id: buildx
         uses: crazy-max/ghaction-docker-buildx@v1
         with:
           version: latest
-      -
-        name: List available platforms
+      - name: List available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
-      -
-        name: Docker login (set DOCKER_USERNAME and DOCKER_PASSWORD in secrets)
-        if:  ${{ success() && startsWith(github.repository, 'vouch/')}} # Remove this line, if you want everybody to publish to docker hub
-        run:
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      -
-        name: Publish to docker as voucher/vouch-proxy
-        if:  ${{ success() && startsWith(github.repository, 'vouch/')}}
+      - name: Docker login (set DOCKER_USERNAME and DOCKER_PASSWORD in secrets)
+        if: ${{ success() && startsWith(github.repository, 'vouch/')}} # Remove this line, if you want everybody to publish to docker hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Publish to docker as voucher/vouch-proxy
+        if: ${{ success() && startsWith(github.repository, 'vouch/')}}
         run: |
           docker buildx build \
             --platform linux/arm/v7,linux/arm64 \
