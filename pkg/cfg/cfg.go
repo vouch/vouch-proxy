@@ -308,15 +308,10 @@ func Get(key string) string {
 
 // basicTest just a quick sanity check to see if the config is sound
 func basicTest() error {
-	if GenOAuth.Provider != Providers.Google &&
-		GenOAuth.Provider != Providers.GitHub &&
-		GenOAuth.Provider != Providers.IndieAuth &&
-		GenOAuth.Provider != Providers.HomeAssistant &&
-		GenOAuth.Provider != Providers.ADFS &&
-		GenOAuth.Provider != Providers.OIDC &&
-		GenOAuth.Provider != Providers.OpenStax &&
-		GenOAuth.Provider != Providers.Nextcloud {
-		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
+
+	// check oauth config
+	if err := oauthBasicTest(); err != nil {
+		return err
 	}
 
 	for _, opt := range RequiredOptions {
@@ -327,38 +322,6 @@ func basicTest() error {
 	// Domains is required _unless_ Cfg.AllowAllUsers is set
 	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
-	}
-
-	// OAuthconfig Checks
-	switch {
-	case GenOAuth.ClientID == "":
-		// everyone has a clientID
-		return errors.New("configuration error: oauth.client_id not found")
-	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
-		// everyone except IndieAuth has a clientSecret
-		// ADFS and OIDC providers also do not require this, but can have it optionally set.
-		return errors.New("configuration error: oauth.client_secret not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
-		// everyone except IndieAuth and Google has an authURL
-		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
-		// everyone except IndieAuth, Google and ADFS has an userInfoURL
-		return errors.New("configuration error: oauth.user_info_url not found")
-	}
-
-	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
-		if GenOAuth.RedirectURL != "" {
-			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
-				return err
-			}
-		}
-		if len(GenOAuth.RedirectURLs) > 0 {
-			for _, cb := range GenOAuth.RedirectURLs {
-				if err := checkCallbackConfig(cb); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	// issue a warning if the secret is too small
