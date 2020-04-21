@@ -1,0 +1,18 @@
+# vouch config
+# bare minimum to get vouch running with adfs
+
+vouch:
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate to ADFS
+  allowAllUsers: true
+
+oauth:
+  provider: adfs
+  client_id: k8s
+  client_secret: sauceSecret
+  auth_url: https://adfs.example.com/adfs/oauth2/authorize/
+  token_url: https://adfs.example.com/adfs/oauth2/token/
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: https://vouch.example.com/auth
