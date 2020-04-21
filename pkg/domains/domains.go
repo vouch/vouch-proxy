@@ -12,7 +12,7 @@ var log *zap.SugaredLogger
 
 // Configure see main.go configure()
 func Configure() {
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 	sort.Sort(ByLengthDesc(cfg.Cfg.Domains))
 }
 

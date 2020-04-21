@@ -15,9 +15,9 @@ var log *zap.SugaredLogger
 
 func configure() {
 	// cfg.ConfigureLogger()
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 	if !cfg.Cfg.Testing {
-		cfg.Cfg.AtomicLogLevel.SetLevel(zap.ErrorLevel)
+		cfg.Logging.AtomicLogLevel.SetLevel(zap.ErrorLevel)
 	}
 }
 

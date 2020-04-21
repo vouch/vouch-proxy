@@ -19,7 +19,7 @@ var (
 
 // Configure see main.go configure()
 func Configure() {
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 	response.Configure()
 }
 

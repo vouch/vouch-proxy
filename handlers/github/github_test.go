@@ -75,7 +75,7 @@ var (
 )
 
 func setUp() {
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 	cfg.InitForTestPurposesWithProvider("github")
 
 	cfg.Cfg.AllowAllUsers = false
