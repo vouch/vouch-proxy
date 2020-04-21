@@ -15,7 +15,7 @@ var log *zap.SugaredLogger
 
 // configure see main.go configure()
 func configure() {
-	log = cfg.Cfg.Logger
+	log = cfg.Logging.Logger
 }
 
 // PrepareTokensAndClient setup the client, usually for a UserInfo request

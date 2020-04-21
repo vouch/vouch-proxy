@@ -65,8 +65,8 @@ var (
 
 // Configure see main.go configure()
 func Configure() {
-	log = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
+	log = cfg.Logging.Logger
+	fastlog = cfg.Logging.FastLogger
 	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly

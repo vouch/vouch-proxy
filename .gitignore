@@ -6,7 +6,7 @@ config/*config.yml
 config/config.yml_*
 config/google_config.json
 config/secret
-!config/test_config.yml
+!config/testing/*
 data/lasso_bolt.db
 data/vouch_bolt.db
 data/test_lasso_bolt.db
