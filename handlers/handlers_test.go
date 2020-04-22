@@ -102,11 +102,13 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 
 	groupHeader := "X-Vouch-IdP-Claims-Groups"
 	booleanHeader := "X-Vouch-IdP-Claims-Boolean-Claim"
+	familyNameHeader := "X-Vouch-IdP-Claims-Family-Name"
 
 	// Check that the custom claim headers are what we expected
 	customClaimHeaders := map[string][]string{
-		strings.ToLower(groupHeader):   []string{},
-		strings.ToLower(booleanHeader): []string{},
+		strings.ToLower(groupHeader):      []string{},
+		strings.ToLower(booleanHeader):    []string{},
+		strings.ToLower(familyNameHeader): []string{},
 	}
 
 	for k, v := range rr.Result().Header {
@@ -116,8 +118,9 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 		}
 	}
 	expectedCustomClaimHeaders := map[string][]string{
-		strings.ToLower(groupHeader):   []string{"\"Website Users\",\"Test Group\""},
-		strings.ToLower(booleanHeader): []string{"true"},
+		strings.ToLower(groupHeader):      []string{"\"Website Users\",\"Test Group\""},
+		strings.ToLower(booleanHeader):    []string{"true"},
+		strings.ToLower(familyNameHeader): []string{"Tester"},
 	}
 	assert.Equal(t, expectedCustomClaimHeaders, customClaimHeaders)
 }

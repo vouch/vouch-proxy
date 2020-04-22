@@ -10,6 +10,7 @@ vouch:
     claims:
       - groups
       - boolean_claim
+      - family_name
 
   cookie:
     name: vouchTestingCookie
