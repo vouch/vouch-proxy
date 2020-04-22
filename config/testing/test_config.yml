@@ -3,21 +3,21 @@ vouch:
   listen: 0.0.0.0
   port: 9090
   domains:
-  - vouch.github.io
+    - vouch.github.io
 
   whiteList:
-  - bob@yourdomain.com
-  - alice@yourdomain.com
-  - joe@yourdomain.com
+    - bob@yourdomain.com
+    - alice@yourdomain.com
+    - joe@yourdomain.com
 
-  cookie: 
+  cookie:
     name: vouchTestingCookie
 
   session:
     name: VouchTestingSession
 
-  db: 
-    file: /tmp/vouch-proxy-testing.db
+  jwt:
+    secret: testingsecret
 
 oauth:
   provider: indieauth

@@ -1,0 +1,17 @@
+vouch:
+  logLevel: debug
+  domains:
+    - example.com
+
+  teamWhitelist:
+    - "org1/team1"
+    - "org1/team2"
+
+  jwt:
+    secret: testingsecret
+
+oauth:
+  provider: github
+  client_id: fake
+  auth_url: fake
+  callback_url: http://vouch.github.io:9090/auth

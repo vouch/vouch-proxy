@@ -1,0 +1,43 @@
+name: Docker build and push voucher/vouch-proxy:latest-arm
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  Publish-to-docker:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_TAG: latest-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: latest
+      - name: List available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+      - name: Docker login (set DOCKER_USERNAME and DOCKER_PASSWORD in secrets)
+        if: ${{ success() && startsWith(github.repository, 'vouch/')}} # Remove this line, if you want everybody to publish to docker hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Publish to docker as voucher/vouch-proxy
+        if: ${{ success() && startsWith(github.repository, 'vouch/')}}
+        run: |
+          docker buildx build \
+            --platform linux/arm/v7,linux/arm64 \
+            --push \
+            -t voucher/vouch-proxy:$DOCKER_TAG \
+            .
+    # Uncomment below to have github build to docker for every user. Watch out for indentation
+    #   -
+    #     name: Publish to docker as github_user/github_repo
+    #     if: ${{ success() && !startsWith(github.repository, 'vouch/')}}
+    #     run: |
+    #       docker buildx build \
+    #         --platform linux/amd64,linux/arm/v7,linux/arm64 \
+    #         --push \
+    #         -t $GITHUB_REPOSITORY:latest \
+    #         .

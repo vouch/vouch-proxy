@@ -6,10 +6,7 @@ config/*config.yml
 config/config.yml_*
 config/google_config.json
 config/secret
-!config/test_config.yml
-data/lasso_bolt.db
-data/vouch_bolt.db
-data/test_lasso_bolt.db
+!config/testing/*
 pkg/model/storage-test.db
 .vscode/*
 coverage.out
