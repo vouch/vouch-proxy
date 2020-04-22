@@ -4,14 +4,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
@@ -45,15 +43,16 @@ type Config struct {
 	}
 
 	Headers struct {
-		JWT         string   `mapstructure:"jwt"`
-		User        string   `mapstructure:"user"`
-		QueryString string   `mapstructure:"querystring"`
-		Redirect    string   `mapstructure:"redirect"`
-		Success     string   `mapstructure:"success"`
-		ClaimHeader string   `mapstructure:"claimheader"`
-		Claims      []string `mapstructure:"claims"`
-		AccessToken string   `mapstructure:"accesstoken"`
-		IDToken     string   `mapstructure:"idtoken"`
+		JWT           string            `mapstructure:"jwt"`
+		User          string            `mapstructure:"user"`
+		QueryString   string            `mapstructure:"querystring"`
+		Redirect      string            `mapstructure:"redirect"`
+		Success       string            `mapstructure:"success"`
+		ClaimHeader   string            `mapstructure:"claimheader"`
+		Claims        []string          `mapstructure:"claims"`
+		AccessToken   string            `mapstructure:"accesstoken"`
+		IDToken       string            `mapstructure:"idtoken"`
+		ClaimsCleaned map[string]string // the rawClaim is mapped to the actual claims header
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
@@ -183,7 +182,7 @@ func Configure() {
 	parseConfig()
 	Logging.configure()
 	setDefaults()
-
+	cleanClaimsHeaders()
 	if *CmdLine.port != -1 {
 		Cfg.Port = *CmdLine.port
 	}
@@ -244,6 +243,7 @@ func InitForTestPurposesWithProvider(provider string) {
 		GenOAuth.Provider = provider
 		setProviderDefaults()
 	}
+	cleanClaimsHeaders()
 
 }
 
@@ -485,110 +485,54 @@ func setDefaults() {
 	}
 }
 
-func setProviderDefaults() {
-	if GenOAuth.Provider == Providers.Google {
-		setDefaultsGoogle()
-		// setDefaultsGoogle also configures the OAuthClient
-	} else if GenOAuth.Provider == Providers.GitHub {
-		setDefaultsGitHub()
-		configureOAuthClient()
-	} else if GenOAuth.Provider == Providers.ADFS {
-		setDefaultsADFS()
-		configureOAuthClient()
-	} else {
-		// IndieAuth, OIDC, OpenStax, Nextcloud
-		configureOAuthClient()
-	}
-}
+func claimToHeader(claim string) (string, error) {
+	was := claim
 
-func setDefaultsGoogle() {
-	log.Info("configuring Google OAuth")
-	GenOAuth.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
-	if len(GenOAuth.Scopes) == 0 {
-		// You have to select a scope from
-		// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-		GenOAuth.Scopes = []string{"email"}
-	}
-	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
-		Scopes:       GenOAuth.Scopes,
-		Endpoint:     google.Endpoint,
-	}
-	if GenOAuth.PreferredDomain != "" {
-		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
-		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
-	}
-}
+	// Auth0 allows "namespaceing" of claims and represents them as URLs
+	claim = strings.TrimPrefix(claim, "http://")
+	claim = strings.TrimPrefix(claim, "https://")
 
-func setDefaultsADFS() {
-	log.Info("configuring ADFS OAuth")
-	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
-}
+	// not allowed in header: "(),/:;<=>?@[\]{}"
+	// https://greenbytes.de/tech/webdav/rfc7230.html#rfc.section.3.2.6
+	// and we don't allow underscores because nginx doesn't like them
+	// http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
+	for _, r := range `"(),/\:;<=>?@[]{}_` {
+		claim = strings.ReplaceAll(claim, string(r), "-")
+	}
 
-func setDefaultsGitHub() {
-	// log.Info("configuring GitHub OAuth")
-	if GenOAuth.AuthURL == "" {
-		GenOAuth.AuthURL = github.Endpoint.AuthURL
-	}
-	if GenOAuth.TokenURL == "" {
-		GenOAuth.TokenURL = github.Endpoint.TokenURL
-	}
-	if GenOAuth.UserInfoURL == "" {
-		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
-	}
-	if GenOAuth.UserTeamURL == "" {
-		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
-	}
-	if GenOAuth.UserOrgURL == "" {
-		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
-	}
-	if len(GenOAuth.Scopes) == 0 {
-		// https://github.com/vouch/vouch-proxy/issues/63
-		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
-		GenOAuth.Scopes = []string{"read:user"}
-
-		if len(Cfg.TeamWhiteList) > 0 {
-			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
+	// The field-name must be composed of printable ASCII characters (i.e., characters)
+	// that have values between 33. and 126., decimal, except colon).
+	// https://github.com/vouch/vouch-proxy/issues/183#issuecomment-564427548
+	// get the rune (char) for each claim character
+	for _, r := range claim {
+		// log.Debugf("claimToHeader rune %c - %d", r, r)
+		if r < 33 || r > 126 {
+			log.Debugf("%s.header.claims %s includes character %c, replacing with '-'", Branding.CcName, was, r)
+			claim = strings.Replace(claim, string(r), "-", 1)
 		}
 	}
-}
-
-func configureOAuthClient() {
-	log.Infof("configuring %s OAuth with Endpoint %s", GenOAuth.Provider, GenOAuth.AuthURL)
-	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  GenOAuth.AuthURL,
-			TokenURL: GenOAuth.TokenURL,
-		},
-		RedirectURL: GenOAuth.RedirectURL,
-		Scopes:      GenOAuth.Scopes,
+	claim = Cfg.Headers.ClaimHeader + http.CanonicalHeaderKey(claim)
+	if claim != was {
+		log.Infof("%s.header.claims %s will be forwarded downstream in the Header %s", Branding.CcName, was, claim)
+		log.Debugf("nginx will popultate the variable $auth_resp_%s", strings.ReplaceAll(strings.ToLower(claim), "-", "_"))
 	}
+	// log.Errorf("%s.header.claims %s will be forwarded in the Header %s", Branding.CcName, was, claim)
+	return claim, nil
+
 }
 
-func getOrGenerateJWTSecret() string {
-	b, err := ioutil.ReadFile(secretFile)
-	if err == nil {
-		log.Info("jwt.secret read from " + secretFile)
-	} else {
-		// then generate a new secret and store it in the file
-		log.Debug(err)
-		log.Info("jwt.secret not found in " + secretFile)
-		log.Warn("generating random jwt.secret and storing it in " + secretFile)
+// fix the claims headers
+// https://github.com/vouch/vouch-proxy/issues/183
 
-		// make sure to create 256 bits for the secret
-		// see https://github.com/vouch/vouch-proxy/issues/54
-		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+func cleanClaimsHeaders() error {
+	cleanedHeaders := make(map[string]string)
+	for _, claim := range Cfg.Headers.Claims {
+		header, err := claimToHeader(claim)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		b = []byte(rstr)
-		err = ioutil.WriteFile(secretFile, b, 0600)
-		if err != nil {
-			log.Debug(err)
-		}
+		cleanedHeaders[claim] = header
 	}
-	return string(b)
+	Cfg.Headers.ClaimsCleaned = cleanedHeaders
+	return nil
 }
