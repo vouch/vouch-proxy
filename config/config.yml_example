@@ -104,9 +104,10 @@ vouch:
       - groups
       - given_name
     # these will result in two headers being passed back to nginx
-    # X-Vouch-IdP-Claims-groups
-    # X-Vouch-IdP-Claims-given_name
-      
+    # X-Vouch-IdP-Claims-Groups
+    # X-Vouch-IdP-Claims-Given-Name
+    # see https://github.com/vouch/vouch-proxy/issues/183 regarding claims and header naming
+
     # claimheader - Customizable claim header prefix (instead of default `X-Vouch-IdP-Claims-`) 
     # claimheader: My-Custom-Claim-Prefix
 
