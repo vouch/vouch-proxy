@@ -54,8 +54,8 @@ func MapClaims(claims []byte, customClaims *structs.CustomClaims) error {
 	m := f.(map[string]interface{})
 	for k := range m {
 		var found = false
-		for _, e := range cfg.Cfg.Headers.Claims {
-			if k == e {
+		for claim := range cfg.Cfg.Headers.ClaimsCleaned {
+			if k == claim {
 				found = true
 			}
 		}

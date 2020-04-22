@@ -33,7 +33,7 @@ type VouchClaims struct {
 var StandardClaims jwt.StandardClaims
 
 // CustomClaims implementation
-var CustomClaims map[string]interface{}
+// var CustomClaims map[string]interface{}
 
 // Sites added to VouchClaims
 var Sites []string

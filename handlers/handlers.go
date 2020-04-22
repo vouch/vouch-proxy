@@ -214,29 +214,29 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if len(cfg.Cfg.Headers.Claims) > 0 {
+
+	if len(cfg.Cfg.Headers.ClaimsCleaned) > 0 {
 		log.Debug("Found claims in config, finding specific keys...")
 		// Run through all the claims found
 		for k, v := range claims.CustomClaims {
 			// Run through the claims we are looking for
-			for _, cv := range cfg.Cfg.Headers.Claims {
+			for claim, header := range cfg.Cfg.Headers.ClaimsCleaned {
 				// Check for matching claim
-				if cv == k {
+				if claim == k {
 					log.Debug("Found matching claim key: ", k)
-					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
 					// convert to string
 					val := fmt.Sprint(v)
 					if reflect.TypeOf(val).Kind() == reflect.String {
 						// if val, ok := v.(string); ok {
-						w.Header().Add(customHeader, val)
-						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
+						log.Debugf("Adding header for claim %s - %s: %s", k, header, val)
+						w.Header().Add(header, val)
 					} else if val, ok := v.([]interface{}); ok {
 						strs := make([]string, len(val))
 						for i, v := range val {
 							strs[i] = fmt.Sprintf("\"%s\"", v)
 						}
-						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", strings.Join(strs, ","))
-						w.Header().Add(customHeader, strings.Join(strs, ","))
+						log.Debugf("Adding header for claim %s - %s: %s", k, header, val)
+						w.Header().Add(header, strings.Join(strs, ","))
 					} else {
 						log.Errorf("Couldn't parse header type for %s %+v.  Please submit an issue.", k, v)
 					}
