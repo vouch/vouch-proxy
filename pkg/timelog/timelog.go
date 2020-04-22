@@ -8,14 +8,20 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/response"
+	"go.uber.org/zap"
 )
 
 var (
 	req        = int64(0)
 	avgLatency = int64(0)
-
-	log = cfg.Cfg.Logger
+	log        *zap.SugaredLogger
 )
+
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Logging.Logger
+	response.Configure()
+}
 
 // TimeLog records how long it takes to process the http request and produce the response (latency)
 func TimeLog(nextHandler http.Handler) func(http.ResponseWriter, *http.Request) {

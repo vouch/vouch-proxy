@@ -10,7 +10,7 @@ cd $SDIR
 export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 
 IMAGE=voucher/vouch-proxy
-GOIMAGE=golang:1.10
+GOIMAGE=golang:1.14
 NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
@@ -56,7 +56,6 @@ drun () {
     -p ${HTTPPORT}:${HTTPPORT} 
     --name $NAME 
     -v ${SDIR}/config:/config 
-    -v ${SDIR}/data:/data 
     $IMAGE $* "
 
     echo $CMD
@@ -142,29 +141,109 @@ coverage() {
   go tool cover -html=coverage.out -o coverage.html
 }
 
-test () {
+test() {
   if [ -z "$VOUCH_CONFIG" ]; then
-    export VOUCH_CONFIG="$SDIR/config/test_config.yml"
+    export VOUCH_CONFIG="$SDIR/config/testing/test_config.yml"
   fi
   # test all the things
   if [ -n "$*" ]; then
-    go test -v -race $EXTRA_TEST_ARGS $*
+    # go test -v -race $EXTRA_TEST_ARGS $*
+    go test -race $EXTRA_TEST_ARGS $*
   else
-    go test -v -race $EXTRA_TEST_ARGS ./...
+    # go test -v -race $EXTRA_TEST_ARGS ./...
+    go test -race $EXTRA_TEST_ARGS ./...
   fi
+}
+
+test_logging() {
+  # use Process Substitution to capture log output
+  # https://stackoverflow.com/questions/20017805/bash-capture-output-of-command-run-in-background
+
+  # set -b
+  # set -o notify
+  build
+  declare -a levels=(error warn info debug)
+
+  echo "testing loglevel set from command line"
+  levelcount=0
+  for ll in ${levels[*]}; do
+    # test that we can see the current level and no level below this level
+    coproc vpll (./vouch-proxy -logtest -loglevel ${ll} -config ./config/testing/test_config.yml)
+    exec 2> /dev/null # suppress process terminated messages since ubuntu's kill doesn't support `kill -0`
+
+    # echo "log level $ll vouch-proxy pid ${vpll_PID} fd ${vpll[0]}";
+    llpid=${vpll_PID}
+
+    # declare -a shouldnotfind=(info)
+    declare -a shouldnotfind=()
+    for (( i=0; i<${#levels[@]}; i++ ));  do
+      if (( i > $levelcount )); then
+        shouldnotfind+=(${levels[$i]})
+      fi
+    done
+
+    linesread=0
+    while read -t 1 -u ${vpll[0]} line; do
+      let "linesread+=1"
+      # echo "$linesread $line"
+      for nono in ${shouldnotfind[*]} ; do
+        # first line is log info
+        if (( $linesread > 1 )) && echo $line | grep $nono; then
+          echo "line should not contain $nono"
+          echo "$linesread $line"
+          echo "bad case of the nonos: $nono"
+          exit 1;
+        fi
+      done
+    done
+    let "levelcount+=1"
+  done
+  echo "passed"
+  
+  echo "testing loglevel set from config file"
+  levelcount=0
+  for ll in ${levels[*]}; do
+    # test that we can see the current level and no level below this level
+    coproc vpll (./vouch-proxy -logtest -config ./config/testing/logging_${ll}.yml )
+    # echo "log level $ll vouch-proxy pid ${vpll_PID} fd ${vpll[0]}";
+
+    # declare -a shouldnotfind=(info)
+    declare -a shouldnotfind=()
+    for (( i=0; i<${#levels[@]}; i++ ));  do
+      if (( $i > $levelcount )); then
+        shouldnotfind+=(${levels[$i]})
+      fi
+    done
+
+    # exec 2> /dev/null # suppress process terminated messages
+    linesread=0
+    while read -t 1 -u ${vpll[0]} line; do
+      let "linesread+=1"
+      # echo "$linesread $line"
+      for nono in ${shouldnotfind[*]} ; do
+        # the first three messages are log and info when starting from the command line
+        if (( $linesread > 3 )) && echo $line | grep $nono; then
+          echo "line should not contain $nono"
+          echo "$linesread $line"
+          echo "bad case of the nonos: $nono"
+          exit 1;
+        fi
+      done
+    done
+    let "levelcount+=1"
+
+  done
+  echo "passed"
+  killall vouch-proxy
+  exit 0
 }
 
 stats () {
   echo -n "lines of code: "
-  find . -name '*.go' | xargs wc -l | grep total | cut -d' ' -f2
+  find . -name '*.go' | xargs wc -l | grep total
 
   echo -n "number of go files: "
   find . -name '*.go' | wc -l
-}
-
-DB=data/vouch_bolt.db
-browsebolt() {
-	${GOPATH}/bin/boltbrowser $DB
 }
 
 usage() {
@@ -177,9 +256,9 @@ usage() {
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
+     $0 test_logging           - test the logging output
      $0 coverage               - coverage report
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
-     $0 browsebolt             - browse the boltdb at ${DB}
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 stats                  - simple metrics (lines of code in project, number of go files)
      $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
@@ -194,7 +273,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'browsebolt'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging')
    shift
    $ARG $*
    ;;

@@ -1,21 +1,23 @@
 package handlers
 
 import (
-	"bytes"
-	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
-	"mime/multipart"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/vouch/vouch-proxy/handlers/adfs"
+	"github.com/vouch/vouch-proxy/handlers/common"
+	"github.com/vouch/vouch-proxy/handlers/github"
+	"github.com/vouch/vouch-proxy/handlers/google"
+	"github.com/vouch/vouch-proxy/handlers/homeassistant"
+	"github.com/vouch/vouch-proxy/handlers/indieauth"
+	"github.com/vouch/vouch-proxy/handlers/nextcloud"
+	"github.com/vouch/vouch-proxy/handlers/openid"
+	"github.com/vouch/vouch-proxy/handlers/openstax"
 
 	"go.uber.org/zap"
 
@@ -26,7 +28,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/model"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"golang.org/x/oauth2"
 )
@@ -44,30 +45,38 @@ type AuthError struct {
 	JWT   string
 }
 
+// Provider each Provider must support GetuserInfo
+type Provider interface {
+	Configure()
+	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
+}
+
 const (
 	base64Bytes = 32
 )
 
 var (
-	// Templates
 	indexTemplate *template.Template
-
-	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore     *sessions.CookieStore
-
 	log           *zap.SugaredLogger
 	fastlog       *zap.Logger
+	provider      Provider
 )
 
-// Init initializes the handlers package
-func Init() {
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Logging.Logger
+	fastlog = cfg.Logging.FastLogger
+	// http://www.gorillatoolkit.org/pkg/sessions
 	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
-	log     = cfg.Cfg.Logger
-	fastlog = cfg.Cfg.FastLogger
-
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
+
+	log.Debugf("handlers.Configure() attempting to parse templates with cfg.RootDir: %s", cfg.RootDir)
+	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+
+	provider = getProvider()
+	provider.Configure()
 }
 
 func loginURL(r *http.Request, state string) string {
@@ -94,7 +103,7 @@ func loginURL(r *http.Request, state string) string {
 			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
 	}
-	// log.Debugf("loginUrl %s", url)
+	// log.Debugf("loginURL %s", url)
 	return lurl
 }
 
@@ -205,30 +214,41 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if len(cfg.Cfg.Headers.Claims) > 0 {
+
+	if len(cfg.Cfg.Headers.ClaimsCleaned) > 0 {
 		log.Debug("Found claims in config, finding specific keys...")
 		// Run through all the claims found
 		for k, v := range claims.CustomClaims {
 			// Run through the claims we are looking for
-			for _, cv := range cfg.Cfg.Headers.Claims {
+			for claim, header := range cfg.Cfg.Headers.ClaimsCleaned {
 				// Check for matching claim
-				if cv == k {
+				if claim == k {
 					log.Debug("Found matching claim key: ", k)
-					customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
+					// <<<<<<< HEAD
+					// customHeader := strings.Join([]string{cfg.Cfg.Headers.ClaimHeader, k}, "")
 					if val, ok := v.([]interface{}); ok {
+						// =======
+						// 					// convert to string
+						// 					val := fmt.Sprint(v)
+						// 					if reflect.TypeOf(val).Kind() == reflect.String {
+						// 						// if val, ok := v.(string); ok {
+						// 						log.Debugf("Adding header for claim %s - %s: %s", k, header, val)
+						// 						w.Header().Add(header, val)
+						// 					} else if val, ok := v.([]interface{}); ok {
+						// >>>>>>> master
 						strs := make([]string, len(val))
 						for i, v := range val {
 							strs[i] = fmt.Sprintf("\"%s\"", v)
 						}
-						log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", strings.Join(strs, ","))
-						w.Header().Add(customHeader, strings.Join(strs, ","))
+						log.Debugf("Adding header for claim %s - %s: %s", k, header, val)
+						w.Header().Add(header, strings.Join(strs, ","))
 					} else {
 						// convert to string
 						val := fmt.Sprint(v)
 						if reflect.TypeOf(val).Kind() == reflect.String {
 							// if val, ok := v.(string); ok {
-							w.Header().Add(customHeader, val)
-							log.Debug("Adding header for claim: ", k, " Name: ", customHeader, " Value: ", val)
+							w.Header().Add(header, val)
+							log.Debugf("Adding header for claim %s - %s: %s", k, header, val)
 						} else {
 							log.Errorf("Couldn't parse header type for %s %+v.  Please submit an issue.", k, v)
 						}
@@ -268,27 +288,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	// parse the jwt and see if the claim is valid for the domain
 
-	// update user last access in a go routine
-	// user := structs.User{}
-	// err = model.User([]byte(email), &user)
-	// if err != nil {
-	// 	// no email in jwt, or no email in db
-	// 	error401(w, r, err.Error())
-	// 	return
-	// }
-	// if user.Email == "" {
-	// 	error401(w, r, "no email found in db")
-	// 	return
-	// }
-
-	// put the site
-	go func() {
-		s := structs.Site{Domain: r.Host}
-		log.Debugf("site struct: %v", s)
-		if err = model.PutSite(s); err != nil {
-			log.Error(err)
-		}
-	}()
 }
 
 // LogoutHandler /logout
@@ -297,7 +296,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/logout")
 	cookie.ClearCookie(w, r)
 
-	log.Debug("saving session")
+	log.Debug("deleting session")
 	sessstore.MaxAge(-1)
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
@@ -405,41 +404,52 @@ func renderIndex(w http.ResponseWriter, msg string) {
 }
 
 // VerifyUser validates that the domains match for the user
-// func VerifyUser(u structs.User) (ok bool, err error) {
-func VerifyUser(u interface{}) (ok bool, err error) {
-	// (w http.ResponseWriter, req http.Request)
-	// is Hd google specific? probably yes
-	// TODO rewrite / abstract this validation
-	ok = false
+func VerifyUser(u interface{}) (bool, error) {
 
-	// TODO: how do we manage the user?
 	user := u.(structs.User)
 
-	if cfg.Cfg.AllowAllUsers {
-		ok = true
-		log.Debugf("skipping verify user since cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
-		// if we're not allowing all users, and we have domains configured and this email isn't in one of those domains...
-	} else if len(cfg.Cfg.WhiteList) != 0 {
+	switch {
+
+	// AllowAllUsers
+	case cfg.Cfg.AllowAllUsers:
+		log.Debugf("VerifyUser: Success! skipping verification, cfg.Cfg.AllowAllUsers is %t", cfg.Cfg.AllowAllUsers)
+		return true, nil
+
+	// WhiteList
+	case len(cfg.Cfg.WhiteList) != 0:
 		for _, wl := range cfg.Cfg.WhiteList {
 			if user.Username == wl {
-				log.Debugf("found user.Username in WhiteList: %s", user.Username)
-				ok = true
-				break
+				log.Debugf("VerifyUser: Success! found user.Username in WhiteList: %s", user.Username)
+				return true, nil
 			}
 		}
+		return false, fmt.Errorf("VerifyUser: user.Username not found in WhiteList: %s", user.Username)
 
-		if !ok {
-			err = fmt.Errorf("user.Username not found in WhiteList: %s", user.Username)
+	// TeamWhiteList
+	case len(cfg.Cfg.TeamWhiteList) != 0:
+		for _, team := range user.TeamMemberships {
+			for _, wl := range cfg.Cfg.TeamWhiteList {
+				if team == wl {
+					log.Debugf("VerifyUser: Success! found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
+					return true, nil
+				}
+			}
 		}
-	} else if len(cfg.Cfg.Domains) != 0 && !domains.IsUnderManagement(user.Email) {
-		err = fmt.Errorf("Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
-		// } else if !domains.IsUnderManagement(user.HostDomain) {
-		// 	err = fmt.Errorf("HostDomain %s is not within a vouch managed domain", u.HostDomain)
-	} else {
-		ok = true
-		log.Debug("no domains configured")
+		return false, fmt.Errorf("VerifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+
+	// Domains
+	case len(cfg.Cfg.Domains) != 0:
+		if domains.IsUnderManagement(user.Email) {
+			log.Debugf("VerifyUser: Success! Email %s found within a "+cfg.Branding.CcName+" managed domain", user.Email)
+			return true, nil
+		}
+		return false, fmt.Errorf("VerifyUser: Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
+
+	// nothing configured, allow everyone through
+	default:
+		log.Warn("VerifyUser: no domains, whitelist, teamWhitelist or AllowAllUsers configured, any successful auth to the IdP authorizes access")
+		return true, nil
 	}
-	return ok, err
 }
 
 // CallbackHandler /auth
@@ -496,11 +506,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS!! they are authorized
 
-	// store the user in the database
-	if err = model.PutUser(user); err != nil {
-		log.Error(err)
-	}
-
 	// issue the jwt
 	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims, ptokens)
 	cookie.SetCookie(w, r, tokenstring)
@@ -522,344 +527,33 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	renderIndex(w, "/auth "+tokenstring)
 }
 
-// TODO: put all getUserInfo logic into its own pkg
-
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
-
-	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
-	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		return getUserInfoFromIndieAuth(r, user, customClaims)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		return getUserInfoFromADFS(r, user, customClaims, ptokens)
-	}
-	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
-	if err != nil {
-		return err
-	}
-	if cfg.GenOAuth.Provider == cfg.Providers.HomeAssistant {
-		ptokens.PAccessToken = providerToken.Extra("access_token").(string)
-		return getUserInfoFromHomeAssistant(r, user, customClaims)
-	}
-	ptokens.PAccessToken = providerToken.AccessToken
-	if cfg.GenOAuth.Provider == cfg.Providers.OpenStax {
-		client := cfg.OAuthClient.Client(context.TODO(), providerToken)
-		return getUserInfoFromOpenStax(client, user, customClaims, providerToken)
-	}
-
-	if providerToken.Extra("id_token") != nil {
-		// Certain providers (eg. gitea) don't provide an id_token
-		// and it's not neccessary for the authentication phase
-		ptokens.PIdToken = providerToken.Extra("id_token").(string)
-	} else {
-		log.Debugf("id_token missing - may not be supported by this provider")
-	}
-
-	log.Debugf("ptokens: %+v", ptokens)
-
-	// make the "third leg" request back to provider to exchange the token for the userinfo
-	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
-	if cfg.GenOAuth.Provider == cfg.Providers.Google {
-		return getUserInfoFromGoogle(client, user, customClaims)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.GitHub {
-		return getUserInfoFromGitHub(client, user, customClaims, providerToken)
-	} else if cfg.GenOAuth.Provider == cfg.Providers.OIDC {
-		return getUserInfoFromOpenID(client, user, customClaims, providerToken)
-	}
-	log.Error("we don't know how to look up the user info")
-	return nil
+	return provider.GetUserInfo(r, user, customClaims, ptokens)
 }
 
-func getUserInfoFromOpenID(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenID userinfo body: %s", string(data))
-	if err = mapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err = json.Unmarshal(data, user); err != nil {
-		log.Error(err)
-		return err
-	}
-	user.PrepareUserData()
-	return nil
-}
-
-func getUserInfoFromOpenStax(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenStax userinfo body: %s", string(data))
-	if err = mapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	oxUser := structs.OpenStaxUser{}
-	if err = json.Unmarshal(data, &oxUser); err != nil {
-		log.Error(err)
-		return err
-	}
-
-	oxUser.PrepareUserData()
-	user.Email = oxUser.Email
-	user.Name = oxUser.Name
-	user.Username = oxUser.Username
-	user.ID = oxUser.ID
-	user.PrepareUserData()
-	return nil
-}
-
-func getUserInfoFromGoogle(client *http.Client, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("google userinfo body: %s", string(data))
-	if err = mapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err = json.Unmarshal(data, user); err != nil {
-		log.Error(err)
-		return err
-	}
-	user.PrepareUserData()
-
-	return nil
-}
-
-// github
-// https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func getUserInfoFromGitHub(client *http.Client, user *structs.User, customClaims *structs.CustomClaims, ptoken *oauth2.Token) (rerr error) {
-
-	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
-	if err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("github userinfo body: %s", string(data))
-	if err = mapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	ghUser := structs.GitHubUser{}
-	if err = json.Unmarshal(data, &ghUser); err != nil {
-		log.Error(err)
-		return err
-	}
-	log.Debug("getUserInfoFromGitHub ghUser")
-	log.Debug(ghUser)
-	log.Debug("getUserInfoFromGitHub user")
-	log.Debug(user)
-
-	ghUser.PrepareUserData()
-	user.Email = ghUser.Email
-	user.Name = ghUser.Name
-	user.Username = ghUser.Username
-	user.ID = ghUser.ID
-	// user = &ghUser.User
-
-	log.Debug("getUserInfoFromGitHub")
-	log.Debug(user)
-	return nil
-}
-
-func getUserInfoFromIndieAuth(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
-
-	code := r.URL.Query().Get("code")
-	log.Errorf("ptoken.AccessToken: %s", code)
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-	// v.Set("code", code)
-	fw, err := w.CreateFormField("code")
-	if err != nil {
-		return err
-	}
-	if _, err = fw.Write([]byte(code)); err != nil {
-		return err
-	}
-	// v.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
-	if fw, err = w.CreateFormField("redirect_uri"); err != nil {
-		return err
-	}
-	if _, err = fw.Write([]byte(cfg.GenOAuth.RedirectURL)); err != nil {
-		return err
-	}
-	// v.Set("client_id", cfg.GenOAuth.ClientID)
-	if fw, err = w.CreateFormField("client_id"); err != nil {
-		return err
-	}
-	if _, err = fw.Write([]byte(cfg.GenOAuth.ClientID)); err != nil {
-		return err
-	}
-	if err = w.Close(); err != nil {
-		log.Error("error closing writer.")
-	}
-
-	req, err := http.NewRequest("POST", cfg.GenOAuth.AuthURL, &b)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", w.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-
-	// v := url.Values{}
-	// userinfo, err := client.PostForm(cfg.GenOAuth.UserInfoURL, v)
-
-	client := &http.Client{}
-	userinfo, err := client.Do(req)
-
-	if err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("indieauth userinfo body: %s", string(data))
-	if err = mapClaims(data, customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	iaUser := structs.IndieAuthUser{}
-	if err = json.Unmarshal(data, &iaUser); err != nil {
-		log.Error(err)
-		return err
-	}
-	iaUser.PrepareUserData()
-	user.Username = iaUser.Username
-	log.Debug(user)
-	return nil
-}
-
-// More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func getUserInfoFromHomeAssistant(r *http.Request, user *structs.User, customClaims *structs.CustomClaims) (rerr error) {
-	// Home assistant does not provide an API to query username, so we statically set it to "homeassistant"
-	user.Username = "homeassistant"
-	return nil
-}
-
-type adfsTokenRes struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	IDToken     string `json:"id_token"`
-	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
-}
-
-// More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func getUserInfoFromADFS(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	code := r.URL.Query().Get("code")
-	log.Debugf("code: %s", code)
-
-	formData := url.Values{}
-	formData.Set("code", code)
-	formData.Set("grant_type", "authorization_code")
-	formData.Set("resource", cfg.GenOAuth.RedirectURL)
-	formData.Set("client_id", cfg.GenOAuth.ClientID)
-	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
-	if cfg.GenOAuth.ClientSecret != "" {
-		formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
-	}
-	req, err := http.NewRequest("POST", cfg.GenOAuth.TokenURL, strings.NewReader(formData.Encode()))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
-	req.Header.Set("Accept", "application/json")
-
-	client := &http.Client{}
-	userinfo, err := client.Do(req)
-
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := userinfo.Body.Close(); err != nil {
-			rerr = err
-		}
-	}()
-
-	data, _ := ioutil.ReadAll(userinfo.Body)
-	tokenRes := adfsTokenRes{}
-
-	if err := json.Unmarshal(data, &tokenRes); err != nil {
-		log.Errorf("oauth2: cannot fetch token: %v", err)
+func getProvider() Provider {
+	switch cfg.GenOAuth.Provider {
+	case cfg.Providers.IndieAuth:
+		return indieauth.Provider{}
+	case cfg.Providers.ADFS:
+		return adfs.Provider{}
+	case cfg.Providers.HomeAssistant:
+		return homeassistant.Provider{}
+	case cfg.Providers.OpenStax:
+		return openstax.Provider{}
+	case cfg.Providers.Google:
+		return google.Provider{}
+	case cfg.Providers.GitHub:
+		return github.Provider{PrepareTokensAndClient: common.PrepareTokensAndClient}
+	case cfg.Providers.Nextcloud:
+		return nextcloud.Provider{}
+	case cfg.Providers.OIDC:
+		return openid.Provider{}
+	default:
+		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
+		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
 		return nil
 	}
-
-	ptokens.PAccessToken = string(tokenRes.AccessToken)
-	ptokens.PIdToken = string(tokenRes.IDToken)
-
-	s := strings.Split(tokenRes.IDToken, ".")
-	if len(s) < 2 {
-		log.Error("jws: invalid token received")
-		return nil
-	}
-
-	idToken, err := base64.RawURLEncoding.DecodeString(s[1])
-	if err != nil {
-		log.Error(err)
-		return nil
-	}
-	log.Debugf("idToken: %+v", string(idToken))
-
-	adfsUser := structs.ADFSUser{}
-	json.Unmarshal([]byte(idToken), &adfsUser)
-	log.Infof("adfs adfsUser: %+v", adfsUser)
-	// data contains an access token, refresh token, and id token
-	// Please note that in order for custom claims to work you MUST set allatclaims in ADFS to be passed
-	// https://oktotechnologies.ca/2018/08/26/adfs-openidconnect-configuration/
-	if err = mapClaims([]byte(idToken), customClaims); err != nil {
-		log.Error(err)
-		return err
-	}
-	adfsUser.PrepareUserData()
-	var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-
-	if len(adfsUser.Email) == 0 {
-		// If the email is blank, we will try to determine if the UPN is an email.
-		if rxEmail.MatchString(adfsUser.UPN) {
-			// Set the email from UPN if there is a valid email present.
-			adfsUser.Email = adfsUser.UPN
-		}
-	}
-	user.Username = adfsUser.Username
-	user.Email = adfsUser.Email
-	log.Debugf("User Obj: %+v", user)
-	return nil
 }
 
 // the standard error
@@ -891,28 +585,4 @@ func ok200(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-}
-
-func mapClaims(claims []byte, customClaims *structs.CustomClaims) error {
-	// Create a struct that contains the claims that we want to store from the config.
-	var f interface{}
-	err := json.Unmarshal(claims, &f)
-	if err != nil {
-		log.Error("Error unmarshaling claims")
-		return err
-	}
-	m := f.(map[string]interface{})
-	for k := range m {
-		var found = false
-		for _, e := range cfg.Cfg.Headers.Claims {
-			if k == e {
-				found = true
-			}
-		}
-		if found == false {
-			delete(m, k)
-		}
-	}
-	customClaims.Claims = m
-	return nil
 }

@@ -1,21 +1,15 @@
 package cfg
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
 
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
@@ -23,16 +17,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// config vouch jwt cookie configuration
-type config struct {
-	Logger        *zap.SugaredLogger
-	FastLogger    *zap.Logger
+// Config vouch jwt cookie configuration
+type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
-	HealthCheck   bool     `mapstructure:"healthCheck"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
+	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
@@ -47,21 +39,20 @@ type config struct {
 		Secure   bool   `mapstructure:"secure"`
 		HTTPOnly bool   `mapstructure:"httpOnly"`
 		MaxAge   int    `mapstructure:"maxage"`
+		SameSite string `mapstructure:"sameSite"`
 	}
 
 	Headers struct {
-		JWT         string   `mapstructure:"jwt"`
-		User        string   `mapstructure:"user"`
-		QueryString string   `mapstructure:"querystring"`
-		Redirect    string   `mapstructure:"redirect"`
-		Success     string   `mapstructure:"success"`
-		ClaimHeader string   `mapstructure:"claimheader"`
-		Claims      []string `mapstructure:"claims"`
-		AccessToken string   `mapstructure:"accesstoken"`
-		IDToken     string   `mapstructure:"idtoken"`
-	}
-	DB struct {
-		File string `mapstructure:"file"`
+		JWT           string            `mapstructure:"jwt"`
+		User          string            `mapstructure:"user"`
+		QueryString   string            `mapstructure:"querystring"`
+		Redirect      string            `mapstructure:"redirect"`
+		Success       string            `mapstructure:"success"`
+		ClaimHeader   string            `mapstructure:"claimheader"`
+		Claims        []string          `mapstructure:"claims"`
+		AccessToken   string            `mapstructure:"accesstoken"`
+		IDToken       string            `mapstructure:"idtoken"`
+		ClaimsCleaned map[string]string // the rawClaim is mapped to the actual claims header
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
@@ -70,7 +61,6 @@ type config struct {
 	TestURL  string   `mapstructure:"test_url"`
 	TestURLs []string `mapstructure:"test_urls"`
 	Testing  bool     `mapstructure:"testing"`
-	WebApp   bool     `mapstructure:"webapp"`
 }
 
 // oauth config items endoint for access
@@ -84,6 +74,8 @@ type oauthConfig struct {
 	RedirectURLs    []string `mapstructure:"callback_urls"`
 	Scopes          []string `mapstructure:"scopes"`
 	UserInfoURL     string   `mapstructure:"user_info_url"`
+	UserTeamURL     string   `mapstructure:"user_team_url"`
+	UserOrgURL      string   `mapstructure:"user_org_url"`
 	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
@@ -96,6 +88,7 @@ type OAuthProviders struct {
 	OIDC          string
 	HomeAssistant string
 	OpenStax      string
+	Nextcloud     string
 }
 
 type branding struct {
@@ -109,9 +102,6 @@ type branding struct {
 var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
-
-	// Cfg the main exported config variable
-	Cfg config
 
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
@@ -133,6 +123,7 @@ var (
 		OIDC:          "oidc",
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
+		Nextcloud:     "nextcloud",
 	}
 
 	// RequiredOptions must have these fields set for minimum viable config
@@ -141,12 +132,31 @@ var (
 	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
 	RootDir string
 
-	secretFile    string
-	cmdLineConfig *string
-	logger        *zap.Logger
-	log           *zap.SugaredLogger
-	atom          zap.AtomicLevel
+	secretFile string
+
+	// CmdLine command line arguments
+	CmdLine = &cmdLineFlags{
+		IsHealthCheck: flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)"),
+		port:          flag.Int("port", -1, "port"),
+		configFile:    flag.String("config", "", "specify alternate config.yml file as command line arg"),
+		// https://github.com/uber-go/zap/blob/master/flag.go
+		logLevel: zap.LevelFlag("loglevel", cmdLineLoggingDefault, "set log level to one of: panic, error, warn, info, debug"),
+		logTest:  flag.Bool("logtest", false, "print a series of log messages and exit (used for testing)"),
+	}
+
+	// Cfg the main exported config variable
+	Cfg = &Config{}
+	// IsHealthCheck see main.go
+	IsHealthCheck = false
 )
+
+type cmdLineFlags struct {
+	IsHealthCheck *bool
+	port          *int
+	configFile    *string
+	logLevel      *zapcore.Level
+	logTest       *bool
+}
 
 const (
 	// for a Base64 string we need 44 characters to get 32bytes (6 bits per char)
@@ -154,157 +164,107 @@ const (
 	base64Bytes     = 32
 )
 
-func init() {
+// Configure called at the very top of main()
+func Configure() {
 
-	atom = zap.NewAtomicLevel()
-	encoderCfg := zap.NewProductionEncoderConfig()
+	Logging.configureFromCmdline()
 
-	logger = zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		atom,
-	))
-
-	defer logger.Sync() // flushes buffer, if any
-	log = logger.Sugar()
-	Cfg.FastLogger = logger
-	Cfg.Logger = log
-
-	// Handle -healthcheck argument
-	healthCheck := flag.Bool("healthcheck", false, "invoke healthcheck (check process return value)")
-	// can pass loglevel on the command line
-	ll := flag.String("loglevel", "", "enable debug log output")
-	// from config file
-	port := flag.Int("port", -1, "port")
-	help := flag.Bool("help", false, "show usage")
-	cmdLineConfig = flag.String("config", "", "specify alternate .yml file as command line arg")
-	flag.Parse()
-
-	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
-	if os.Getenv(Branding.UCName+"_ROOT") != "" {
-		RootDir = os.Getenv(Branding.UCName + "_ROOT")
-		log.Infof("set cfg.RootDir from VOUCH_ROOT env var: %s", RootDir)
-	} else {
-		ex, errEx := os.Executable()
-		if errEx != nil {
-			panic(errEx)
-		}
-		RootDir = filepath.Dir(ex)
-		log.Debugf("cfg.RootDir: %s", RootDir)
-	}
+	setRootDir()
 	secretFile = filepath.Join(RootDir, "config/secret")
 
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
-		fmt.Println("`go test` detected, not loading regular config")
+		Logging.setLogLevel(zap.DebugLevel)
+		log.Debug("`go test` detected, not loading regular config")
 		return
 	}
 
-	ParseConfig()
+	parseConfig()
+	Logging.configure()
+	setDefaults()
+	cleanClaimsHeaders()
+	if *CmdLine.port != -1 {
+		Cfg.Port = *CmdLine.port
+	}
 
+}
+
+// TestConfiguration Confirm the Configuration is valid
+func TestConfiguration() {
 	if Cfg.Testing {
-		setDevelopmentLogger()
+		Logging.setLogLevel(zap.DebugLevel)
+		Logging.setDevelopmentLogger()
 	}
 
-	if *ll == "debug" || Cfg.LogLevel == "debug" {
-		atom.SetLevel(zap.DebugLevel)
-		log.Debug("logLevel set to debug")
-	} else if *healthCheck {
-		// just errors for healthcheck, unless debug is set
-		atom.SetLevel(zap.ErrorLevel)
-	}
-
-	if *help {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	SetDefaults()
-
-	if *port != -1 {
-		Cfg.Port = *port
-	}
-
-	errT := BasicTest()
+	errT := basicTest()
 	if errT != nil {
-		// log.Fatalf(errT.Error())
-		panic(errT)
-	}
-
-	if *healthCheck {
-		url := fmt.Sprintf("http://%s:%d/healthcheck", Cfg.Listen, Cfg.Port)
-		log.Debug("Invoking healthcheck on URL ", url)
-		resp, err := http.Get(url)
-		if err == nil {
-			robots, err := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err == nil {
-				var result map[string]interface{}
-				jsonErr := json.Unmarshal(robots, &result)
-				if jsonErr == nil {
-					if result["ok"] == true {
-						os.Exit(0)
-					}
-				}
-			}
-		}
-		log.Error("Healthcheck against ", url, " failed.")
-		os.Exit(1)
-	}
-
-	var listen = Cfg.Listen + ":" + strconv.Itoa(Cfg.Port)
-	if !isTCPPortAvailable(listen) {
-		log.Fatal(errors.New(listen + " is not available (is " + Branding.CcName + " already running?)"))
+		log.Panic(errT)
 	}
 
 	log.Debugf("viper settings %+v", viper.AllSettings())
 }
 
-func setDevelopmentLogger() {
-	// then configure the logger for development output
-	logger = logger.WithOptions(
-		zap.WrapCore(
-			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stderr), atom)
-			}))
-	log = logger.Sugar()
-	Cfg.FastLogger = log.Desugar()
-	Cfg.Logger = log
-	log.Infof("testing: %s, using development console logger", strconv.FormatBool(Cfg.Testing))
+func setRootDir() {
+	// set RootDir from VOUCH_ROOT env var, or to the executable's directory
+	if os.Getenv(Branding.UCName+"_ROOT") != "" {
+		RootDir = os.Getenv(Branding.UCName + "_ROOT")
+		log.Warnf("set cfg.RootDir from VOUCH_ROOT env var: %s", RootDir)
+	} else {
+		ex, errEx := os.Executable()
+		if errEx != nil {
+			log.Panic(errEx)
+		}
+		RootDir = filepath.Dir(ex)
+		log.Debugf("cfg.RootDir: %s", RootDir)
+	}
 }
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
 func InitForTestPurposes() {
-    InitForTestPurposesWithPath("../../config/test_config.yml")
+	InitForTestPurposesWithProvider("")
 }
 
-// InitForTestPurposesWithPath initializes the cfg package for test purposes with a custom config path
-func InitForTestPurposesWithPath(path string) {
-	if err := os.Setenv(Branding.UCName+"_CONFIG", path); err != nil {
-		log.Error(err)
+// InitForTestPurposesWithProvider just for testing
+func InitForTestPurposesWithProvider(provider string) {
+	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+	setRootDir()
+	// _, b, _, _ := runtime.Caller(0)
+	// basepath := filepath.Dir(b)
+	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
+	if configEnv == "" {
+		if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(RootDir, "config/testing/test_config.yml")); err != nil {
+			log.Error(err)
+		}
 	}
-	// log.Debug("opening config")
-	setDevelopmentLogger()
-	ParseConfig()
-	SetDefaults()
+	// Configure()
+	// setRootDir()
+	parseConfig()
+	setDefaults()
+	// setDevelopmentLogger()
+
+	// Needed to override the provider, which is otherwise set via yml
+	if provider != "" {
+		GenOAuth.Provider = provider
+		setProviderDefaults()
+	}
+	cleanClaimsHeaders()
+
 }
 
-// ParseConfig parse the config file
-func ParseConfig() {
-	log.Debug("opening config")
-
+// parseConfig parse the config file
+func parseConfig() {
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 
 	if configEnv != "" {
-		log.Infof("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
+		log.Warnf("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
 		configFile, _ := filepath.Abs(configEnv)
 		viper.SetConfigFile(configFile)
-	} else if *cmdLineConfig != "" {
-		log.Infof("config file set on commandline: %s", *cmdLineConfig)
+	} else if *CmdLine.configFile != "" {
+		log.Infof("config file set on commandline: %s", *CmdLine.configFile)
 		viper.AddConfigPath("/")
 		viper.AddConfigPath(RootDir)
 		viper.AddConfigPath(filepath.Join(RootDir, "config"))
-		viper.SetConfigFile(*cmdLineConfig)
+		viper.SetConfigFile(*CmdLine.configFile)
 	} else {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
@@ -313,14 +273,14 @@ func ParseConfig() {
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s", err.Error())
-		panic(err)
+		log.Panic(err)
 	}
 	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
-		var oldConfig config
+		var oldConfig = &Config{}
 		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
 			log.Error(err)
 		}
@@ -350,16 +310,12 @@ func Get(key string) string {
 	return viper.GetString(key)
 }
 
-// BasicTest just a quick sanity check to see if the config is sound
-func BasicTest() error {
-	if GenOAuth.Provider != Providers.Google &&
-		GenOAuth.Provider != Providers.GitHub &&
-		GenOAuth.Provider != Providers.IndieAuth &&
-		GenOAuth.Provider != Providers.HomeAssistant &&
-		GenOAuth.Provider != Providers.ADFS &&
-		GenOAuth.Provider != Providers.OIDC &&
-		GenOAuth.Provider != Providers.OpenStax {
-		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
+// basicTest just a quick sanity check to see if the config is sound
+func basicTest() error {
+
+	// check oauth config
+	if err := oauthBasicTest(); err != nil {
+		return err
 	}
 
 	for _, opt := range RequiredOptions {
@@ -370,38 +326,6 @@ func BasicTest() error {
 	// Domains is required _unless_ Cfg.AllowAllUsers is set
 	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
-	}
-
-	// OAuthconfig Checks
-	switch {
-	case GenOAuth.ClientID == "":
-		// everyone has a clientID
-		return errors.New("configuration error: oauth.client_id not found")
-	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
-		// everyone except IndieAuth has a clientSecret
-		// ADFS and OIDC providers also do not require this, but can have it optionally set.
-		return errors.New("configuration error: oauth.client_secret not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
-		// everyone except IndieAuth and Google has an authURL
-		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
-		// everyone except IndieAuth, Google and ADFS has an userInfoURL
-		return errors.New("configuration error: oauth.user_info_url not found")
-	}
-
-	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
-		if GenOAuth.RedirectURL != "" {
-			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
-				return err
-			}
-		}
-		if len(GenOAuth.RedirectURLs) > 0 {
-			for _, cb := range GenOAuth.RedirectURLs {
-				if err := checkCallbackConfig(cb); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	// issue a warning if the secret is too small
@@ -450,8 +374,8 @@ func checkCallbackConfig(url string) error {
 	return nil
 }
 
-// SetDefaults set default options for some items
-func SetDefaults() {
+// setDefaults set default options for most items
+func setDefaults() {
 
 	// this should really be done by Viper up in parseConfig but..
 	// nested defaults is currently *broken*
@@ -462,17 +386,20 @@ func SetDefaults() {
 	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
 	// viper.SetDefault("Cookie.Name", "Vouch")
 
-	// logging
-	if !viper.IsSet(Branding.LCName + ".logLevel") {
-		Cfg.LogLevel = "info"
-	}
 	// network defaults
 	if !viper.IsSet(Branding.LCName + ".listen") {
 		Cfg.Listen = "0.0.0.0"
 	}
+
 	if !viper.IsSet(Branding.LCName + ".port") {
 		Cfg.Port = 9090
 	}
+
+	// bare minimum for healthcheck acheived
+	if *CmdLine.IsHealthCheck {
+		return
+	}
+
 	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
 		Cfg.AllowAllUsers = false
 	}
@@ -534,11 +461,6 @@ func SetDefaults() {
 		Cfg.Headers.ClaimHeader = "X-" + Branding.CcName + "-IdP-Claims-"
 	}
 
-	// db defaults
-	if !viper.IsSet(Branding.LCName + ".db.file") {
-		Cfg.DB.File = "data/" + Branding.LCName + "_bolt.db"
-	}
-
 	// session
 	if !viper.IsSet(Branding.LCName + ".session.name") {
 		Cfg.Session.Name = Branding.CcName + "Session"
@@ -559,121 +481,62 @@ func SetDefaults() {
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
-	// TODO: probably change this name, maybe set the domain/port the webapp runs on
-	if !viper.IsSet(Branding.LCName + ".webapp") {
-		Cfg.WebApp = false
-	}
 
 	// OAuth defaults and client configuration
 	err := UnmarshalKey("oauth", &GenOAuth)
 	if err == nil {
-		if GenOAuth.Provider == Providers.Google {
-			setDefaultsGoogle()
-			// setDefaultsGoogle also configures the OAuthClient
-		} else if GenOAuth.Provider == Providers.GitHub {
-			setDefaultsGitHub()
-			configureOAuthClient()
-		} else if GenOAuth.Provider == Providers.ADFS {
-			setDefaultsADFS()
-			configureOAuthClient()
-		} else {
-			// IndieAuth, OIDC, OpenStax
-			configureOAuthClient()
+		setProviderDefaults()
+	}
+}
+
+func claimToHeader(claim string) (string, error) {
+	was := claim
+
+	// Auth0 allows "namespaceing" of claims and represents them as URLs
+	claim = strings.TrimPrefix(claim, "http://")
+	claim = strings.TrimPrefix(claim, "https://")
+
+	// not allowed in header: "(),/:;<=>?@[\]{}"
+	// https://greenbytes.de/tech/webdav/rfc7230.html#rfc.section.3.2.6
+	// and we don't allow underscores because nginx doesn't like them
+	// http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
+	for _, r := range `"(),/\:;<=>?@[]{}_` {
+		claim = strings.ReplaceAll(claim, string(r), "-")
+	}
+
+	// The field-name must be composed of printable ASCII characters (i.e., characters)
+	// that have values between 33. and 126., decimal, except colon).
+	// https://github.com/vouch/vouch-proxy/issues/183#issuecomment-564427548
+	// get the rune (char) for each claim character
+	for _, r := range claim {
+		// log.Debugf("claimToHeader rune %c - %d", r, r)
+		if r < 33 || r > 126 {
+			log.Debugf("%s.header.claims %s includes character %c, replacing with '-'", Branding.CcName, was, r)
+			claim = strings.Replace(claim, string(r), "-", 1)
 		}
 	}
+	claim = Cfg.Headers.ClaimHeader + http.CanonicalHeaderKey(claim)
+	if claim != was {
+		log.Infof("%s.header.claims %s will be forwarded downstream in the Header %s", Branding.CcName, was, claim)
+		log.Debugf("nginx will popultate the variable $auth_resp_%s", strings.ReplaceAll(strings.ToLower(claim), "-", "_"))
+	}
+	// log.Errorf("%s.header.claims %s will be forwarded in the Header %s", Branding.CcName, was, claim)
+	return claim, nil
+
 }
 
-func setDefaultsGoogle() {
-	log.Info("configuring Google OAuth")
-	GenOAuth.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
-	if len(GenOAuth.Scopes) == 0 {
-		// You have to select a scope from
-		// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-		GenOAuth.Scopes = []string{"email"}
-	}
-	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
-		Scopes:       GenOAuth.Scopes,
-		Endpoint:     google.Endpoint,
-	}
-	if GenOAuth.PreferredDomain != "" {
-		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
-		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
-	}
-}
+// fix the claims headers
+// https://github.com/vouch/vouch-proxy/issues/183
 
-func setDefaultsADFS() {
-	log.Info("configuring ADFS OAuth")
-	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
-}
-
-func setDefaultsGitHub() {
-	// log.Info("configuring GitHub OAuth")
-	if GenOAuth.AuthURL == "" {
-		GenOAuth.AuthURL = github.Endpoint.AuthURL
-	}
-	if GenOAuth.TokenURL == "" {
-		GenOAuth.TokenURL = github.Endpoint.TokenURL
-	}
-	if GenOAuth.UserInfoURL == "" {
-		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
-	}
-	if len(GenOAuth.Scopes) == 0 {
-		// https://github.com/vouch/vouch-proxy/issues/63
-		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
-		GenOAuth.Scopes = []string{"read:user"}
-	}
-}
-
-func configureOAuthClient() {
-	log.Infof("configuring %s OAuth with Endpoint %s", GenOAuth.Provider, GenOAuth.AuthURL)
-	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  GenOAuth.AuthURL,
-			TokenURL: GenOAuth.TokenURL,
-		},
-		RedirectURL: GenOAuth.RedirectURL,
-		Scopes:      GenOAuth.Scopes,
-	}
-}
-
-func getOrGenerateJWTSecret() string {
-	b, err := ioutil.ReadFile(secretFile)
-	if err == nil {
-		log.Info("jwt.secret read from " + secretFile)
-	} else {
-		// then generate a new secret and store it in the file
-		log.Debug(err)
-		log.Info("jwt.secret not found in " + secretFile)
-		log.Warn("generating random jwt.secret and storing it in " + secretFile)
-
-		// make sure to create 256 bits for the secret
-		// see https://github.com/vouch/vouch-proxy/issues/54
-		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+func cleanClaimsHeaders() error {
+	cleanedHeaders := make(map[string]string)
+	for _, claim := range Cfg.Headers.Claims {
+		header, err := claimToHeader(claim)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		b = []byte(rstr)
-		err = ioutil.WriteFile(secretFile, b, 0600)
-		if err != nil {
-			log.Debug(err)
-		}
+		cleanedHeaders[claim] = header
 	}
-	return string(b)
-}
-
-func isTCPPortAvailable(listen string) bool {
-	log.Debug("checking availability of tcp port: " + listen)
-	conn, err := net.Listen("tcp", listen)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	if err = conn.Close(); err != nil {
-		log.Error(err)
-	}
-	return true
+	Cfg.Headers.ClaimsCleaned = cleanedHeaders
+	return nil
 }

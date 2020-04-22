@@ -22,6 +22,7 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
+- [Nextcloud](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html)
 - most other OpenID Connect (OIDC) providers
 
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
@@ -29,6 +30,8 @@ Please do let us know when you have deployed Vouch Proxy with your preffered IdP
 If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
 
 ## Installation
+
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` where your apps are running on `app1.yourdomain.com` and `app2.yourdomain.com`.
 
 - `cp ./config/config.yml_example ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
@@ -134,6 +137,8 @@ server {
 
 An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
 
+If you're protecting an API with Vouch Proxy you may need to configure Nginx to handle `OPTIONS` requests in the `/validate` block [issue #216](https://github.com/vouch/vouch-proxy/issues/216).
+
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## Running from Docker
@@ -143,11 +148,10 @@ docker run -d \
     -p 9090:9090 \
     --name vouch-proxy \
     -v ${PWD}/config:/config \
-    -v ${PWD}/data:/data \
     voucher/vouch-proxy
 ```
 
-The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` which is based on [scratch](https://docs.docker.com/samples/library/scratch/) there is an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` as well as versioned images as `voucher/vouch-proxy:x.y.z` and `voucher/vouch-proxy:x.y.z_alpine`.
+The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` (based on [scratch](https://docs.docker.com/samples/library/scratch/)) there are versioned images as `voucher/vouch-proxy:x.y.z` and an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` for the current version.
 
 [https://hub.docker.com/r/voucher/vouch-proxy/builds/](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
 
@@ -196,7 +200,21 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 ### I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)
 
-- first **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`. This will slow down the loop.
+Double check that you are running Vouch Proxy and your apps on a common domain that can share cookies. For example, `vouch.yourdomain.com` and `app.yourdomain.com` can share cookies on the `.yourdomain.com` domain. (It will not work if you are trying to use `vouch.yourdomain.org` and `app.yourdomain.net`.)
+
+You may need to explicitly define the domain that the cookie should be set on. You can do this in the config file by setting the option:
+
+```yaml
+vouch:
+  cookie:
+    # force the domain of the cookie to set
+    domain: yourdomain.com
+```
+
+If you continue to have trouble, try the following:
+
+- **turn on `vouch.testing: true`**. This will slow down the loop.
+- set `vouch.logLevel: debug`.
 - the `Host:` header in the http request, the `oauth.callback_url` and the configured `vouch.domains` must all align so that the cookie that carries the JWT can be placed properly into the browser and then returned on each request
 - it helps to **_think like a cookie_**.
 
@@ -207,8 +225,11 @@ Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky
 
 - please see the [issues which have been closed that mention redirect](https://github.com/vouch/vouch-proxy/issues?utf8=%E2%9C%93&q=is%3Aissue+redirect+)
 
-### Okay, I looked at the issues and have tried some things with my configs but I still can't figure it out
+### Okay, I looked at the issues and have tried some things with my configs but it's still not working
 
+Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the following fashion..
+
+- **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`.
 - use [hasteb.in](https://hasteb.in/), or another **paste service** or a [gist](https://gist.github.com/) to provide your logs and config. **_DO NOT PUT YOUR LOGS AND CONFIG INTO THE GITHUB ISSUE_**. Using a paste service is important as it will maintain spacing and will provide line numbers and formatting. We are hunting for needles in haystacks with setups with several moving parts, these features help considerably. Paste services save your time and our time and help us to help you quickly. You're more likely to get good support from us in a timely manner by following this advice.
 - run `./do.sh bug_report yourdomain.com [yourotherdomain.com]` which will create a redacted version of your config and logs
   - and follow the instructions at the end to redact your Nginx config
@@ -270,7 +291,6 @@ OpenResty and configs for a variety of scenarios are available in the [examples]
   - if the \$STATE nonce from the url matches the session variable "state"
   - make a "third leg" request of google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
   - if the email address matches the domain oursites.com (it does)
-    - create a user in our database with key bob@oursites.com
     - issue bob a JWT in the form of a cookie named "oursitesSSO"
     - retrieve the session variable $requestedURL and 302 redirect bob back to $requestedURL
 

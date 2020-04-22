@@ -1,0 +1,31 @@
+
+# vouch config
+# bare minimum to get vouch running with Nextcloud Authentication
+
+vouch:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+  - yourotherdomain.com
+
+  # - OR -
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # allowAllUsers: true
+
+oauth:
+  # This assumes usage of pretty URLs otherwise add /index.php/
+  # to start of URL path
+  provider: nextcloud
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  auth_url: https://nextcloud.yourdomain.com/apps/oauth2/authorize
+  token_url: https://nextcloud.yourdomain.com/apps/oauth2/api/v1/token
+  user_info_url: https://nextcloud.yourdomain.com/ocs/v2.php/cloud/user?format=json
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: http://vouch.yourdomain.com:9090/auth

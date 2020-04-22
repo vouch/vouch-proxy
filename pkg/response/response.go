@@ -5,13 +5,19 @@ import (
 	"strconv"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"go.uber.org/zap"
 )
 
 // we wrap ResponseWriter so that we can store the StatusCode
 // and then pull it out later for logging
 // https://play.golang.org/p/wPHaX9DH-Ik
 
-var log = cfg.Cfg.FastLogger
+var log *zap.Logger
+
+// Configure see main.go configure()
+func Configure() {
+	log = cfg.Logging.FastLogger
+}
 
 // CaptureWriter extends http.ResponseWriter
 type CaptureWriter struct {
