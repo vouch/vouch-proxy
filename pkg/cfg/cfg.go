@@ -498,9 +498,10 @@ func claimToHeader(claim string) (string, error) {
 
 	// not allowed in header: "(),/:;<=>?@[\]{}"
 	// https://greenbytes.de/tech/webdav/rfc7230.html#rfc.section.3.2.6
-	// and we don't allow underscores because nginx doesn't like them
-	// http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
-	for _, r := range `"(),/\:;<=>?@[]{}_` {
+	// and we don't allow underscores `_` or periods `.` because nginx doesn't like them
+	// "Valid names are composed of English letters, digits, hyphens, and possibly underscores"
+	// as per http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
+	for _, r := range `"(),/\:;<=>?@[]{}_.` {
 		claim = strings.ReplaceAll(claim, string(r), "-")
 	}
 

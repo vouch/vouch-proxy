@@ -11,6 +11,7 @@ vouch:
       - groups
       - boolean_claim
       - family_name
+      - http://www.example.com/favorite_color
 
   cookie:
     name: vouchTestingCookie

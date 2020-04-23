@@ -48,12 +48,6 @@ func setUp(configFile string) {
 // }
 
 func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
-	// setUp()
-
-	// user := structs.User{
-	// 	Username: "test@testing.com",
-	// 	Name:     "Test Name",
-	// }
 	setUp("/config/testing/handler_claims.yml")
 
 	customClaims := structs.CustomClaims{
@@ -67,8 +61,16 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 			"family_name":   "Tester",
 			"email":         "mrtester@test.int",
 			"boolean_claim": true,
+			// Auth0 custom claim are URLs
+			// https://auth0.com/docs/tokens/guides/create-namespaced-custom-claims
+			"http://www.example.com/favorite_color": "blue",
 		},
 	}
+
+	groupHeader := "X-Vouch-IdP-Claims-Groups"
+	booleanHeader := "X-Vouch-IdP-Claims-Boolean-Claim"
+	familyNameHeader := "X-Vouch-IdP-Claims-Family-Name"
+	favoriteColorHeader := "X-Vouch-IdP-Claims-Www-Example-Com-Favorite-Color"
 
 	tokens := structs.PTokens{
 		// PAccessToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6IjRvaXU4In0.eyJzdWIiOiJuZnlmZSIsImF1ZCI6ImltX29pY19jbGllbnQiLCJqdGkiOiJUOU4xUklkRkVzUE45enU3ZWw2eng2IiwiaXNzIjoiaHR0cHM6XC9cL3Nzby5tZXljbG91ZC5uZXQ6OTAzMSIsImlhdCI6MTM5MzczNzA3MSwiZXhwIjoxMzkzNzM3MzcxLCJub25jZSI6ImNiYTU2NjY2LTRiMTItNDU2YS04NDA3LTNkMzAyM2ZhMTAwMiIsImF0X2hhc2giOiJrdHFvZVBhc2praVY5b2Z0X3o5NnJBIn0.g1Jc9DohWFfFG3ppWfvW16ib6YBaONC5VMs8J61i5j5QLieY-mBEeVi1D3vr5IFWCfivY4hZcHtoJHgZk1qCumkAMDymsLGX-IGA7yFU8LOjUdR4IlCPlZxZ_vhqr_0gQ9pCFKDkiOv1LVv5x3YgAdhHhpZhxK6rWxojg2RddzvZ9Xi5u2V1UZ0jukwyG2d4PRzDn7WoRNDGwYOEt4qY7lv_NO2TY2eAklP-xYBWu0b9FBElapnstqbZgAXdndNs-Wqp4gyQG5D0owLzxPErR9MnpQfgNcai-PlWI_UrvoopKNbX0ai2zfkuQ-qh6Xn8zgkiaYDHzq4gzwRfwazaqA",
@@ -100,15 +102,12 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	groupHeader := "X-Vouch-IdP-Claims-Groups"
-	booleanHeader := "X-Vouch-IdP-Claims-Boolean-Claim"
-	familyNameHeader := "X-Vouch-IdP-Claims-Family-Name"
-
 	// Check that the custom claim headers are what we expected
 	customClaimHeaders := map[string][]string{
-		strings.ToLower(groupHeader):      []string{},
-		strings.ToLower(booleanHeader):    []string{},
-		strings.ToLower(familyNameHeader): []string{},
+		strings.ToLower(groupHeader):         []string{},
+		strings.ToLower(booleanHeader):       []string{},
+		strings.ToLower(familyNameHeader):    []string{},
+		strings.ToLower(favoriteColorHeader): []string{},
 	}
 
 	for k, v := range rr.Result().Header {
@@ -118,9 +117,10 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 		}
 	}
 	expectedCustomClaimHeaders := map[string][]string{
-		strings.ToLower(groupHeader):      []string{"\"Website Users\",\"Test Group\""},
-		strings.ToLower(booleanHeader):    []string{"true"},
-		strings.ToLower(familyNameHeader): []string{"Tester"},
+		strings.ToLower(groupHeader):         []string{"\"Website Users\",\"Test Group\""},
+		strings.ToLower(booleanHeader):       []string{"true"},
+		strings.ToLower(familyNameHeader):    []string{"Tester"},
+		strings.ToLower(favoriteColorHeader): []string{"blue"},
 	}
 	assert.Equal(t, expectedCustomClaimHeaders, customClaimHeaders)
 }
