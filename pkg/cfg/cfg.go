@@ -356,24 +356,6 @@ func basicTest() error {
 	return nil
 }
 
-func checkCallbackConfig(url string) error {
-	inDomain := false
-	for _, d := range Cfg.Domains {
-		if strings.Contains(url, d) {
-			inDomain = true
-			break
-		}
-	}
-	if !inDomain {
-		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
-	}
-
-	if !strings.Contains(url, "/auth") {
-		return fmt.Errorf("configuration error: oauth.callback_url (%s) must contain '/auth'", url)
-	}
-	return nil
-}
-
 // setDefaults set default options for most items
 func setDefaults() {
 
