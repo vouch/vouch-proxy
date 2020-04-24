@@ -2,8 +2,9 @@ package cfg
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -37,17 +38,15 @@ func oauthBasicTest() error {
 		return errors.New("configuration error: oauth.user_info_url not found")
 	}
 
-	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
-		if GenOAuth.RedirectURL != "" {
-			if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
-				return err
-			}
+	if GenOAuth.RedirectURL != "" {
+		if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
+			return err
 		}
-		if len(GenOAuth.RedirectURLs) > 0 {
-			for _, cb := range GenOAuth.RedirectURLs {
-				if err := checkCallbackConfig(cb); err != nil {
-					return err
-				}
+	}
+	if len(GenOAuth.RedirectURLs) > 0 {
+		for _, cb := range GenOAuth.RedirectURLs {
+			if err := checkCallbackConfig(cb); err != nil {
+				return err
 			}
 		}
 	}
@@ -135,4 +134,23 @@ func configureOAuthClient() {
 		RedirectURL: GenOAuth.RedirectURL,
 		Scopes:      GenOAuth.Scopes,
 	}
+}
+
+func checkCallbackConfig(url string) error {
+	if !strings.Contains(url, "/auth") {
+		log.Errorf("configuration error: oauth.callback_url (%s) should almost always point at the vouch-proxy '/auth' endpoint", url)
+	}
+
+	inDomain := false
+	for _, d := range Cfg.Domains {
+		if strings.Contains(url, d) {
+			inDomain = true
+			break
+		}
+	}
+	if !inDomain {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
+	}
+
+	return nil
 }
