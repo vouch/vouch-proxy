@@ -244,6 +244,18 @@ stats () {
 
   echo -n "number of go files: "
   find . -name '*.go' | wc -l
+
+  echo -n "number of covered packages: "
+  covered=$(coverage | grep ok | wc -l)
+  echo $covered
+  echo -n "number of packages not covered: "
+  coverage | grep -v ok | wc -l
+
+  echo -n "average of coverage for all covered packages: "
+  sumcoverage=$(coverage | grep ok | awk '{print $5}' | sed 's/%//' | paste -sd+ - | bc)
+  # echo " sumcoverage: $sumcoverage "
+  perl -le "print $sumcoverage/$covered, '%'"
+  exit 0;
 }
 
 usage() {
