@@ -15,7 +15,6 @@ type logging struct {
 	FastLogger      *zap.Logger
 	AtomicLogLevel  zap.AtomicLevel
 	DefaultLogLevel zapcore.Level
-	LogLevel        zapcore.Level
 }
 
 var (
@@ -55,8 +54,7 @@ func init() {
 
 func (logging) setLogLevel(lvl zapcore.Level) {
 	// https://github.com/uber-go/zap/blob/master/zapcore/level.go#L59
-	if Logging.LogLevel != lvl {
-		Logging.LogLevel = lvl
+	if Logging.AtomicLogLevel.Level() != lvl {
 		log.Infof("setting LogLevel to %s", lvl)
 		Logging.AtomicLogLevel.SetLevel(lvl)
 	}
@@ -101,7 +99,7 @@ func (logging) configure() {
 		Cfg.LogLevel = fmt.Sprintf("%s", Logging.DefaultLogLevel)
 	}
 
-	if Cfg.LogLevel != Logging.LogLevel.String() {
+	if Cfg.LogLevel != Logging.AtomicLogLevel.Level().String() {
 		// log.Errorf("Logging.configure() Logging.LogLevel %s Cfg.LogLevel %s", Logging.LogLeveLogging.String(), Cfg.LogLevel)
 		Logging.setLogLevelString(Cfg.LogLevel)
 	}
@@ -118,7 +116,12 @@ func (logging) configureFromCmdline() {
 
 	if *CmdLine.logLevel != cmdLineLoggingDefault {
 		Logging.setLogLevel(*CmdLine.logLevel) // defaults to Logging.DefaultLogLevel which is zap.InfoLevel
-		log.Error("logging configured from cmdline")
+		log.Info("logging configured from cmdline")
+		// if we're supposed to run tests, run tests and exit
+		if *CmdLine.logTest {
+			Logging.cmdlineTestLogs()
+		}
+
 		configured = true
 	}
 }
