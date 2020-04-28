@@ -192,7 +192,7 @@ func Configure() {
 // TestConfiguration Confirm the Configuration is valid
 func TestConfiguration() {
 	if Cfg.Testing {
-		Logging.setLogLevel(zap.DebugLevel)
+		// Logging.setLogLevel(zap.DebugLevel)
 		Logging.setDevelopmentLogger()
 	}
 

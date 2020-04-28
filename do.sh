@@ -156,45 +156,36 @@ test() {
 }
 
 test_logging() {
-  # use Process Substitution to capture log output
-  # https://stackoverflow.com/questions/20017805/bash-capture-output-of-command-run-in-background
-
-  # set -b
-  # set -o notify
   build
+
   declare -a levels=(error warn info debug)
 
   echo "testing loglevel set from command line"
   levelcount=0
   for ll in ${levels[*]}; do
     # test that we can see the current level and no level below this level
-    coproc vpll (./vouch-proxy -logtest -loglevel ${ll} -config ./config/testing/test_config.yml)
-    exec 2> /dev/null # suppress process terminated messages since ubuntu's kill doesn't support `kill -0`
 
-    # echo "log level $ll vouch-proxy pid ${vpll_PID} fd ${vpll[0]}";
-    llpid=${vpll_PID}
-
-    # declare -a shouldnotfind=(info)
     declare -a shouldnotfind=()
     for (( i=0; i<${#levels[@]}; i++ ));  do
-      if (( i > $levelcount )); then
+      if (( $i > $levelcount )); then
         shouldnotfind+=(${levels[$i]})
       fi
     done
 
     linesread=0
-    while read -t 1 -u ${vpll[0]} line; do
+    IFS=$'\n';for line in $(./vouch-proxy -logtest -loglevel ${ll} -config ./config/testing/test_config.yml); do
       let "linesread+=1"
       # echo "$linesread $line"
-      for nono in ${shouldnotfind[*]} ; do
-        # first line is log info
-        if (( $linesread > 1 )) && echo $line | grep $nono; then
-          echo "line should not contain $nono"
-          echo "$linesread $line"
-          echo "bad case of the nonos: $nono"
-          exit 1;
-        fi
-      done
+      # first line is log info
+      if (( $linesread > 1 )); then
+        for nono in ${shouldnotfind[*]} ; do
+          if echo $line | grep $nono; then
+            echo "error: line should not contain '$nono' when loglevel is '$ll'"
+            echo "$linesread $line"
+            exit 1;
+          fi
+        done
+      fi
     done
     let "levelcount+=1"
   done
@@ -204,10 +195,6 @@ test_logging() {
   levelcount=0
   for ll in ${levels[*]}; do
     # test that we can see the current level and no level below this level
-    coproc vpll (./vouch-proxy -logtest -config ./config/testing/logging_${ll}.yml )
-    # echo "log level $ll vouch-proxy pid ${vpll_PID} fd ${vpll[0]}";
-
-    # declare -a shouldnotfind=(info)
     declare -a shouldnotfind=()
     for (( i=0; i<${#levels[@]}; i++ ));  do
       if (( $i > $levelcount )); then
@@ -215,26 +202,26 @@ test_logging() {
       fi
     done
 
-    # exec 2> /dev/null # suppress process terminated messages
     linesread=0
-    while read -t 1 -u ${vpll[0]} line; do
+    IFS=$'\n';for line in $(./vouch-proxy -logtest -config ./config/testing/logging_${ll}.yml); do
       let "linesread+=1"
-      # echo "$linesread $line"
-      for nono in ${shouldnotfind[*]} ; do
-        # the first three messages are log and info when starting from the command line
-        if (( $linesread > 3 )) && echo $line | grep $nono; then
-          echo "line should not contain $nono"
-          echo "$linesread $line"
-          echo "bad case of the nonos: $nono"
-          exit 1;
-        fi
-      done
+      # the first four messages are log and info when starting from the command line
+      if (( $linesread > 4 )); then
+        # echo "$linesread $line"
+        for nono in ${shouldnotfind[*]} ; do
+          # echo "testing $nono"
+          if echo $line | grep $nono; then
+            echo "error: line should not contain '$nono' when loglevel is '$ll'"
+            echo "$linesread $line"
+            exit 1;
+          fi
+        done
+      fi
     done
     let "levelcount+=1"
 
   done
   echo "passed"
-  killall vouch-proxy
   exit 0
 }
 
