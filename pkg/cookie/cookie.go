@@ -37,21 +37,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
-
-	sameSite := http.SameSite(0)
-	if cfg.Cfg.Cookie.SameSite != "" {
-		switch strings.ToLower(cfg.Cfg.Cookie.SameSite) {
-		case "lax":
-			sameSite = http.SameSiteLaxMode
-		case "strict":
-			sameSite = http.SameSiteStrictMode
-		case "none":
-			if cfg.Cfg.Cookie.Secure == false {
-				log.Error("SameSite cookie attribute with sameSite=none should also be specified with secure=true.")
-			}
-			sameSite = http.SameSiteNoneMode
-		}
-	}
+	sameSite := SameSite()
 
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
@@ -175,6 +161,27 @@ func ClearCookie(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
+}
+
+// SameSite return cfg.Cfg.Cookie.SameSite as http.Samesite
+// if cfg.Cfg.Cookie.SameSite is unconfigured return http.SameSite(0)
+// see https://github.com/vouch/vouch-proxy/issues/210
+func SameSite() http.SameSite {
+	sameSite := http.SameSite(0)
+	if cfg.Cfg.Cookie.SameSite != "" {
+		switch strings.ToLower(cfg.Cfg.Cookie.SameSite) {
+		case "lax":
+			sameSite = http.SameSiteLaxMode
+		case "strict":
+			sameSite = http.SameSiteStrictMode
+		case "none":
+			if cfg.Cfg.Cookie.Secure == false {
+				log.Error("SameSite cookie attribute with sameSite=none should also be specified with secure=true.")
+			}
+			sameSite = http.SameSiteNoneMode
+		}
+	}
+	return sameSite
 }
 
 // splitCookie separate string into several strings of specified length
