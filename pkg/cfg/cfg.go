@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
+
 	"golang.org/x/oauth2"
 
 	"github.com/spf13/viper"
@@ -275,9 +277,17 @@ func parseConfig() {
 		log.Fatalf("Fatal error config file: %s", err.Error())
 		log.Panic(err)
 	}
+
+	if err = checkConfigFileWellFormed(); err != nil {
+		log.Error("configuration error: config file should have only two top level elements: `vouch` and `oauth`.  These and other syntax errors follow...")
+		log.Error(err)
+		log.Error("continuing... (maybe you know what you're doing :)")
+	}
+
 	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
+
 	if len(Cfg.Domains) == 0 {
 		// then lets check for "lasso"
 		var oldConfig = &Config{}
@@ -298,6 +308,23 @@ please update your config file to change '%s:' to '%s:' as per %s
 
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
+}
+
+// use viper and mapstructure check to see if
+// https://pkg.go.dev/github.com/spf13/viper@v1.6.3?tab=doc#Unmarshal
+// https://pkg.go.dev/github.com/mitchellh/mapstructure?tab=doc#DecoderConfig
+func checkConfigFileWellFormed() error {
+	opt := func(dc *mapstructure.DecoderConfig) {
+		dc.ErrorUnused = true
+	}
+
+	type quick struct {
+		Vouch Config
+		OAuth oauthConfig
+	}
+	q := &quick{}
+
+	return viper.Unmarshal(q, opt)
 }
 
 // UnmarshalKey populate struct from contents of cfg tree at key
