@@ -128,7 +128,7 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 func TestVerifyUserPositiveUserInWhiteList(t *testing.T) {
 	setUp("/config/testing/handler_whitelist.yml")
 	user := &structs.User{Username: "test@example.com", Email: "test@example.com", Name: "Test Name"}
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
 }
@@ -138,7 +138,7 @@ func TestVerifyUserPositiveAllowAllUsers(t *testing.T) {
 
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
 }
@@ -146,7 +146,7 @@ func TestVerifyUserPositiveAllowAllUsers(t *testing.T) {
 func TestVerifyUserPositiveByEmail(t *testing.T) {
 	setUp("/config/testing/handler_email.yml")
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
 }
@@ -158,7 +158,7 @@ func TestVerifyUserPositiveByTeam(t *testing.T) {
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 	user.TeamMemberships = append(user.TeamMemberships, "org1/team3")
 	user.TeamMemberships = append(user.TeamMemberships, "org1/team1")
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
 }
@@ -168,7 +168,7 @@ func TestVerifyUserNegativeByTeam(t *testing.T) {
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 	// cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "org1/team1")
 
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.False(t, ok)
 	assert.NotNil(t, err)
 }
@@ -178,7 +178,7 @@ func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
 
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 	cfg.Cfg.Domains = make([]string, 0)
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 
 	assert.True(t, ok)
 	assert.Nil(t, err)
@@ -187,7 +187,7 @@ func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
 func TestVerifyUserNegative(t *testing.T) {
 	setUp("/config/testing/test_config.yml")
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 
 	assert.False(t, ok)
 	assert.NotNil(t, err)
