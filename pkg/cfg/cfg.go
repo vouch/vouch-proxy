@@ -30,7 +30,7 @@ type Config struct {
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
-		MaxAge   int    `mapstructure:"maxAge"`
+		MaxAge   int    `mapstructure:"maxAge"` // in minutes
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
 		Compress bool   `mapstructure:"compress"`

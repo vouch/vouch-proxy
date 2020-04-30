@@ -46,6 +46,7 @@ func Configure() {
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
 	populateSites()
+	cacheConfigure()
 }
 
 func populateSites() {
