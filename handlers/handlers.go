@@ -441,10 +441,10 @@ func VerifyUser(u interface{}) (bool, error) {
 	// Domains
 	case len(cfg.Cfg.Domains) != 0:
 		if domains.IsUnderManagement(user.Email) {
-			log.Debugf("VerifyUser: Success! Email %s found within a "+cfg.Branding.CcName+" managed domain", user.Email)
+			log.Debugf("VerifyUser: Success! Email %s found within a "+cfg.Branding.FullName+" managed domain", user.Email)
 			return true, nil
 		}
-		return false, fmt.Errorf("VerifyUser: Email %s is not within a "+cfg.Branding.CcName+" managed domain", user.Email)
+		return false, fmt.Errorf("VerifyUser: Email %s is not within a "+cfg.Branding.FullName+" managed domain", user.Email)
 
 	// nothing configured, allow everyone through
 	default:

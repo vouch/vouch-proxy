@@ -92,7 +92,7 @@ func main() {
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	checkTCPPortAvailable(listen)
 
-	logger.Infow("starting "+cfg.Branding.CcName,
+	logger.Infow("starting "+cfg.Branding.FullName,
 		// "semver":    semver,
 		"version", version,
 		"buildtime", builddt,
@@ -149,7 +149,7 @@ func checkTCPPortAvailable(listen string) {
 	conn, err := net.Listen("tcp", listen)
 	if err != nil {
 		logger.Error(err)
-		logger.Fatal(errors.New(listen + " is not available (is " + cfg.Branding.CcName + " already running?)"))
+		logger.Fatal(errors.New(listen + " is not available (is " + cfg.Branding.FullName + " already running?)"))
 	}
 	if err = conn.Close(); err != nil {
 		logger.Error(err)

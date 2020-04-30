@@ -97,13 +97,14 @@ type branding struct {
 	LCName    string // lower case
 	UCName    string // upper case
 	CcName    string // camel case
+	FullName  string // Vouch Proxy
 	OldLCName string // lasso
 	URL       string // https://github.com/vouch/vouch-proxy
 }
 
 var (
 	// Branding that's our name
-	Branding = branding{"vouch", "VOUCH", "Vouch", "lasso", "https://github.com/vouch/vouch-proxy"}
+	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "lasso", "https://github.com/vouch/vouch-proxy"}
 
 	// GenOAuth exported OAuth config variable
 	// TODO: I think GenOAuth and OAuthConfig can be combined!
