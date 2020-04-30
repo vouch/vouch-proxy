@@ -20,7 +20,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: collapse all of the `if !cfg.Cfg.PublicAccess` calls
 	// perhaps using an `ok=false` pattern
 	jwt := findJWT(r)
-	// if jwt != "" {
+
 	if jwt == "" {
 		// If the module is configured to allow public access with no authentication, return 200 now
 		if cfg.Cfg.PublicAccess {
@@ -29,6 +29,23 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 			ok200(w, r)
 		} else {
 			error401(w, r, authError{Error: "no jwt found in request"})
+		}
+		return
+	}
+
+	// check to see if we have headers cached for this jwt
+	if resp, found := jwtmanager.Cache.Get(jwt); found {
+		// found it in cache!
+		// fastlog.Debug("/validate found jwt response in cache")
+		fastlog.Info("/validate found jwt response in cache")
+		for k, v := range resp.(http.Header) {
+			w.Header().Add(k, strings.Join(v, ","))
+		}
+
+		if cfg.Cfg.Testing {
+			renderIndex(w, "user authorized "+w.Header().Get("X-Vouch-User"))
+		} else {
+			ok200(w, r)
 		}
 		return
 	}
@@ -121,15 +138,15 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("response header",
 		zap.Any("all headers", w.Header()))
 
-	// good to go!!
+	// cache the headers against this jwt
+	jwtmanager.Cache.SetDefault(jwt, w.Header().Clone())
+
+	// ship it!
 	if cfg.Cfg.Testing {
 		renderIndex(w, "user authorized "+claims.Username)
 	} else {
 		ok200(w, r)
 	}
-
-	// TODO
-	// parse the jwt and see if the claim is valid for the domain
 
 }
 
