@@ -1,0 +1,15 @@
+vouch:
+  domains:
+    - example.com
+
+  cookie:
+    secure: false
+
+  jwt:
+    secret: testingsecret
+
+oauth:
+  provider: google
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth
