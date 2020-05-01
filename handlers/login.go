@@ -107,8 +107,8 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		return "", fmt.Errorf("query string won't parse: %w %s", errInvalidURL, err)
 	}
 
-	for k, v := range u.Query() {
-		log.Debugf("validateRequestedURL %s:%s", k, v)
+	for _, v := range u.Query() {
+		// log.Debugf("validateRequestedURL %s:%s", k, v)
 		for _, vval := range v {
 			for _, bad := range badStrings {
 				if strings.HasPrefix(vval, bad) {
@@ -121,7 +121,6 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	hostname := u.Hostname()
 	if cfg.GenOAuth.Provider != cfg.Providers.IndieAuth {
 		d := domains.Matches(hostname)
-		log.Debugf("HERE domain %s cookie.domain %s", d, cfg.Cfg.Cookie.Domain)
 		if d == "" {
 			if cfg.Cfg.Cookie.Domain == "" || !strings.Contains(hostname, cfg.Cfg.Cookie.Domain) {
 				return "", fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
@@ -130,10 +129,11 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	}
 
 	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
-	log.Debugf("HERE testing scheme %s", u.Scheme)
 	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
 		return "", fmt.Errorf("%w: mismatch between requested destination URL and %s.cookie.secure %v (the cookie will not be visible to https)", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
 	}
+
+	// and irregardless cookies placed from https are not able to be seen by http
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure
 	if u.Scheme != r.URL.Scheme {
 		log.Warnf("the requested destination URL %s is %s but %s is running under %s, this may mean the jwt/cookie cannot be seen in some browsers", u, u.Scheme, cfg.Branding.FullName, r.URL.Scheme)
