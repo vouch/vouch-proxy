@@ -60,9 +60,10 @@ type Config struct {
 		Name string `mapstructure:"name"`
 		Key  string `mapstructure:"key"`
 	}
-	TestURL  string   `mapstructure:"test_url"`
-	TestURLs []string `mapstructure:"test_urls"`
-	Testing  bool     `mapstructure:"testing"`
+	TestURL            string   `mapstructure:"test_url"`
+	TestURLs           []string `mapstructure:"test_urls"`
+	Testing            bool     `mapstructure:"testing"`
+	LogoutRedirectURLs []string `mapstructure:"allowed_logout_redirect_urls"`
 }
 
 // oauth config items endoint for access
