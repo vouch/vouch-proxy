@@ -180,12 +180,37 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
   ./vouch-proxy
 ```
 
-## /logout endpoint redirection
+## /login and /logout endpoint redirection
+
+As of `v0.11.0` we have put additional checks in place to reduce [the attack surface of url redirection](https://blog.detectify.com/2019/05/16/the-real-impact-of-an-open-redirect/).
+
+### /login?url=POST_LOGIN_URL
+
+The passed URL...
+
+- must start with either `http` or `https`
+- must have a domain overlap with either a domain in the `vouch.domains` list or the `vouch.cookie.domain` (if either of those are configured)
+- cannot have a parameter which includes a URL to [prevent URL chaining attacks](https://hackerone.com/reports/202781)
+
+### /logout?url=NEXT_URL
 
 The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string which can be used to `302` redirect a user to your orignal OAuth provider/IDP/OIDC provider's [revocation_endpoint](https://tools.ietf.org/html/rfc7009)
 
 ```bash
     https://vouch.oursites.com/logout?url=https://oauth2.googleapis.com/revoke
+```
+
+this url must be present in the configuration file on the list `vouch.allowed_logout_redirect_urls`
+
+```yaml
+# in order to prevent redirection attacks all redirected URLs to /logout must be specified
+# the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
+allowed_logout_redirect_urls:
+  # your apps login page
+  - http://.yourdomain.com/login
+  # your IdPs logout enpoint
+  # from https://accounts.google.com/.well-known/openid-configuration
+  - https://oauth2.googleapis.com/revoke
 ```
 
 logout resources..
@@ -241,18 +266,16 @@ Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the 
 
 I really love Vouch Proxy! I wish it did XXXX...
 
-Please make a proposal before you spend precious hours of your time and our time integrating a new feature.
+Please make a proposal before you spend your time and our time integrating a new feature.
 
 Code contributions should..
 
 - include unit tests and in some cases end-to-end tests
-- be formatted correctly with `go fmt`
+- be formatted with `go fmt`
 - not break existing setups without a clear reason (usually security related)
-- and generally be discussed beforehand in a GitHub issue.
+- and generally be discussed beforehand in a GitHub issue
 
-It's always appreciated to "see it coming". Please propose a change with "I would like to...". It can be very frustrating on both ends to have new code arrive for a feature that is in conflict with WIP that you may not be aware of.
-
-For large contributions or code related to a platform that we don't currently support we ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
+For larger contributions or code related to a platform that we don't currently support we will ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
 
 ## Advanced Authorization Using OpenResty
 
