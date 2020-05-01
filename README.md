@@ -194,7 +194,7 @@ logout resources..
 - [Okta](https://developer.okta.com/docs/api/resources/oidc#logout)
 - [Auth0](https://auth0.com/docs/logout/guides/logout-idps)
 
-## Troubleshooting, Support and Feature Requests
+## Troubleshooting, Support and Feature Requests (Read this before submitting an issue at GitHub)
 
 Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky. We want to help you get up and running as quickly as possible. The most common problem is..
 
@@ -237,11 +237,22 @@ Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the 
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
 - or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
-### I really love Vouch Proxy! I wish it did XXXX
+### submitting a Pull Request for a new feature
 
-Thanks for the love, please open an issue describing your feature or idea before submitting a PR.
+I really love Vouch Proxy! I wish it did XXXX...
 
-Please know that Vouch Proxy is not sponsored and is developed and supported on a volunteer basis.
+Please make a proposal before you spend precious hours of your time and our time integrating a new feature.
+
+Code contributions should..
+
+- include unit tests and in some cases end-to-end tests
+- be formatted correctly with `go fmt`
+- not break existing setups without a clear reason (usually security related)
+- and generally be discussed beforehand in a GitHub issue.
+
+It's always appreciated to "see it coming". Please propose a change with "I would like to...". It can be very frustrating on both ends to have new code arrive for a feature that is in conflict with WIP that you may not be aware of.
+
+For large contributions or code related to a platform that we don't currently support we ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
 
 ## Advanced Authorization Using OpenResty
 

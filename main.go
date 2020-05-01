@@ -1,7 +1,16 @@
 package main
 
-// vouch
+// Vouch Proxy
 // github.com/vouch/vouch-proxy
+
+/*
+
+Hello Developer!  Thanks for looking at the code!
+
+Before submitting PRs, please see the README...
+https://github.com/vouch/vouch-proxy#submitting-a-pull-request-for-a-new-feature
+
+*/
 
 import (
 	"errors"
@@ -14,19 +23,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vouch/vouch-proxy/pkg/healthcheck"
-	"github.com/vouch/vouch-proxy/pkg/response"
-
-	"github.com/vouch/vouch-proxy/pkg/cookie"
-	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-
-	"github.com/vouch/vouch-proxy/pkg/domains"
-
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/handlers"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/healthcheck"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/response"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
 )
 
