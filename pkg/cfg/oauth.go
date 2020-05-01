@@ -141,15 +141,15 @@ func checkCallbackConfig(url string) error {
 		log.Errorf("configuration error: oauth.callback_url (%s) should almost always point at the vouch-proxy '/auth' endpoint", url)
 	}
 
-	inDomain := false
-	for _, d := range Cfg.Domains {
-		if strings.Contains(url, d) {
-			inDomain = true
+	found := false
+	for _, d := range append(Cfg.Domains, Cfg.Cookie.Domain) {
+		if d != "" && strings.Contains(url, d) {
+			found = true
 			break
 		}
 	}
-	if !inDomain {
-		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within the configured domain where the cookie will be set %s", url, Cfg.Domains)
+	if !found {
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within a configured domains where the cookie will be set: either `vouch.domains` %s or `vouch.cookie.domain` %s", url, Cfg.Domains, Cfg.Cookie.Domain)
 	}
 
 	return nil
