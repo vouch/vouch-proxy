@@ -35,7 +35,7 @@ func error400(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set("X-Vouch-Error", e.Error())
-	http.Error(w, e.Error(), http.StatusUnauthorized)
+	http.Error(w, e.Error(), http.StatusBadRequest)
 }
 
 // the standard error
