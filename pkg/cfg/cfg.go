@@ -63,7 +63,7 @@ type Config struct {
 	TestURL            string   `mapstructure:"test_url"`
 	TestURLs           []string `mapstructure:"test_urls"`
 	Testing            bool     `mapstructure:"testing"`
-	LogoutRedirectURLs []string `mapstructure:"allowed_logout_redirect_urls"`
+	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris"`
 }
 
 // oauth config items endoint for access

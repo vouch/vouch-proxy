@@ -8,7 +8,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 )
 
-var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in `%s.allowed_logout_redirect_urls`", cfg.Branding.LCName)
+var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in `%s.post_logout_redirect_uris`", cfg.Branding.LCName)
 
 // LogoutHandler /logout
 // 302 redirect to the provider
