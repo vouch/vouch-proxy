@@ -200,18 +200,22 @@ The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string
     https://vouch.oursites.com/logout?url=https://oauth2.googleapis.com/revoke
 ```
 
-this url must be present in the configuration file on the list `vouch.allowed_logout_redirect_urls`
+this url must be present in the configuration file on the list `vouch.post_logout_redirect_uris`
 
 ```yaml
 # in order to prevent redirection attacks all redirected URLs to /logout must be specified
 # the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
-allowed_logout_redirect_urls:
+post_logout_redirect_uris:
   # your apps login page
   - http://.yourdomain.com/login
   # your IdPs logout enpoint
   # from https://accounts.google.com/.well-known/openid-configuration
   - https://oauth2.googleapis.com/revoke
+  # you may be daisy chaining to your IdP
+  - https://myorg.okta.com/oauth2/123serverid/v1/logout?post_logout_redirect_uri=http://myapp.yourdomain.com/login
 ```
+
+Note that your IdP will likely carry their own, separate `post_logout_redirect_uri` list.
 
 logout resources..
 

@@ -118,18 +118,20 @@ vouch:
     # application. This is optional.
     # idtoken: X-Vouch-IdP-IdToken
 
-  # test_url - add this URL to the page which vouch displays
+  # test_url - add this URL to the page which vouch displays during testing (a convenience for testing)
   test_url: http://yourdomain.com
 
   # in order to prevent redirection attacks all redirected URLs to /logout must be specified
   # the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
-  allowed_logout_redirect_urls:
+  # in line with the OIDC spec https://openid.net/specs/openid-connect-session-1_0.html#RedirectionAfterLogout
+  post_logout_redirect_uris:
     # your apps login page
-    - http://.yourdomain.com/login
+    - http://myapp.yourdomain.com/login
     # your IdPs logout enpoint
     # from https://accounts.google.com/.well-known/openid-configuration
     - https://oauth2.googleapis.com/revoke
-
+    # you may be daisy chaining to your IdP
+    - https://myorg.okta.com/oauth2/123serverid/v1/logout?post_logout_redirect_uri=http://myapp.yourdomain.com/login
 
 #
 # OAuth Provider

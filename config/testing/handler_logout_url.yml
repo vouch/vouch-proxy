@@ -8,7 +8,7 @@ vouch:
   jwt:
     secret: testingsecret
 
-  allowed_logout_redirect_urls:
+  post_logout_redirect_uris:
     - http://myapp.example.com/login
     # https://accounts.google.com/.well-known/openid-configuration
     - https://oauth2.googleapis.com/revoke
