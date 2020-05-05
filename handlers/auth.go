@@ -117,6 +117,17 @@ func verifyUser(u interface{}) (bool, error) {
 		}
 		return false, fmt.Errorf("verifyUser: user.Username not found in WhiteList: %s", user.Username)
 
+	// regexWhiteList
+	case len(cfg.CompiledRegexWhiteList) != 0:
+		for _, wl := range cfg.CompiledRegexWhiteList {
+			log.Debugf("Checking claim: '%v' against regex: '%v'", user.Username, wl)
+			if wl.MatchString(user.Username) {
+				log.Debugf("VerifyUser: Success! found user.Username in regexWhiteList: %s", user.Username)
+				return true, nil
+			}
+		}
+		return false, fmt.Errorf("VerifyUser: user.Username not found in regexWhiteList: %s", user.Username)
+
 	// TeamWhiteList
 	case len(cfg.Cfg.TeamWhiteList) != 0:
 		for _, team := range user.TeamMemberships {

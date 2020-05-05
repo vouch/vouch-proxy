@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"regexp"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -36,6 +37,7 @@ type Config struct {
 	Port          int      `mapstructure:"port"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
+	RegexWhiteList []string `mapstructure:"regexWhiteList"`
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
@@ -162,6 +164,8 @@ var (
 	Cfg = &Config{}
 	// IsHealthCheck see main.go
 	IsHealthCheck = false
+	// CompiledRegexWhiteList see auth.go
+	CompiledRegexWhiteList []*regexp.Regexp
 )
 
 type cmdLineFlags struct {
@@ -391,6 +395,19 @@ func basicTest() error {
 	}
 	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
 		return fmt.Errorf("configuration error: Cookie maxAge (%d) cannot be larger than the JWT maxAge (%d)", Cfg.Cookie.MaxAge, Cfg.JWT.MaxAge)
+	}
+	// if using regexWhiteList, compile regex statements, and store them in cfg.CompiledRegexWhiteList
+	if len(Cfg.RegexWhiteList) != 0 {
+		for i, wl := range Cfg.RegexWhiteList {
+			//generate regex array
+			reWhiteList, reWhiteListErr := regexp.Compile(wl)
+			if reWhiteListErr != nil {
+				return fmt.Fatalf("Uncompilable regex parameter: '%v'", wl)
+			}
+			CompiledRegexWhiteList = append(CompiledRegexWhiteList, reWhiteList)
+			log.Debugf("Compiled regex parameter '%v'", CompiledRegexWhiteList[i])
+		}
+		log.Debugf("compiled regex array %v", CompiledRegexWhiteList)
 	}
 	return nil
 }
