@@ -146,7 +146,7 @@ func TestVerifyUserPositiveUserInWhiteList(t *testing.T) {
 func TestVerifyUserPositiveUserInRegexWhiteList(t *testing.T) {
 	setUp("/config/testing/handler_regexwhitelist.yml")
 	user := &structs.User{Username: "test@example.com", Email: "test@example.com", Name: "Test Name"}
-	ok, err := VerifyUser(*user)
+	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
 }
