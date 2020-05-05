@@ -402,7 +402,7 @@ func basicTest() error {
 			//generate regex array
 			reWhiteList, reWhiteListErr := regexp.Compile(wl)
 			if reWhiteListErr != nil {
-				return fmt.Fatalf("Uncompilable regex parameter: '%v'", wl)
+				log.Fatalf("Uncompilable regex parameter: '%v'", wl)
 			}
 			CompiledRegexWhiteList = append(CompiledRegexWhiteList, reWhiteList)
 			log.Debugf("Compiled regex parameter '%v'", CompiledRegexWhiteList[i])
