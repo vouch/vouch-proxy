@@ -180,7 +180,19 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
   ./vouch-proxy
 ```
 
-## /logout endpoint redirection
+## /login and /logout endpoint redirection
+
+As of `v0.11.0` we have put additional checks in place to reduce [the attack surface of url redirection](https://blog.detectify.com/2019/05/16/the-real-impact-of-an-open-redirect/).
+
+### /login?url=POST_LOGIN_URL
+
+The passed URL...
+
+- must start with either `http` or `https`
+- must have a domain overlap with either a domain in the `vouch.domains` list or the `vouch.cookie.domain` (if either of those are configured)
+- cannot have a parameter which includes a URL to [prevent URL chaining attacks](https://hackerone.com/reports/202781)
+
+### /logout?url=NEXT_URL
 
 The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string which can be used to `302` redirect a user to your orignal OAuth provider/IDP/OIDC provider's [revocation_endpoint](https://tools.ietf.org/html/rfc7009)
 
@@ -188,13 +200,30 @@ The Vouch Proxy `/logout` endpoint accepts a `url` parameter in the query string
     https://vouch.oursites.com/logout?url=https://oauth2.googleapis.com/revoke
 ```
 
+this url must be present in the configuration file on the list `vouch.post_logout_redirect_uris`
+
+```yaml
+# in order to prevent redirection attacks all redirected URLs to /logout must be specified
+# the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
+post_logout_redirect_uris:
+  # your apps login page
+  - http://.yourdomain.com/login
+  # your IdPs logout enpoint
+  # from https://accounts.google.com/.well-known/openid-configuration
+  - https://oauth2.googleapis.com/revoke
+  # you may be daisy chaining to your IdP
+  - https://myorg.okta.com/oauth2/123serverid/v1/logout?post_logout_redirect_uri=http://myapp.yourdomain.com/login
+```
+
+Note that your IdP will likely carry their own, separate `post_logout_redirect_uri` list.
+
 logout resources..
 
 - [Google](https://developers.google.com/identity/protocols/OAuth2WebServer#tokenrevoke)
 - [Okta](https://developer.okta.com/docs/api/resources/oidc#logout)
 - [Auth0](https://auth0.com/docs/logout/guides/logout-idps)
 
-## Troubleshooting, Support and Feature Requests
+## Troubleshooting, Support and Feature Requests (Read this before submitting an issue at GitHub)
 
 Getting the stars to align between Nginx, Vouch Proxy and your IdP can be tricky. We want to help you get up and running as quickly as possible. The most common problem is..
 
@@ -237,11 +266,20 @@ Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the 
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
 - or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
-### I really love Vouch Proxy! I wish it did XXXX
+### submitting a Pull Request for a new feature
 
-Thanks for the love, please open an issue describing your feature or idea before submitting a PR.
+I really love Vouch Proxy! I wish it did XXXX...
 
-Please know that Vouch Proxy is not sponsored and is developed and supported on a volunteer basis.
+Please make a proposal before you spend your time and our time integrating a new feature.
+
+Code contributions should..
+
+- include unit tests and in some cases end-to-end tests
+- be formatted with `go fmt`
+- not break existing setups without a clear reason (usually security related)
+- and generally be discussed beforehand in a GitHub issue
+
+For larger contributions or code related to a platform that we don't currently support we will ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
 
 ## Advanced Authorization Using OpenResty
 

@@ -1,0 +1,20 @@
+vouch:
+  domains:
+    - example.com
+
+  cookie:
+    secure: false
+
+  jwt:
+    secret: testingsecret
+
+  post_logout_redirect_uris:
+    - http://myapp.example.com/login
+    # https://accounts.google.com/.well-known/openid-configuration
+    - https://oauth2.googleapis.com/revoke
+
+oauth:
+  provider: google
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth

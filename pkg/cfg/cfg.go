@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that 
+can be found in the LICENSE file. Software distributed under The 
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package cfg
 
 import (
@@ -60,9 +70,10 @@ type Config struct {
 		Name string `mapstructure:"name"`
 		Key  string `mapstructure:"key"`
 	}
-	TestURL  string   `mapstructure:"test_url"`
-	TestURLs []string `mapstructure:"test_urls"`
-	Testing  bool     `mapstructure:"testing"`
+	TestURL            string   `mapstructure:"test_url"`
+	TestURLs           []string `mapstructure:"test_urls"`
+	Testing            bool     `mapstructure:"testing"`
+	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris"`
 }
 
 // oauth config items endoint for access

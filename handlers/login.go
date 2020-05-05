@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that 
+can be found in the LICENSE file. Software distributed under The 
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package handlers
 
 import (
@@ -41,12 +51,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// requestedURL comes from nginx in the query string via a 302 redirect
 	// it sets the ultimate destination
 	// https://vouch.yoursite.com/login?url=
-	var requestedURL = r.URL.Query().Get("url")
 	// need to clean the URL to prevent malicious redirection
-
-	if err := validateRequestedURL(requestedURL); err != nil {
-		renderIndex(w, fmt.Sprintf("/login %s", err))
-		log.Error(err.Error())
+	var requestedURL string
+	if requestedURL, err = getValidRequestedURL(r); err != nil {
+		error400(w, r, err)
 		return
 	}
 
@@ -71,7 +79,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if failcount > 2 {
 		var vouchError = r.URL.Query().Get("error")
-		renderIndex(w, fmt.Sprintf("/login %s for %s - %s", errTooManyRedirects, requestedURL, vouchError))
+		error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
 		return
 	}
 
@@ -82,36 +90,39 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	redirect302(w, r, lURL)
 }
 
-var errNoURL = errors.New("no destination URL requested")
-var errInvalidURL = errors.New("requested destination URL appears to be invalid")
-var errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
-var errDangerQS = errors.New("requested destination URL has a dangerous query string")
+var (
+	errNoURL      = errors.New("no destination URL requested")
+	errInvalidURL = errors.New("requested destination URL appears to be invalid")
+	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
+	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+)
 
-var badStrings = []string{"http://", "https://", "data:", "ftp://", "ftps://"}
+func getValidRequestedURL(r *http.Request) (string, error) {
+	urlparam := r.URL.Query().Get("url")
 
-func validateRequestedURL(urlparam string) error {
 	if urlparam == "" {
-		return errNoURL
+		return "", errNoURL
 	}
-	if !strings.HasPrefix(urlparam, "http://") && !strings.HasPrefix(urlparam, "https://") {
-		return errURLNotHTTP
+	if !strings.HasPrefix(strings.ToLower(urlparam), "http://") && !strings.HasPrefix(strings.ToLower(urlparam), "https://") {
+		return "", errURLNotHTTP
 	}
 	u, err := url.Parse(urlparam)
 	if err != nil {
-		return fmt.Errorf("won't parse: %w %s", errInvalidURL, err)
+		return "", fmt.Errorf("won't parse: %w %s", errInvalidURL, err)
 	}
 
 	_, err = url.ParseQuery(u.RawQuery)
 	if err != nil {
-		return fmt.Errorf("query string won't parse: %w %s", errInvalidURL, err)
+		return "", fmt.Errorf("query string won't parse: %w %s", errInvalidURL, err)
 	}
 
-	for k, v := range u.Query() {
-		log.Debugf("validateRequestedURL %s:%s", k, v)
+	for _, v := range u.Query() {
+		// log.Debugf("validateRequestedURL %s:%s", k, v)
 		for _, vval := range v {
 			for _, bad := range badStrings {
-				if strings.HasPrefix(vval, bad) {
-					return fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
+				if strings.HasPrefix(strings.ToLower(vval), bad) {
+					return "", fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
 				}
 			}
 		}
@@ -119,12 +130,26 @@ func validateRequestedURL(urlparam string) error {
 
 	hostname := u.Hostname()
 	if cfg.GenOAuth.Provider != cfg.Providers.IndieAuth {
-		if domains.Matches(hostname) == "" && !strings.Contains(hostname, cfg.Cfg.Cookie.Domain) {
-			return fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
+		d := domains.Matches(hostname)
+		if d == "" {
+			if cfg.Cfg.Cookie.Domain == "" || !strings.Contains(hostname, cfg.Cfg.Cookie.Domain) {
+				return "", fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
+			}
 		}
 	}
 
-	return nil
+	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
+	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
+		return "", fmt.Errorf("%w: mismatch between requested destination URL and %s.cookie.secure %v (the cookie will not be visible to https)", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
+	}
+
+	// and irregardless cookies placed from https are not able to be seen by http
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure
+	if u.Scheme != r.URL.Scheme {
+		log.Warnf("the requested destination URL %s is %s but %s is running under %s, this may mean the jwt/cookie cannot be seen in some browsers", u, u.Scheme, cfg.Branding.FullName, r.URL.Scheme)
+	}
+
+	return urlparam, nil
 }
 
 func loginURL(r *http.Request, state string) string {
