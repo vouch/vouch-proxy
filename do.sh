@@ -245,6 +245,48 @@ stats () {
   exit 0;
 }
 
+license() {
+  local FILE=$1;
+  if [ ! -f "${FILE}" ]; then
+    echo "need filename";
+    exit 1;
+  fi
+  FOUND=$(_has_license $FILE)
+  if [ -z "${FOUND}" ]; then
+    local YEAR=$(git log -1 --format="%ai" -- $FILE | cut -d- -f1);
+    _print_license $YEAR > ${FILE}_licensed
+    cat $FILE >> ${FILE}_licensed
+    mv ${FILE}_licensed $FILE
+    echo "added license to the header of $FILE"
+  fi
+}
+
+_print_license() {
+  local YEAR=$1;
+  if [ -z "$YEAR" ]; then
+    YEAR=$(date +%Y)
+  fi
+  cat <<EOF
+/*
+
+Copyright $YEAR The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that 
+can be found in the LICENSE file. Software distributed under The 
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
+EOF
+
+}
+
+_has_license() {
+  local FILE=$1;
+  # echo checking $FILE
+  echo $(grep -P 'Copyright \d\d\d\d The Vouch Proxy Authors' ${FILE})
+}
+
 usage() {
    cat <<EOF
    usage:
@@ -260,7 +302,8 @@ usage() {
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 stats                  - simple metrics (lines of code in project, number of go files)
-     $0 watch [cmd]]           - watch the $CWD for any change and re-reun the [cmd]
+     $0 watch [cmd]            - watch the $CWD for any change and re-reun the [cmd]
+     $0 license [file]         - apply the license to the file
 
   do is like make
 
@@ -272,7 +315,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license')
    shift
    $ARG $*
    ;;
