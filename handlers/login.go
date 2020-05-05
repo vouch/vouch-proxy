@@ -95,7 +95,7 @@ var (
 	errInvalidURL = errors.New("requested destination URL appears to be invalid")
 	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
 	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
-	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://"}
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
 )
 
 func getValidRequestedURL(r *http.Request) (string, error) {
@@ -104,7 +104,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	if urlparam == "" {
 		return "", errNoURL
 	}
-	if !strings.HasPrefix(urlparam, "http://") && !strings.HasPrefix(urlparam, "https://") {
+	if !strings.HasPrefix(strings.ToLower(urlparam), "http://") && !strings.HasPrefix(strings.ToLower(urlparam), "https://") {
 		return "", errURLNotHTTP
 	}
 	u, err := url.Parse(urlparam)
@@ -121,7 +121,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		// log.Debugf("validateRequestedURL %s:%s", k, v)
 		for _, vval := range v {
 			for _, bad := range badStrings {
-				if strings.HasPrefix(vval, bad) {
+				if strings.HasPrefix(strings.ToLower(vval), bad) {
 					return "", fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
 				}
 			}
