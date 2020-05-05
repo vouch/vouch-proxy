@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 	"go.uber.org/zap"
 )
@@ -23,13 +23,13 @@ var (
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
-	jwt := findJWT(r)
+	jwt := common.FindJWT(r)
 	if jwt == "" {
 		send401or200PublicAccess(w, r, errNoJWT)
 		return
 	}
 
-	claims, err := claimsFromJWT(jwt)
+	claims, err := common.ClaimsFromJWT(jwt)
 	if err != nil {
 		send401or200PublicAccess(w, r, err)
 		return
@@ -122,53 +122,3 @@ func send401or200PublicAccess(w http.ResponseWriter, r *http.Request, e error) {
 	error401(w, r, e)
 }
 
-// findJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
-// and Query String in that order
-func findJWT(r *http.Request) string {
-	jwt, err := cookie.Cookie(r)
-	if err == nil {
-		log.Debugf("jwt from cookie: %s", jwt)
-		return jwt
-	}
-	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
-	if jwt != "" {
-		log.Debugf("jwt from header %s: %s", cfg.Cfg.Headers.JWT, jwt)
-		return jwt
-	}
-	auth := r.Header.Get("Authorization")
-	if auth != "" {
-		s := strings.SplitN(auth, " ", 2)
-		if len(s) == 2 {
-			jwt = s[1]
-			log.Debugf("jwt from authorization header: %s", jwt)
-			return jwt
-		}
-	}
-	jwt = r.URL.Query().Get(cfg.Cfg.Headers.QueryString)
-	if jwt != "" {
-		log.Debugf("jwt from querystring %s: %s", cfg.Cfg.Headers.QueryString, jwt)
-		return jwt
-	}
-	return ""
-}
-
-// claimsFromJWT parse the jwt and return the claims
-func claimsFromJWT(jwt string) (jwtmanager.VouchClaims, error) {
-	var claims jwtmanager.VouchClaims
-
-	jwtParsed, err := jwtmanager.ParseTokenString(jwt)
-	if err != nil {
-		// it didn't parse, which means its bad, start over
-		log.Error("jwtParsed returned error, clearing cookie")
-		return claims, err
-	}
-
-	claims, err = jwtmanager.PTokenClaims(jwtParsed)
-	if err != nil {
-		// claims = jwtmanager.PTokenClaims(jwtParsed)
-		// if claims == &jwtmanager.VouchClaims{} {
-		return claims, err
-	}
-	log.Debugf("JWT Claims: %+v", claims)
-	return claims, nil
-}
