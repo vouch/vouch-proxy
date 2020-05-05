@@ -17,7 +17,10 @@ func Test_getValidRequestedURL(t *testing.T) {
 	}{
 		{"no https", "example.com/dest", "", true},
 		{"redirection chaining", "http://example.com/dest?url=https://", "", true},
+		{"redirection chaining upper case", "http://example.com/dest?url=HTTPS://someplaceelse.com", "", true},
+		{"redirection chaining no protocol", "http://example.com/dest?url=//someplaceelse.com", "", true},
 		{"data uri", "http://example.com/dest?url=data:text/plain,Example+Text", "", true},
+		{"javascript uri", "http://example.com/dest?url=javascript:alert(1)", "", true},
 		{"not in domain", "http://somewherelse.com/", "", true},
 		{"should warn", "https://example.com/", "https://example.com/", false},
 		{"should be fine", "http://example.com/", "http://example.com/", false},
