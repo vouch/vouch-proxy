@@ -14,13 +14,12 @@ import (
 var log *zap.SugaredLogger
 
 // configure see main.go configure()
-func configure() {
+func Configure() {
 	log = cfg.Logging.Logger
 }
 
 // PrepareTokensAndClient setup the client, usually for a UserInfo request
 func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bool) (*http.Client, *oauth2.Token, error) {
-	configure()
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
 		return nil, nil, err
