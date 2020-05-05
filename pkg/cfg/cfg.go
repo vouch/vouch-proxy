@@ -73,6 +73,7 @@ type oauthConfig struct {
 	ClientSecret    string   `mapstructure:"client_secret"`
 	AuthURL         string   `mapstructure:"auth_url"`
 	TokenURL        string   `mapstructure:"token_url"`
+	LogoutURL       string   `mapstructure:"logout_url"`
 	RedirectURL     string   `mapstructure:"callback_url"`
 	RedirectURLs    []string `mapstructure:"callback_urls"`
 	Scopes          []string `mapstructure:"scopes"`
