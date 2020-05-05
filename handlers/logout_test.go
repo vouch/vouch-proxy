@@ -30,7 +30,10 @@ func TestLogoutHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 			if rr.Code != tt.wantcode {
-				t.Errorf("LogoutHandler() = %v, want %v", rr.Code, tt.wantcode)
+				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
+			}
+			if (rr.Code == http.StatusFound && rr.Header().Get("Location") != tt.url) {
+				t.Errorf("LogoutHandler() redirect = %s, want %s", rr.Header().Get("Location"), tt.url)
 			}
 		})
 	}
