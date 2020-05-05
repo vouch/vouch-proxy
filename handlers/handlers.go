@@ -63,6 +63,7 @@ func Configure() {
 
 	provider = getProvider()
 	provider.Configure()
+	common.Configure()
 }
 
 func getProvider() Provider {
