@@ -85,7 +85,7 @@ var (
 	errInvalidURL = errors.New("requested destination URL appears to be invalid")
 	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
 	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
-	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://"}
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
 )
 
 func getValidRequestedURL(r *http.Request) (string, error) {
