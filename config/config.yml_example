@@ -175,6 +175,7 @@ oauth:
   auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
   token_url: https://{yourOktaDomain}/oauth2/default/v1/token
   user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+  logout_url: https://{yourOktaDomain}/oauth2/default/v1/logout
   scopes:
     - openid
     - email
