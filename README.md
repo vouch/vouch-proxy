@@ -275,7 +275,7 @@ Please make a proposal before you spend your time and our time integrating a new
 Code contributions should..
 
 - include unit tests and in some cases end-to-end tests
-- be formatted with `go fmt`
+- be formatted with `go fmt`, checked with `go vet` and other common go tools
 - not break existing setups without a clear reason (usually security related)
 - and generally be discussed beforehand in a GitHub issue
 
