@@ -29,7 +29,6 @@ var (
 )
 
 // ValidateRequestHandler /validate
-// TODO this should use the handler interface
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
@@ -42,8 +41,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// check to see if we have headers cached for this jwt
 	if resp, found := jwtmanager.Cache.Get(jwt); found {
 		// found it in cache!
-		// fastlog.Debug("/validate found jwt response in cache")
-		fastlog.Info("/validate found jwt response in cache")
+		fastlog.Info("/validate found response headers for jwt in cache")
+		// TODO: instead of the copy for each, can we just append the whole blob?
+		// or better still can we just cache the entire response including 200OK?
 		for k, v := range resp.(http.Header) {
 			w.Header().Add(k, strings.Join(v, ","))
 		}
@@ -77,7 +77,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	generateCustomClaimsHeaders(w, claims)
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
-
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 
 	if cfg.Cfg.Headers.AccessToken != "" && claims.PAccessToken != "" {
@@ -95,7 +94,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// good to go!!
 
 	// cache the headers against this jwt
-	jwtmanager.Cache.SetDefault(jwt, w.Header().Clone())
+	go jwtmanager.Cache.SetDefault(jwt, w.Header().Clone())
 
 	if cfg.Cfg.Testing {
 		renderIndex(w, "user authorized "+claims.Username)
