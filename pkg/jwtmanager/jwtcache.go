@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package jwtmanager
 
 import (
@@ -18,66 +28,8 @@ func cacheConfigure() {
 		expire = cfg.Cfg.JWT.MaxAge
 	}
 	dExp := time.Duration(expire) * time.Minute
-	purgeCheck := dExp / 3
+	purgeCheck := dExp / 5
 	// log.Debugf("cacheConfigure expire %d dExp %d purgecheck %d", expire, dExp, purgeCheck)
-	log.Infof("cacheConfigure expire %d dExp %d purgecheck %d", expire, dExp, purgeCheck)
+	log.Infof("jwtmanager: the returned headers for a valid jwt will be cached for %d minutes", expire)
 	Cache = cache.New(dExp, purgeCheck)
 }
-
-// Cache an empty struct with methods to access the cache
-// var Cache = &cache{}
-//
-// the same JWT should have the same cached response
-// type jwtCacheMap map[string]jcmCacheEntry
-//
-// type jcmCacheEntry struct {
-// expires  int64
-// response []byte
-// }
-//
-//
-// type cache struct{}
-//
-// var cacheLock = &sync.RWMutex{}
-// var jcm = make(jwtCacheMap)
-//
-// var errNotFound = errors.New("jwtCache: jwt not found in cache")
-// var errExpired = errors.New("jwtCache: jwt is expired, deleted from cache")
-//
-// func (cache) Get(jwtkey string) ([]byte, error) {
-// var entry jcmCacheEntry
-// var ok bool
-// cacheLock.RLock()
-// entry, ok = jcm[jwtkey]
-// cacheLock.RUnlock()
-// if !ok {
-// return nil, errNotFound
-// }
-// if entry.expires < time.Now().Unix() {
-// go Cache.Delete(jwtkey)
-// return nil, errExpired
-// }
-// return entry.response, nil
-// }
-//
-// func (cache) Put(jwtkey string, res []byte, exp int64) error {
-// e := jcmCacheEntry{exp, res}
-// cacheLock.Lock()
-// jcm[jwtkey] = e
-// cacheLock.Unlock()
-// go func() {
-// dur := time.Duration(exp - time.Now().Unix())
-// log.Info("jwtcach: sleeping for duration")
-// time.Sleep(dur)
-// Cache.Delete(jwtkey)
-// }()
-// return nil
-// }
-//
-// func (cache) Delete(jwtkey string) error {
-// cacheLock.Lock()
-// delete(jcm, jwtkey)
-// cacheLock.Unlock()
-// return nil
-// }
-//
