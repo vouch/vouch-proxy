@@ -17,10 +17,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/cookie"
-	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 	"go.uber.org/zap"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 )
 
 var (
@@ -32,31 +32,13 @@ var (
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
-	jwt := findJWT(r)
+	jwt := jwtmanager.FindJWT(r)
 	if jwt == "" {
 		send401or200PublicAccess(w, r, errNoJWT)
 		return
 	}
 
-	// check to see if we have headers cached for this jwt
-	if resp, found := jwtmanager.Cache.Get(jwt); found {
-		// found it in cache!
-		fastlog.Info("/validate found response headers for jwt in cache")
-		// TODO: instead of the copy for each, can we just append the whole blob?
-		// or better still can we just cache the entire response including 200OK?
-		for k, v := range resp.(http.Header) {
-			w.Header().Add(k, strings.Join(v, ","))
-		}
-
-		if cfg.Cfg.Testing {
-			renderIndex(w, "user authorized "+w.Header().Get("X-Vouch-User"))
-		} else {
-			ok200(w, r)
-		}
-		return
-	}
-
-	claims, err := claimsFromJWT(jwt)
+	claims, err := jwtmanager.ClaimsFromJWT(jwt)
 	if err != nil {
 		send401or200PublicAccess(w, r, err)
 		return
@@ -68,7 +50,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cfg.Cfg.AllowAllUsers {
-		if !jwtmanager.SiteInClaims(r.Host, &claims) {
+		if !claims.SiteInClaims(r.Host) {
 			send401or200PublicAccess(w, r,
 				fmt.Errorf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host))
 			return
@@ -93,9 +75,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// good to go!!
 
-	// cache the headers against this jwt
-	go jwtmanager.Cache.SetDefault(jwt, w.Header().Clone())
-
 	if cfg.Cfg.Testing {
 		renderIndex(w, "user authorized "+claims.Username)
 	} else {
@@ -107,7 +86,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func generateCustomClaimsHeaders(w http.ResponseWriter, claims jwtmanager.VouchClaims) {
+func generateCustomClaimsHeaders(w http.ResponseWriter, claims *jwtmanager.VouchClaims) {
 	if len(cfg.Cfg.Headers.ClaimsCleaned) > 0 {
 		log.Debug("Found claims in config, finding specific keys...")
 		// Run through all the claims found
@@ -151,55 +130,4 @@ func send401or200PublicAccess(w http.ResponseWriter, r *http.Request, e error) {
 	}
 
 	error401(w, r, e)
-}
-
-// findJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
-// and Query String in that order
-func findJWT(r *http.Request) string {
-	jwt, err := cookie.Cookie(r)
-	if err == nil {
-		log.Debugf("jwt from cookie: %s", jwt)
-		return jwt
-	}
-	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
-	if jwt != "" {
-		log.Debugf("jwt from header %s: %s", cfg.Cfg.Headers.JWT, jwt)
-		return jwt
-	}
-	auth := r.Header.Get("Authorization")
-	if auth != "" {
-		s := strings.SplitN(auth, " ", 2)
-		if len(s) == 2 {
-			jwt = s[1]
-			log.Debugf("jwt from authorization header: %s", jwt)
-			return jwt
-		}
-	}
-	jwt = r.URL.Query().Get(cfg.Cfg.Headers.QueryString)
-	if jwt != "" {
-		log.Debugf("jwt from querystring %s: %s", cfg.Cfg.Headers.QueryString, jwt)
-		return jwt
-	}
-	return ""
-}
-
-// claimsFromJWT parse the jwt and return the claims
-func claimsFromJWT(jwt string) (jwtmanager.VouchClaims, error) {
-	var claims jwtmanager.VouchClaims
-
-	jwtParsed, err := jwtmanager.ParseTokenString(jwt)
-	if err != nil {
-		// it didn't parse, which means its bad, start over
-		log.Error("jwtParsed returned error, clearing cookie")
-		return claims, err
-	}
-
-	claims, err = jwtmanager.PTokenClaims(jwtParsed)
-	if err != nil {
-		// claims = jwtmanager.PTokenClaims(jwtParsed)
-		// if claims == &jwtmanager.VouchClaims{} {
-		return claims, err
-	}
-	log.Debugf("JWT Claims: %+v", claims)
-	return claims, nil
 }

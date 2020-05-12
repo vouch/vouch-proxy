@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -90,7 +90,7 @@ func configure() {
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
 
-	cfg.TestConfiguration()
+	cfg.ValidateConfiguration()
 
 	logger = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
@@ -121,8 +121,8 @@ func main() {
 	muxR := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	muxR.HandleFunc("/validate", timelog.TimeLog(authH))
-	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
+	muxR.HandleFunc("/validate", timelog.TimeLog(response.JWTCacheHandler(authH)))
+	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(response.JWTCacheHandler(authH)))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	muxR.HandleFunc("/login", timelog.TimeLog(loginH))

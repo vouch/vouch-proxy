@@ -18,11 +18,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	vegeta "github.com/tsenart/vegeta/lib"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/response"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-
-	vegeta "github.com/tsenart/vegeta/lib"
 )
 
 func TestValidateRequestHandlerPerf(t *testing.T) {
@@ -40,12 +41,13 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 		Expires: time.Now().Add(1 * time.Hour),
 	}
 
-	handler := http.HandlerFunc(ValidateRequestHandler)
+	// handler := http.HandlerFunc(ValidateRequestHandler)
+	handler := response.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	rate := vegeta.Rate{Freq: 100, Per: time.Second}
-	duration := 4 * time.Second
+	duration := 10 * time.Second
 	h := &http.Header{}
 	h.Add("Cookie", c.String())
 	targeter := vegeta.NewStaticTargeter(vegeta.Target{
@@ -57,22 +59,27 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	attacker := vegeta.NewAttacker()
 
 	var metrics vegeta.Metrics
+	mustFail := false
 	for res := range attacker.Attack(targeter, rate, duration, "Big Bang!") {
 		if res.Code != http.StatusOK {
 			t.Logf("/validate perf %d response code %d", res.Seq, res.Code)
+			mustFail = true
 		}
 		metrics.Add(res)
 	}
 	metrics.Close()
 
 	limit := time.Millisecond
-	if metrics.Latencies.P95 > limit {
+	if mustFail || metrics.Latencies.P95 > limit {
 		t.Logf("99th percentile latencies: %s", metrics.Latencies.P99)
 		t.Logf("95th percentile latencies: %s", metrics.Latencies.P95)
 		t.Logf("50th percentile latencies: %s", metrics.Latencies.P50)
 		t.Logf("min latencies: %s", metrics.Latencies.Min)
 		t.Logf("max latencies: %s", metrics.Latencies.Max)
 		t.Logf("/validate 95th percentile latency is higher than %s", limit)
+		if mustFail {
+			t.Logf("not all requests were %d", http.StatusOK)
+		}
 		t.FailNow()
 	}
 

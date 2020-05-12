@@ -15,14 +15,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vouch/vouch-proxy/pkg/cookie"
-
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/response"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -43,6 +44,7 @@ func setUp(configFile string) {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
+	response.Configure()
 
 }
 

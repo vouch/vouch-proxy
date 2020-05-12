@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -22,11 +22,14 @@ import (
 // and then pull it out later for logging
 // https://play.golang.org/p/wPHaX9DH-Ik
 
+var logger *zap.SugaredLogger
 var log *zap.Logger
 
 // Configure see main.go configure()
 func Configure() {
+	logger = cfg.Logging.Logger
 	log = cfg.Logging.FastLogger
+	cacheConfigure()
 }
 
 // CaptureWriter extends http.ResponseWriter
