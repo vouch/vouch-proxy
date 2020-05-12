@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -141,12 +141,6 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
 	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
 		return "", fmt.Errorf("%w: mismatch between requested destination URL and %s.cookie.secure %v (the cookie will not be visible to https)", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
-	}
-
-	// and irregardless cookies placed from https are not able to be seen by http
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure
-	if u.Scheme != r.URL.Scheme {
-		log.Warnf("the requested destination URL %s is %s but %s is running under %s, this may mean the jwt/cookie cannot be seen in some browsers", u, u.Scheme, cfg.Branding.FullName, r.URL.Scheme)
 	}
 
 	return urlparam, nil
