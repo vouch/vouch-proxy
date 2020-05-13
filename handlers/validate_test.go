@@ -22,12 +22,45 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/response"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
+func BenchmarkValidateRequestHandler(b *testing.B) {
+	setUp("/config/testing/handler_email.yml")
+	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	tokens := structs.PTokens{}
+	customClaims := structs.CustomClaims{}
+
+	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+
+	c := &http.Cookie{
+		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
+		Name:    cfg.Cfg.Cookie.Name,
+		Value:   userTokenString,
+		Expires: time.Now().Add(1 * time.Hour),
+	}
+
+	handler := jwtmanager.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
+	// handler := http.HandlerFunc(ValidateRequestHandler)
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	req, err := http.NewRequest("GET", "/validate", nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	req.Host = "myapp.example.com"
+	req.AddCookie(c)
+	w := httptest.NewRecorder()
+
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(w, req)
+	}
+
+}
+
 func TestValidateRequestHandlerPerf(t *testing.T) {
-	setUp("/config/testing/handler_claims.yml")
+	setUp("/config/testing/handler_email.yml")
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
@@ -42,14 +75,15 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	}
 
 	// handler := http.HandlerFunc(ValidateRequestHandler)
-	handler := response.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
+	handler := jwtmanager.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	rate := vegeta.Rate{Freq: 100, Per: time.Second}
-	duration := 10 * time.Second
+	rate := vegeta.Rate{Freq: 1000, Per: time.Second}
+	duration := 5 * time.Second
 	h := &http.Header{}
 	h.Add("Cookie", c.String())
+	h.Add("Host", "myapp.example.com")
 	targeter := vegeta.NewStaticTargeter(vegeta.Target{
 		Method: "GET",
 		URL:    ts.URL,
