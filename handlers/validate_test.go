@@ -13,6 +13,7 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -79,7 +80,12 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	rate := vegeta.Rate{Freq: 1000, Per: time.Second}
+	freq := 1000
+	if _, ok := os.LookupEnv("ISTRAVIS"); ok {
+		freq = 100
+	}
+
+	rate := vegeta.Rate{Freq: freq, Per: time.Second}
 	duration := 5 * time.Second
 	h := &http.Header{}
 	h.Add("Cookie", c.String())

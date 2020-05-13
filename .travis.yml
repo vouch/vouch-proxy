@@ -9,10 +9,17 @@ services:
 go:
   - "1.13"
 
+env:
+  - ISTRAVIS=true
+
 before_install:
   - ./do.sh goget
+  # - go get github.com/golang/lint/golint # Linter
+  # - go get github.com/fzipp/gocyclo
 
 script:
+  - GO_FILES=$(find . -iname '*.go' -type f)
+  - test -z $(gofmt -s -l $GO_FILES) # Fail if a .go file hasn't been formatted with gofmt
   - ./do.sh build
   - ./do.sh test
 #  - docker build -t $TRAVIS_REPO_SLUG .
