@@ -81,12 +81,14 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	defer ts.Close()
 
 	freq := 1000
+	duration := 5 * time.Second
 	if _, ok := os.LookupEnv("ISTRAVIS"); ok {
+		log.Info("ISTRAVIS found, dropping rate by one order of magnitude")
 		freq = 100
+		duration = 2 * time.Second
 	}
 
 	rate := vegeta.Rate{Freq: freq, Per: time.Second}
-	duration := 5 * time.Second
 	h := &http.Header{}
 	h.Add("Cookie", c.String())
 	h.Add("Host", "myapp.example.com")
