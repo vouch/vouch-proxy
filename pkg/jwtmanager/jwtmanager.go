@@ -49,11 +49,13 @@ var StandardClaims jwt.StandardClaims
 
 // Sites added to VouchClaims
 var Sites []string
+var logger *zap.Logger
 var log *zap.SugaredLogger
 
 // Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
+	logger = cfg.Logging.FastLogger
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
@@ -237,7 +239,7 @@ func compressAndEncodeTokenString(ss string) string {
 func FindJWT(r *http.Request) string {
 	jwt, err := cookie.Cookie(r)
 	if err == nil {
-		log.Debugf("jwt from cookie: %s", jwt)
+		logger.Debug("jwt found in cookie")
 		return jwt
 	}
 	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
