@@ -61,6 +61,10 @@ func BenchmarkValidateRequestHandler(b *testing.B) {
 }
 
 func TestValidateRequestHandlerPerf(t *testing.T) {
+	if _, ok := os.LookupEnv("ISTRAVIS"); ok {
+		t.Skip("travis doesn't like perf tests, skipping")
+	}
+
 	setUp("/config/testing/handler_email.yml")
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
 	tokens := structs.PTokens{}
@@ -82,11 +86,6 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 
 	freq := 1000
 	duration := 5 * time.Second
-	if _, ok := os.LookupEnv("ISTRAVIS"); ok {
-		log.Info("ISTRAVIS found, dropping rate by one order of magnitude")
-		freq = 100
-		duration = 2 * time.Second
-	}
 
 	rate := vegeta.Rate{Freq: freq, Per: time.Second}
 	h := &http.Header{}
