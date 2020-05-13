@@ -18,8 +18,8 @@ before_install:
   # - go get github.com/fzipp/gocyclo
 
 script:
-  - GO_FILES=$(find . -iname '*.go' -type f)
-  - test -z $(gofmt -s -l $GO_FILES) # Fail if a .go file hasn't been formatted with gofmt
+  # TODO: enable gofmt
+  # - gofmt -w -s . && git diff --exit-code
   - ./do.sh build
   - ./do.sh test
 #  - docker build -t $TRAVIS_REPO_SLUG .
