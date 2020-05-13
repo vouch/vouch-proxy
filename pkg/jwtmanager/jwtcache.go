@@ -8,7 +8,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 */
 
-package response
+package jwtmanager
 
 import (
 	"context"
@@ -19,7 +19,6 @@ import (
 	cache "github.com/patrickmn/go-cache"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 )
 
 // Cache in memory temporary store for responses from /validate for jwt
@@ -36,7 +35,7 @@ func cacheConfigure() {
 	purgeCheck := dExp / 5
 	// log.Debugf("cacheConfigure expire %d dExp %d purgecheck %d", expire, dExp, purgeCheck)
 	Cache = cache.New(dExp, purgeCheck)
-	logger.Infof("jwtcache: the returned headers for a valid jwt will be cached for %d minutes", expire)
+	log.Infof("jwtcache: the returned headers for a valid jwt will be cached for %d minutes", expire)
 }
 
 // CachedResponse caches the JWT response
@@ -55,32 +54,16 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 		// wrap ResponseWriter
 		// v := CachedResponse{CaptureWriter: &CaptureWriter{ResponseWriter: w}}
 
-		jwt := jwtmanager.FindJWT(r)
+		jwt := FindJWT(r)
 		// check to see if we have headers cached for this jwt
 		if resp, found := Cache.Get(jwt); found {
 			// found it in cache!
-			log.Debug("/validate found response headers for jwt in cache")
+			logger.Debug("/validate found response headers for jwt in cache")
 			// TODO: instead of the copy for each, can we just append the whole blob?
 			// or better still can we just cache the entire response including 200OK?
 			for k, v := range resp.(http.Header) {
 				w.Header().Add(k, strings.Join(v, ","))
 			}
-
-			// hj, ok := v.ResponseWriter.(http.Hijacker)
-			// if !ok {
-			// 	logger.Errorf("webserver doesn't support hijacking %w", ok)
-			// 	http.Error(v.ResponseWriter, "webserver doesn't support hijacking", http.StatusInternalServerError)
-			// 	return
-			// }
-			// conn, bufrw, err := hj.Hijack()
-			// if err != nil {
-			// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-			// 	return
-			// }
-			// // Don't forget to close the connection:
-			// defer conn.Close()
-			// bufrw.WriteString(resp.(string))
-			// bufrw.Flush()
 
 			// if cfg.Cfg.Testing {
 			// 	renderIndex(w, "user authorized "+w.Header().Get("X-Vouch-User"))
@@ -91,7 +74,6 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 		}
 
 		ctx := context.Background()
-		// next.ServeHTTP(&v, r.WithContext(ctx))
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 		// cache the response against this jwt
