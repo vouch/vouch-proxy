@@ -189,7 +189,7 @@ func Configure() {
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
 		log.Debug("`go test` detected, not loading regular config")
-		Logging.setLogLevel(zap.ErrorLevel)
+		Logging.setLogLevel(zap.WarnLevel)
 		return
 	}
 
@@ -241,6 +241,7 @@ func InitForTestPurposes() {
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+	Logging.setLogLevel(zapcore.WarnLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
 	// basepath := filepath.Dir(b)

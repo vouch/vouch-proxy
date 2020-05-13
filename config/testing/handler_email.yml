@@ -1,5 +1,5 @@
 vouch:
-  logLevel: debug
+  logLevel: error
   domains:
     - example.com
 
