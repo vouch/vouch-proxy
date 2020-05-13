@@ -29,7 +29,6 @@ var log *zap.Logger
 func Configure() {
 	logger = cfg.Logging.Logger
 	log = cfg.Logging.FastLogger
-	cacheConfigure()
 }
 
 // CaptureWriter extends http.ResponseWriter

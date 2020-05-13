@@ -121,8 +121,8 @@ func main() {
 	muxR := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	muxR.HandleFunc("/validate", timelog.TimeLog(response.JWTCacheHandler(authH)))
-	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(response.JWTCacheHandler(authH)))
+	muxR.HandleFunc("/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	muxR.HandleFunc("/login", timelog.TimeLog(loginH))

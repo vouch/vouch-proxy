@@ -56,6 +56,7 @@ var log *zap.SugaredLogger
 func Configure() {
 	log = cfg.Logging.Logger
 	logger = cfg.Logging.FastLogger
+	cacheConfigure()
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
