@@ -22,7 +22,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/response"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
@@ -44,7 +44,7 @@ func setUp(configFile string) {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
-	response.Configure()
+	responses.Configure()
 
 }
 

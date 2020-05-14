@@ -19,6 +19,7 @@ import (
 	cache "github.com/patrickmn/go-cache"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 // Cache in memory temporary store for responses from /validate for jwt
@@ -63,13 +64,11 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 			// or better still can we just cache the entire response including 200OK?
 			for k, v := range resp.(http.Header) {
 				w.Header().Add(k, strings.Join(v, ","))
+
 			}
 
-			// if cfg.Cfg.Testing {
-			// 	renderIndex(w, "user authorized "+w.Header().Get("X-Vouch-User"))
-			// } else {
-			// 	ok200(w, r)
-			// }
+			responses.OK200(w, r)
+
 			return
 		}
 

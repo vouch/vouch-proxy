@@ -22,6 +22,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"golang.org/x/oauth2"
 )
 
@@ -54,7 +55,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// need to clean the URL to prevent malicious redirection
 	var requestedURL string
 	if requestedURL, err = getValidRequestedURL(r); err != nil {
-		error400(w, r, err)
+		responses.Error400(w, r, err)
 		return
 	}
 
@@ -79,7 +80,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if failcount > 2 {
 		var vouchError = r.URL.Query().Get("error")
-		error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
+		responses.Error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
 		return
 	}
 
@@ -87,7 +88,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// bounce to oauth provider for login
 	var lURL = loginURL(r, state)
 	log.Debugf("redirecting to oauthURL %s", lURL)
-	redirect302(w, r, lURL)
+	responses.Redirect302(w, r, lURL)
 }
 
 var (

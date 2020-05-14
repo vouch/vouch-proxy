@@ -42,7 +42,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/healthcheck"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/response"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
 )
 
@@ -98,9 +98,9 @@ func configure() {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
+	responses.Configure()
 	handlers.Configure()
 	timelog.Configure()
-	response.Configure()
 }
 
 func main() {

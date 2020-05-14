@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -18,6 +18,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
@@ -39,7 +40,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	queryState := r.URL.Query().Get("state")
 	if session.Values["state"] != queryState {
 		log.Errorf("/auth Invalid session state: stored %s, returned %s", session.Values["state"], queryState)
-		renderIndex(w, "/auth Invalid session state.")
+		responses.RenderIndex(w, "/auth Invalid session state.")
 		return
 	}
 
@@ -48,7 +49,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		errorDescription := r.URL.Query().Get("error_description")
 		log.Warn("/auth Error state: ", errorState, ", Error description: ", errorDescription)
 		w.WriteHeader(http.StatusForbidden)
-		renderIndex(w, "FORBIDDEN: "+errorDescription)
+		responses.RenderIndex(w, "FORBIDDEN: "+errorDescription)
 		return
 	}
 
@@ -68,7 +69,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	if ok, err := verifyUser(user); !ok {
 		log.Error(err)
-		renderIndex(w, fmt.Sprintf("/auth User is not authorized. %s Please try again.", err))
+		responses.RenderIndex(w, fmt.Sprintf("/auth User is not authorized. %s Please try again.", err))
 		return
 	}
 
@@ -88,11 +89,11 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			log.Error(err)
 		}
 
-		redirect302(w, r, requestedURL)
+		responses.Redirect302(w, r, requestedURL)
 		return
 	}
 	// otherwise serve an html page
-	renderIndex(w, "/auth "+tokenstring)
+	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
 // verifyUser validates that the domains match for the user
