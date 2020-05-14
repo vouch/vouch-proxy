@@ -33,6 +33,8 @@ import (
 	"strconv"
 	"time"
 
+	// "net/http/pprof"
+
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
@@ -58,6 +60,7 @@ var (
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
 	help      = flag.Bool("help", false, "show usage")
+	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
@@ -147,6 +150,11 @@ func main() {
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
 	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
 
+	//
+	// if *doProfile {
+	// 	addProfilingHandlers(muxR)
+	// }
+
 	srv := &http.Server{
 		Handler: muxR,
 		Addr:    listen,
@@ -171,3 +179,18 @@ func checkTCPPortAvailable(listen string) {
 		logger.Error(err)
 	}
 }
+
+// if you'd like to enable profiling uncomment these
+// func addProfilingHandlers(muxR *mux.Router) {
+// 	// https://stackoverflow.com/questions/47452471/pprof-profile-with-julienschmidtrouter-and-benchmarks-not-profiling-handler
+// 	logger.Debugf("profiling routes added at http://%s:%d/debug/pprof/", cfg.Cfg.Listen, cfg.Cfg.Port)
+// 	muxR.HandleFunc("/debug/pprof/", pprof.Index)
+// 	muxR.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+// 	muxR.HandleFunc("/debug/pprof/profile", pprof.Profile)
+// 	muxR.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+// 	muxR.HandleFunc("/debug/pprof/trace", pprof.Trace)
+// 	muxR.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+// 	muxR.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+// 	muxR.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+// 	muxR.Handle("/debug/pprof/block", pprof.Handler("block"))
+// }
