@@ -1,9 +1,9 @@
 # vouch config
 
 # you should probably start with one of the other configs in the example directory
-# vouch proxy does a fairly good job of setting its config to sane defaults
+# Vouch Proxy does a fairly good job of setting its config to sane defaults
 
-# be aware of your indentation, the only top level elements are `vouch` and `oauth`. 
+# be aware of the yaml indentation, the only top level elements are `vouch` and `oauth`. 
 
 vouch:
   # logLevel: debug
@@ -28,7 +28,7 @@ vouch:
   - yourdomain.com
   - yourotherdomain.com
 
-  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   # allowAllUsers: false
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 
@@ -46,32 +46,41 @@ vouch:
   jwt:
     # secret - a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
-    # if the secret is not set here then..
-    # look for the secret in `./config/secret`
-    # if `./config/secret` doesn't exist then randomly generate a secret and store it there
+    # if the secret is not set here then Vouch Proxy will..
+    # - look for the secret in `./config/secret`
+    # - if `./config/secret` doesn't exist then randomly generate a secret and store it there
     # in order to run multiple instances of vouch on multiple servers (perhaps purely for validating the jwt),
     # you'll want them all to have the same secret
     secret: your_random_string
+
     issuer: Vouch
+
     # number of minutes until jwt expires
     maxAge: 240
+
     # compress the jwt
     compress: true
 
   cookie: 
     # name of cookie to store the jwt
     name: VouchCookie
+
     # optionally force the domain of the cookie to set
     # domain: yourdomain.com
+
+    # Set `secure: false` when protecting a non-https site such as http://app.yourdmain.com
     secure: true
+
     httpOnly: true
+
     # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
     maxAge: 14400
-    # Set SameSite attribute to restrict browser behaviour browser to send this cookie along with cross-site requests.
+
+    # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests.
     # Possible attribute values lax, strict, none.
     # If attribute not specified then cross-site behaviour will depend on the browser used. If sameSite=none then secure must be set to true
     # More context: https://github.com/vouch/vouch-proxy/issues/210
-    # sameSite: lax
+    sameSite: lax
 
   session:
     # name of session variable stored locally
@@ -80,7 +89,8 @@ vouch:
     # if the key is not set here then it is generated at startup and stored in memory
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
-    key: you_random_key
+    # where each instance may rely on a session cookie for state or the original requested URL
+    # key: your_random_key
 
 
   headers:
@@ -91,8 +101,7 @@ vouch:
     # GENERAL WARNING ABOUT claims AND tokens
     # all of these config elements can cause performance impacts due to the amount of information being 
     # moved around.  They will get added to the Vouch cookie and (possibly) make it large.  The Vouch cookie will 
-    # get split up into several cookies. Every request will process the cookies in order to extract and create the 
-    # additional headers which get returned.  But if you need it, you need it.
+    # get split up into several cookies. But if you need it, you need it.
     # With large cookies and headers it will require additional nginx config to open up the buffers a bit..
     # see `large_client_header_buffers` http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
     # and `proxy_buffer_size` http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
@@ -103,9 +112,12 @@ vouch:
     claims:
       - groups
       - given_name
-    # these will result in two headers being passed back to nginx
-    # X-Vouch-IdP-Claims-Groups
-    # X-Vouch-IdP-Claims-Given-Name
+    # these will result in two headers being passed back to nginx as the headers
+    #   X-Vouch-IdP-Claims-Groups: groupa, groupb, groupc
+    #   X-Vouch-IdP-Claims-Given-Name: Robert
+    # nginx will populate the variables
+    #   $auth_resp_x_vouch_idp_claims_groups
+    #   $auth_resp_x_vouch_idp_claims_given-name
     # see https://github.com/vouch/vouch-proxy/issues/183 regarding claims and header naming
 
     # claimheader - Customizable claim header prefix (instead of default `X-Vouch-IdP-Claims-`) 
@@ -160,7 +172,7 @@ oauth:
   client_id:
   client_secret:
   # callback_url is configured at github.com when setting up the app
-  # set to e.g. https://vouch.yourdomain.com/auth
+  # Set to e.g. https://vouch.yourdomain.com/auth
   # defaults (uncomment and change these if you are using github enterprise on-prem)
   # auth_url: https://github.com/login/oauth/authorize
   # token_url: https://github.com/login/oauth/access_token
