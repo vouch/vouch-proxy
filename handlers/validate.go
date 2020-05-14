@@ -21,6 +21,7 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 var (
@@ -76,9 +77,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	// good to go!!
 
 	if cfg.Cfg.Testing {
-		renderIndex(w, "user authorized "+claims.Username)
+		responses.RenderIndex(w, "user authorized "+claims.Username)
 	} else {
-		ok200(w, r)
+		responses.OK200(w, r)
 	}
 
 	// TODO
@@ -123,11 +124,11 @@ func generateCustomClaimsHeaders(w http.ResponseWriter, claims *jwtmanager.Vouch
 
 func send401or200PublicAccess(w http.ResponseWriter, r *http.Request, e error) {
 	if cfg.Cfg.PublicAccess {
-		log.Debugf("error: %s, but public access is '%v', returning ok200", e, cfg.Cfg.PublicAccess)
+		log.Debugf("error: %s, but public access is '%v', returning OK200", e, cfg.Cfg.PublicAccess)
 		w.Header().Add(cfg.Cfg.Headers.User, "")
-		ok200(w, r)
+		responses.OK200(w, r)
 		return
 	}
 
-	error401(w, r, e)
+	responses.Error401(w, r, e)
 }

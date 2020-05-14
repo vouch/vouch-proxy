@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -16,6 +16,7 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in `%s.post_logout_redirect_uris`", cfg.Branding.LCName)
@@ -42,12 +43,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		for _, allowed := range cfg.Cfg.LogoutRedirectURLs {
 			if allowed == requestedURL {
 				log.Debugf("/logout found ")
-				redirect302(w, r, allowed)
+				responses.Redirect302(w, r, allowed)
 				return
 			}
 		}
-		error400(w, r, fmt.Errorf("%w: %s", errUnauthRedirURL, requestedURL))
+		responses.Error400(w, r, fmt.Errorf("%w: %s", errUnauthRedirURL, requestedURL))
 		return
 	}
-	renderIndex(w, "/logout you have been logged out")
+	responses.RenderIndex(w, "/logout you have been logged out")
 }
