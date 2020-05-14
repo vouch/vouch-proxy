@@ -48,28 +48,32 @@ func TimeLog(nextHandler http.Handler) func(http.ResponseWriter, *http.Request) 
 
 		// Stop timer
 		end := time.Now()
-		latency := end.Sub(start)
-		req++
-		avgLatency = avgLatency + ((int64(latency) - avgLatency) / req)
-		log.Debugf("Request handled successfully: %v", v.GetStatusCode())
-		var statusCode = v.GetStatusCode()
 
-		path := r.URL.Path
-		host := r.Host
-		referer := r.Header.Get("Referer")
-		clientIP := r.RemoteAddr
-		method := r.Method
+		go func() {
+			latency := end.Sub(start)
+			req++
+			avgLatency = avgLatency + ((int64(latency) - avgLatency) / req)
+			// log.Debugf("Request handled successfully: %v", v.GetStatusCode())
+			var statusCode = v.GetStatusCode()
 
-		log.Infow(fmt.Sprintf("|%d| %10v %s", statusCode, time.Duration(latency), path),
-			"statusCode", statusCode,
-			"request", req,
-			"latency", time.Duration(latency),
-			"avgLatency", time.Duration(avgLatency),
-			"ipPort", clientIP,
-			"method", method,
-			"host", host,
-			"path", path,
-			"referer", referer,
-		)
+			path := r.URL.Path
+			host := r.Host
+			referer := r.Header.Get("Referer")
+			clientIP := r.RemoteAddr
+			method := r.Method
+
+			log.Infow(fmt.Sprintf("|%d| %10v %s", statusCode, time.Duration(latency), path),
+				"statusCode", statusCode,
+				"request", req,
+				"latency", time.Duration(latency),
+				"avgLatency", time.Duration(avgLatency),
+				"ipPort", clientIP,
+				"method", method,
+				"host", host,
+				"path", path,
+				"referer", referer,
+			)
+		}()
+
 	}
 }
