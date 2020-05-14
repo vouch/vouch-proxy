@@ -8,7 +8,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 */
 
-package response
+package capturewriter
 
 import (
 	"net/http"
@@ -40,7 +40,7 @@ type CaptureWriter struct {
 func (w *CaptureWriter) Write(b []byte) (int, error) {
 	if w.StatusCode == 0 {
 		w.StatusCode = 200
-		log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
+		// log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
 	}
 	return w.ResponseWriter.Write(b)
 }
