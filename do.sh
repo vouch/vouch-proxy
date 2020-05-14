@@ -287,6 +287,15 @@ _has_license() {
   echo $(grep -P 'Copyright \d\d\d\d The Vouch Proxy Authors' ${FILE})
 }
 
+profile() {
+  echo "for profiling to work you may need uncomment the code in main.go"
+  build
+  ./vouch-proxy -profile
+  go tool pprof -http=0.0.0.0:19091 http://0.0.0.0:9090/debug/pprof/profile?seconds=10
+
+}
+
+
 usage() {
    cat <<EOF
    usage:
@@ -299,6 +308,7 @@ usage() {
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 test_logging           - test the logging output
      $0 coverage               - coverage report
+     $0 profile                - go pprof tools
      $0 bug_report domain.com  - print config file removing secrets and each provided domain
      $0 gogo [gocmd]           - run, build, any go cmd
      $0 stats                  - simple metrics (lines of code in project, number of go files)
@@ -315,7 +325,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license'|'profile')
    shift
    $ARG $*
    ;;
