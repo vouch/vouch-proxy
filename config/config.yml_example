@@ -43,6 +43,19 @@ vouch:
   - alice@yourdomain.com
   - joe@yourdomain.com
 
+  # regexWhiteList - (optional) allows only the listed usernames
+  # Note: whiteList always takes precidence and disables regexWhiteList
+  #
+  # Single-quotes(') are to prevent the yaml parser from misinterpreting the line)
+  # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
+  #
+  # regexWhiteList:
+  # - '^bob[4-9]?@yourdomain.com$'
+  # - '^alice@.+\.com$'
+  # - '^alice@your(other)?domain\.com$'
+  # - '^joe@yourdomain\.com$'
+  # - '^j[aneo]{1,3}@yourdomain\.(org|net|com)$'
+
   jwt:
     # secret - a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
