@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package jwtmanager
 
 import (
@@ -7,16 +17,16 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
-	"net/http"
-
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
-	"github.com/vouch/vouch-proxy/pkg/cookie"
-	"go.uber.org/zap"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"go.uber.org/zap"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 // const numSites = 2
@@ -39,11 +49,14 @@ var StandardClaims jwt.StandardClaims
 
 // Sites added to VouchClaims
 var Sites []string
+var logger *zap.Logger
 var log *zap.SugaredLogger
 
 // Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
+	logger = cfg.Logging.FastLogger
+	cacheConfigure()
 	StandardClaims = jwt.StandardClaims{
 		Issuer: cfg.Cfg.JWT.Issuer,
 	}
@@ -118,7 +131,7 @@ func TokenIsValid(token *jwt.Token, err error) bool {
 func SiteInToken(site string, token *jwt.Token) bool {
 	if claims, ok := token.Claims.(*VouchClaims); ok {
 		log.Debugf("site %s claim %v", site, claims)
-		if SiteInClaims(site, claims) {
+		if claims.SiteInClaims(site) {
 			return true
 		}
 	}
@@ -146,7 +159,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 }
 
 // SiteInClaims does the claim contain the value?
-func SiteInClaims(site string, claims *VouchClaims) bool {
+func (claims *VouchClaims) SiteInClaims(site string) bool {
 	for _, s := range claims.Sites {
 		if strings.Contains(site, s) {
 			log.Debugf("site %s is found for claims.Site %s", site, s)
@@ -157,8 +170,7 @@ func SiteInClaims(site string, claims *VouchClaims) bool {
 }
 
 // PTokenClaims get all the claims
-// TODO HERE there's something wrong with claims parsing, probably related to VouchClaims not being a pointer
-func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
+func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
 	// func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
 	// return ptoken.Claims, nil
 
@@ -166,10 +178,10 @@ func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
 	ptokenClaims, ok := ptoken.Claims.(*VouchClaims)
 	if !ok {
 		log.Debugf("failed claims: %v %v", ptokenClaims, ptoken.Claims)
-		return *ptokenClaims, errors.New("cannot parse claims")
+		return ptokenClaims, errors.New("cannot parse claims")
 	}
 	log.Debugf("*ptokenCLaims: %v", *ptokenClaims)
-	return *ptokenClaims, nil
+	return ptokenClaims, nil
 }
 
 // PTokenToUsername returns the Username in the validated ptoken
@@ -228,7 +240,7 @@ func compressAndEncodeTokenString(ss string) string {
 func FindJWT(r *http.Request) string {
 	jwt, err := cookie.Cookie(r)
 	if err == nil {
-		log.Debugf("jwt from cookie: %s", jwt)
+		logger.Debug("jwt found in cookie")
 		return jwt
 	}
 	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
@@ -254,8 +266,8 @@ func FindJWT(r *http.Request) string {
 }
 
 // ClaimsFromJWT parse the jwt and return the claims
-func ClaimsFromJWT(jwt string) (VouchClaims, error) {
-	var claims VouchClaims
+func ClaimsFromJWT(jwt string) (*VouchClaims, error) {
+	var claims *VouchClaims
 
 	jwtParsed, err := ParseTokenString(jwt)
 	if err != nil {
@@ -266,8 +278,8 @@ func ClaimsFromJWT(jwt string) (VouchClaims, error) {
 
 	claims, err = PTokenClaims(jwtParsed)
 	if err != nil {
-		// claims = PTokenClaims(jwtParsed)
-		// if claims == &VouchClaims{} {
+		// claims = jwtmanager.PTokenClaims(jwtParsed)
+		// if claims == &jwtmanager.VouchClaims{} {
 		return claims, err
 	}
 	log.Debugf("JWT Claims: %+v", claims)

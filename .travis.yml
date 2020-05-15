@@ -9,10 +9,17 @@ services:
 go:
   - "1.13"
 
+env:
+  - ISTRAVIS=true
+
 before_install:
   - ./do.sh goget
+  # - go get github.com/golang/lint/golint # Linter
+  # - go get github.com/fzipp/gocyclo
 
 script:
+  # TODO: enable gofmt
+  # - gofmt -w -s . && git diff --exit-code
   - ./do.sh build
   - ./do.sh test
 #  - docker build -t $TRAVIS_REPO_SLUG .

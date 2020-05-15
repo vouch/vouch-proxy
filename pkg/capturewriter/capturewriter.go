@@ -1,4 +1,14 @@
-package response
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
+package capturewriter
 
 import (
 	"net/http"
@@ -12,10 +22,12 @@ import (
 // and then pull it out later for logging
 // https://play.golang.org/p/wPHaX9DH-Ik
 
+var logger *zap.SugaredLogger
 var log *zap.Logger
 
 // Configure see main.go configure()
 func Configure() {
+	logger = cfg.Logging.Logger
 	log = cfg.Logging.FastLogger
 }
 
@@ -28,7 +40,7 @@ type CaptureWriter struct {
 func (w *CaptureWriter) Write(b []byte) (int, error) {
 	if w.StatusCode == 0 {
 		w.StatusCode = 200
-		log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
+		// log.Debug("CaptureWriter.Write set w.StatusCode " + strconv.Itoa(w.StatusCode))
 	}
 	return w.ResponseWriter.Write(b)
 }

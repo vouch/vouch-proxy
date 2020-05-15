@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package main
 
 // Vouch Proxy
@@ -23,6 +33,8 @@ import (
 	"strconv"
 	"time"
 
+	// "net/http/pprof"
+
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
@@ -32,7 +44,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/healthcheck"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/response"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/timelog"
 )
 
@@ -48,6 +60,7 @@ var (
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
 	help      = flag.Bool("help", false, "show usage")
+	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
@@ -80,7 +93,7 @@ func configure() {
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
 
-	cfg.TestConfiguration()
+	cfg.ValidateConfiguration()
 
 	logger = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
@@ -88,9 +101,9 @@ func configure() {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
+	responses.Configure()
 	handlers.Configure()
 	timelog.Configure()
-	response.Configure()
 }
 
 func main() {
@@ -111,8 +124,8 @@ func main() {
 	muxR := mux.NewRouter()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	muxR.HandleFunc("/validate", timelog.TimeLog(authH))
-	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(authH))
+	muxR.HandleFunc("/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
 	muxR.HandleFunc("/login", timelog.TimeLog(loginH))
@@ -136,6 +149,11 @@ func main() {
 	}
 	// https://golangcode.com/serve-static-assets-using-the-mux-router/
 	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
+
+	//
+	// if *doProfile {
+	// 	addProfilingHandlers(muxR)
+	// }
 
 	srv := &http.Server{
 		Handler: muxR,
@@ -161,3 +179,18 @@ func checkTCPPortAvailable(listen string) {
 		logger.Error(err)
 	}
 }
+
+// if you'd like to enable profiling uncomment these
+// func addProfilingHandlers(muxR *mux.Router) {
+// 	// https://stackoverflow.com/questions/47452471/pprof-profile-with-julienschmidtrouter-and-benchmarks-not-profiling-handler
+// 	logger.Debugf("profiling routes added at http://%s:%d/debug/pprof/", cfg.Cfg.Listen, cfg.Cfg.Port)
+// 	muxR.HandleFunc("/debug/pprof/", pprof.Index)
+// 	muxR.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+// 	muxR.HandleFunc("/debug/pprof/profile", pprof.Profile)
+// 	muxR.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+// 	muxR.HandleFunc("/debug/pprof/trace", pprof.Trace)
+// 	muxR.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+// 	muxR.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+// 	muxR.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+// 	muxR.Handle("/debug/pprof/block", pprof.Handler("block"))
+// }
