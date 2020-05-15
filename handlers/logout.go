@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -60,12 +61,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// If provider logout URL is configured, redirect to it (and pass redirectURL along)
 	// If provider logout URL is not configured, redirect directly to redirectURL
 	if providerLogoutURL != "" {
-		req, err := http.NewRequest("GET", providerLogoutURL, nil)
+		newRedirectURL, err := url.Parse(providerLogoutURL)
 		if err != nil {
 			log.Error(err)
 		}
 	
-		q := req.URL.Query()
+		q := newRedirectURL.Query()
 		if redirectURL != "" {
 			q.Add("post_logout_redirect_uri", redirectURL)
 		}
@@ -73,8 +74,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 			// Optional in spec, required by some providers (Okta, for example)
 			q.Add("id_token_hint", token)
 		}
-		req.URL.RawQuery = q.Encode()
-		redirectURL = req.URL.String()
+		newRedirectURL.RawQuery = q.Encode()
+		redirectURL = newRedirectURL.String()
 	}
 
 	if redirectURL != "" {
