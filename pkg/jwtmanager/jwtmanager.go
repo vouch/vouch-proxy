@@ -9,9 +9,11 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/structs"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"go.uber.org/zap"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -219,4 +221,55 @@ func compressAndEncodeTokenString(ss string) string {
 	// ret := url.QueryEscape(buf.String())
 	log.Debugf("compressed string: %s", ret)
 	return ret
+}
+
+// FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
+// and Query String in that order
+func FindJWT(r *http.Request) string {
+	jwt, err := cookie.Cookie(r)
+	if err == nil {
+		log.Debugf("jwt from cookie: %s", jwt)
+		return jwt
+	}
+	jwt = r.Header.Get(cfg.Cfg.Headers.JWT)
+	if jwt != "" {
+		log.Debugf("jwt from header %s: %s", cfg.Cfg.Headers.JWT, jwt)
+		return jwt
+	}
+	auth := r.Header.Get("Authorization")
+	if auth != "" {
+		s := strings.SplitN(auth, " ", 2)
+		if len(s) == 2 {
+			jwt = s[1]
+			log.Debugf("jwt from authorization header: %s", jwt)
+			return jwt
+		}
+	}
+	jwt = r.URL.Query().Get(cfg.Cfg.Headers.QueryString)
+	if jwt != "" {
+		log.Debugf("jwt from querystring %s: %s", cfg.Cfg.Headers.QueryString, jwt)
+		return jwt
+	}
+	return ""
+}
+
+// ClaimsFromJWT parse the jwt and return the claims
+func ClaimsFromJWT(jwt string) (VouchClaims, error) {
+	var claims VouchClaims
+
+	jwtParsed, err := ParseTokenString(jwt)
+	if err != nil {
+		// it didn't parse, which means its bad, start over
+		log.Error("jwtParsed returned error, clearing cookie")
+		return claims, err
+	}
+
+	claims, err = PTokenClaims(jwtParsed)
+	if err != nil {
+		// claims = PTokenClaims(jwtParsed)
+		// if claims == &VouchClaims{} {
+		return claims, err
+	}
+	log.Debugf("JWT Claims: %+v", claims)
+	return claims, nil
 }
