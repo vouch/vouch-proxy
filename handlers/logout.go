@@ -36,7 +36,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 		
-	token := claims.PIdToken
+	var token = ""
+	if claims != nil {
+		token = claims.PIdToken
+	}
 
 	cookie.ClearCookie(w, r)
 	log.Debug("/logout deleting session")
