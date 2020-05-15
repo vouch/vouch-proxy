@@ -34,6 +34,7 @@ func TestLogoutHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("GET", "/logout?url="+tt.url, nil)
+			req.Host = "myapp.example.com"
 			if err != nil {
 				t.Fatal(err)
 			}
