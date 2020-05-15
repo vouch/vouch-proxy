@@ -31,25 +31,22 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
-		log.Errorf("/auth could not find session store %s", cfg.Cfg.Session.Name)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		responses.Error400(w, r, fmt.Errorf("/auth %w: could not find session store %s", err, cfg.Cfg.Session.Name))
 		return
 	}
 
 	// is the nonce "state" valid?
 	queryState := r.URL.Query().Get("state")
 	if session.Values["state"] != queryState {
-		log.Errorf("/auth Invalid session state: stored %s, returned %s", session.Values["state"], queryState)
-		responses.RenderIndex(w, "/auth Invalid session state.")
+		responses.Error400(w, r, fmt.Errorf("/auth Invalid session state: stored %s, returned %s", session.Values["state"], queryState))
 		return
 	}
 
+	// did the IdP return an error when they redirected back to /auth
 	errorState := r.URL.Query().Get("error")
 	if errorState != "" {
 		errorDescription := r.URL.Query().Get("error_description")
-		log.Warn("/auth Error state: ", errorState, ", Error description: ", errorDescription)
-		w.WriteHeader(http.StatusForbidden)
-		responses.RenderIndex(w, "FORBIDDEN: "+errorDescription)
+		responses.Error401(w, r, fmt.Errorf("/auth Error state: %s - %s", errorState, errorDescription))
 		return
 	}
 
@@ -58,18 +55,17 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ptokens := structs.PTokens{}
 
 	if err := getUserInfo(r, &user, &customClaims, &ptokens); err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successflu login at the OAuth provider: %w", err))
 		return
 	}
 	log.Debugf("/auth Claims from userinfo: %+v", customClaims)
 	//getProviderJWT(r, &user)
-	log.Debug("/auth CallbackHandler")
-	log.Debugf("/auth %+v", user)
+	// log.Debug("/auth CallbackHandler")
+	// log.Debugf("/auth %+v", user)
 
+	// verify / authz the user
 	if ok, err := verifyUser(user); !ok {
-		log.Error(err)
-		responses.RenderIndex(w, fmt.Sprintf("/auth User is not authorized. %s Please try again.", err))
+		responses.Error403(w, r, fmt.Errorf("/auth User is not authorized: %w . Please try again or seek support from your administrator", err))
 		return
 	}
 
