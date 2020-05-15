@@ -200,3 +200,58 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 	}
 	assert.Equal(t, expectedCustomClaimHeaders, customClaimHeaders)
 }
+
+func TestJWTCacheHandler(t *testing.T) {
+	setUp("/config/testing/handler_logout_url.yml")
+	handler := jwtmanager.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
+
+	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	tokens := structs.PTokens{}
+	customClaims := structs.CustomClaims{}
+
+	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+
+	c := &http.Cookie{
+		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
+		Name:    cfg.Cfg.Cookie.Name,
+		Value:   userTokenString,
+		Expires: time.Now().Add(1 * time.Hour),
+		Domain:  cfg.Cfg.Cookie.Domain,
+	}
+
+	cBlank := &http.Cookie{
+		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
+		Name:    cfg.Cfg.Cookie.Name,
+		Value:   "",
+		Expires: time.Now().Add(1 * time.Hour),
+		Domain:  cfg.Cfg.Cookie.Domain,
+	}
+
+	tests := []struct {
+		name     string
+		cookie   *http.Cookie
+		wantcode int
+	}{
+		{"authorized", c, http.StatusOK},
+		{"authorized", c, http.StatusOK}, // because we're testing the cacheing we run these multiple times
+		{"notauthorized", cBlank, http.StatusUnauthorized},
+		{"notauthorized", cBlank, http.StatusUnauthorized},
+		{"authorized", c, http.StatusOK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", "/validate", nil)
+			req.Host = "myapp.example.com"
+			req.AddCookie(tt.cookie)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+			if rr.Code != tt.wantcode {
+				t.Errorf("JWTCacheHandler() = %v, want %v", rr.Code, tt.wantcode)
+			}
+		})
+	}
+}
