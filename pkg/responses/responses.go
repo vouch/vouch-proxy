@@ -69,7 +69,7 @@ func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	http.Redirect(w, r, rURL, http.StatusFound)
 }
 
-// Error400 400 Bad Request
+// Error400 Bad Request
 // returned when the requesed url param for /login or /logout is bd
 func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
@@ -78,7 +78,7 @@ func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	http.Error(w, e.Error(), http.StatusBadRequest)
 }
 
-// Error401 the standard error
+// Error401 Unauthorized the standard error
 // this is captured by nginx, which converts the 401 into 302 to the login page
 func Error401(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
@@ -90,4 +90,13 @@ func Error401(w http.ResponseWriter, r *http.Request, e error) {
 // Error401na send 401 not authorized
 func Error401na(w http.ResponseWriter, r *http.Request) {
 	Error401(w, r, fmt.Errorf("not authorized"))
+}
+
+// Error403 Forbidden
+// if there's an error during /auth or if they don't pass validation in /auth
+func Error403(w http.ResponseWriter, r *http.Request, e error) {
+	log.Error(e)
+	cookie.ClearCookie(w, r)
+	w.Header().Set("X-Vouch-Error", e.Error())
+	http.Error(w, e.Error(), http.StatusForbidden)
 }
