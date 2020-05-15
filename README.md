@@ -31,7 +31,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ## Installation
 
-Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](blob/master/config/config.yml_example#L27-L29) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](blob/master/config/config.yml_example#L68-L69) to `yourdomain.com`.
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L27-L29) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L68-L69) to `yourdomain.com`.
 
 - `cp ./config/config.yml_example_$OAUTH_PROVIDER ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), etc
@@ -41,7 +41,7 @@ Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy serv
 The following Nginx config assumes..
 
 - Nginx, `vouch.yourdomain.com` and `protectedapp.yourdomain.com` are running on the same server
-- both domains are served as `https` and have valid certs (if not, change to `listen 80` and set [])
+- both domains are served as `https` and have valid certs (if not, change to `listen 80` and set [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L71-L72) to `false`)
 
 ```{.nginxconf}
 server {

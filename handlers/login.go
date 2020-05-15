@@ -164,7 +164,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var lurl = ""
+	var lurl string
 
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
@@ -172,10 +172,10 @@ func loginURL(r *http.Request, state string) string {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
 		domain := domains.Matches(r.Host)
-		log.Debugf("looking for callback_url matching  %v", domain)
+		log.Debugf("/login looking for callback_url matching  %v", domain)
 		for i, v := range cfg.GenOAuth.RedirectURLs {
 			if strings.Contains(v, domain) {
-				log.Debugf("redirect value matched at [%d]=%v", i, v)
+				log.Debugf("/login  redirect value matched at [%d]=%v", i, v)
 				cfg.OAuthClient.RedirectURL = v
 				break
 			}
