@@ -1,22 +1,22 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
 */
 
-package openstax
+package openid
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"go.uber.org/zap"
 )
@@ -33,7 +33,7 @@ func (Provider) Configure() {
 
 // GetUserInfo provider specific call to get userinfomation
 func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	client, _, err := common.PrepareTokensAndClient(r, ptokens, false)
+	client, _, err := common.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		return err
 	}
@@ -47,22 +47,15 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		}
 	}()
 	data, _ := ioutil.ReadAll(userinfo.Body)
-	log.Infof("OpenStax userinfo body: %s", string(data))
+	log.Infof("OpenID userinfo body: %s", string(data))
 	if err = common.MapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
-	oxUser := structs.OpenStaxUser{}
-	if err = json.Unmarshal(data, &oxUser); err != nil {
+	if err = json.Unmarshal(data, user); err != nil {
 		log.Error(err)
 		return err
 	}
-
-	oxUser.PrepareUserData()
-	user.Email = oxUser.Email
-	user.Name = oxUser.Name
-	user.Username = oxUser.Username
-	user.ID = oxUser.ID
 	user.PrepareUserData()
 	return nil
 }
