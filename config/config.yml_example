@@ -187,7 +187,9 @@ oauth:
   auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
   token_url: https://{yourOktaDomain}/oauth2/default/v1/token
   user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
-  logout_url: https://{yourOktaDomain}/oauth2/default/v1/logout
+  # end_session_endpoint is usually the IdP's logout URL
+  # see https://github.com/vouch/vouch-proxy/pull/258
+  end_session_endpoint: https://{yourOktaDomain}/oauth2/default/v1/logout
   scopes:
     - openid
     - email

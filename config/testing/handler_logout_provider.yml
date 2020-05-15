@@ -18,4 +18,4 @@ oauth:
   client_id: http://vouch.github.io
   auth_url: https://indielogin.com/auth
   callback_url: http://vouch.github.io:9090/auth
-  logout_url: https://indielogin.com/logout
+  end_session_endpoint: https://indielogin.com/logout
