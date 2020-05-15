@@ -59,22 +59,6 @@ func init() {
 	json.Unmarshal([]byte(claimjson), &customClaims.Claims)
 }
 
-func TestCreateUserTokenStringAndParseToUsername(t *testing.T) {
-
-	uts := CreateUserTokenString(u1, customClaims, t1)
-	assert.NotEmpty(t, uts)
-
-	utsParsed, err := ParseTokenString(uts)
-	if utsParsed == nil || err != nil {
-		t.Error(err)
-	} else {
-		log.Debugf("test parsed token string %v", utsParsed)
-		ptUsername, _ := PTokenToUsername(utsParsed)
-		assert.Equal(t, u1.Username, ptUsername)
-	}
-
-}
-
 func TestClaims(t *testing.T) {
 	populateSites()
 	log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
@@ -91,5 +75,4 @@ func TestClaims(t *testing.T) {
 	log.Infof("utsParsed: %+v", utsParsed)
 	log.Infof("Sites: %+v", Sites)
 	assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
-
 }
