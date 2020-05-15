@@ -31,17 +31,17 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ## Installation
 
-Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` where your apps are running on `app1.yourdomain.com` and `app2.yourdomain.com`.
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](blob/master/config/config.yml_example#L27-L29) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](blob/master/config/config.yml_example#L68-L69) to `yourdomain.com`.
 
-- `cp ./config/config.yml_example ./config/config.yml`
-- create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
-  - be sure to direct the callback URL to the `/auth` endpoint
+- `cp ./config/config.yml_example_$OAUTH_PROVIDER ./config/config.yml`
+- create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), etc
+  - be sure to direct the callback URL to the Vouch Proxy `/auth` endpoint
 - configure Nginx...
 
 The following Nginx config assumes..
 
-- Nginx, `vouch.yourdomain.com` and `dev.yourdomain.com` are running on the same server
-- both domains are served as `https` and have valid certs (if not, change to `listen 80`)
+- Nginx, `vouch.yourdomain.com` and `protectedapp.yourdomain.com` are running on the same server
+- both domains are served as `https` and have valid certs (if not, change to `listen 80` and set [])
 
 ```{.nginxconf}
 server {
@@ -49,8 +49,8 @@ server {
     server_name protectedapp.yourdomain.com;
     root /var/www/html/;
 
-    ssl_certificate /etc/letsencrypt/live/dev.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/dev.yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/protectedapp.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/protectedapp.yourdomain.com/privkey.pem;
 
     # send all requests to the `/validate` endpoint for authorization
     auth_request /validate;
@@ -275,7 +275,7 @@ Please make a proposal before you spend your time and our time integrating a new
 Code contributions should..
 
 - include unit tests and in some cases end-to-end tests
-- be formatted with `go fmt`
+- be formatted with `go fmt`, checked with `go vet` and other common go tools
 - not break existing setups without a clear reason (usually security related)
 - and generally be discussed beforehand in a GitHub issue
 

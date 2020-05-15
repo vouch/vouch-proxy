@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package handlers
 
 import (
@@ -12,6 +22,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 	"golang.org/x/oauth2"
 )
 
@@ -44,7 +55,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// need to clean the URL to prevent malicious redirection
 	var requestedURL string
 	if requestedURL, err = getValidRequestedURL(r); err != nil {
-		error400(w, r, err)
+		responses.Error400(w, r, err)
 		return
 	}
 
@@ -69,7 +80,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if failcount > 2 {
 		var vouchError = r.URL.Query().Get("error")
-		error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
+		responses.Error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
 		return
 	}
 
@@ -77,7 +88,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// bounce to oauth provider for login
 	var lURL = loginURL(r, state)
 	log.Debugf("redirecting to oauthURL %s", lURL)
-	redirect302(w, r, lURL)
+	responses.Redirect302(w, r, lURL)
 }
 
 var (
@@ -85,7 +96,7 @@ var (
 	errInvalidURL = errors.New("requested destination URL appears to be invalid")
 	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
 	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
-	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://"}
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
 )
 
 func getValidRequestedURL(r *http.Request) (string, error) {
@@ -94,7 +105,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	if urlparam == "" {
 		return "", errNoURL
 	}
-	if !strings.HasPrefix(urlparam, "http://") && !strings.HasPrefix(urlparam, "https://") {
+	if !strings.HasPrefix(strings.ToLower(urlparam), "http://") && !strings.HasPrefix(strings.ToLower(urlparam), "https://") {
 		return "", errURLNotHTTP
 	}
 	u, err := url.Parse(urlparam)
@@ -111,7 +122,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		// log.Debugf("validateRequestedURL %s:%s", k, v)
 		for _, vval := range v {
 			for _, bad := range badStrings {
-				if strings.HasPrefix(vval, bad) {
+				if strings.HasPrefix(strings.ToLower(vval), bad) {
 					return "", fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
 				}
 			}
@@ -131,12 +142,6 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
 	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
 		return "", fmt.Errorf("%w: mismatch between requested destination URL and %s.cookie.secure %v (the cookie will not be visible to https)", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
-	}
-
-	// and irregardless cookies placed from https are not able to be seen by http
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure
-	if u.Scheme != r.URL.Scheme {
-		log.Warnf("the requested destination URL %s is %s but %s is running under %s, this may mean the jwt/cookie cannot be seen in some browsers", u, u.Scheme, cfg.Branding.FullName, r.URL.Scheme)
 	}
 
 	return urlparam, nil

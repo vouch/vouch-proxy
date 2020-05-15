@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that 
+can be found in the LICENSE file. Software distributed under The 
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package handlers
 
 import (
@@ -17,7 +27,10 @@ func Test_getValidRequestedURL(t *testing.T) {
 	}{
 		{"no https", "example.com/dest", "", true},
 		{"redirection chaining", "http://example.com/dest?url=https://", "", true},
+		{"redirection chaining upper case", "http://example.com/dest?url=HTTPS://someplaceelse.com", "", true},
+		{"redirection chaining no protocol", "http://example.com/dest?url=//someplaceelse.com", "", true},
 		{"data uri", "http://example.com/dest?url=data:text/plain,Example+Text", "", true},
+		{"javascript uri", "http://example.com/dest?url=javascript:alert(1)", "", true},
 		{"not in domain", "http://somewherelse.com/", "", true},
 		{"should warn", "https://example.com/", "https://example.com/", false},
 		{"should be fine", "http://example.com/", "http://example.com/", false},

@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package handlers
 
 import (
@@ -7,9 +17,11 @@ import (
 	"reflect"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"go.uber.org/zap"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 var (
@@ -18,7 +30,6 @@ var (
 )
 
 // ValidateRequestHandler /validate
-// TODO this should use the handler interface
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
@@ -40,7 +51,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cfg.Cfg.AllowAllUsers {
-		if !jwtmanager.SiteInClaims(r.Host, &claims) {
+		if !claims.SiteInClaims(r.Host) {
 			send401or200PublicAccess(w, r,
 				fmt.Errorf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host))
 			return
@@ -49,7 +60,6 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	generateCustomClaimsHeaders(w, claims)
 	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
-
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 
 	if cfg.Cfg.Headers.AccessToken != "" && claims.PAccessToken != "" {
@@ -65,10 +75,11 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		zap.Any("all headers", w.Header()))
 
 	// good to go!!
+
 	if cfg.Cfg.Testing {
-		renderIndex(w, "user authorized "+claims.Username)
+		responses.RenderIndex(w, "user authorized "+claims.Username)
 	} else {
-		ok200(w, r)
+		responses.OK200(w, r)
 	}
 
 	// TODO
@@ -76,7 +87,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func generateCustomClaimsHeaders(w http.ResponseWriter, claims jwtmanager.VouchClaims) {
+func generateCustomClaimsHeaders(w http.ResponseWriter, claims *jwtmanager.VouchClaims) {
 	if len(cfg.Cfg.Headers.ClaimsCleaned) > 0 {
 		log.Debug("Found claims in config, finding specific keys...")
 		// Run through all the claims found
@@ -113,11 +124,11 @@ func generateCustomClaimsHeaders(w http.ResponseWriter, claims jwtmanager.VouchC
 
 func send401or200PublicAccess(w http.ResponseWriter, r *http.Request, e error) {
 	if cfg.Cfg.PublicAccess {
-		log.Debugf("error: %s, but public access is '%v', returning ok200", e, cfg.Cfg.PublicAccess)
+		log.Debugf("error: %s, but public access is '%v', returning OK200", e, cfg.Cfg.PublicAccess)
 		w.Header().Add(cfg.Cfg.Headers.User, "")
-		ok200(w, r)
+		responses.OK200(w, r)
 		return
 	}
-	error401(w, r, e)
-}
 
+	responses.Error401(w, r, e)
+}

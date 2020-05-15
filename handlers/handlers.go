@@ -1,9 +1,17 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package handlers
 
 import (
-	"html/template"
 	"net/http"
-	"path/filepath"
 
 	"github.com/vouch/vouch-proxy/handlers/adfs"
 	"github.com/vouch/vouch-proxy/handlers/common"
@@ -23,13 +31,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
-// Index variables passed to index.tmpl
-type Index struct {
-	Msg      string
-	TestURLs []string
-	Testing  bool
-}
-
 // Provider each Provider must support GetuserInfo
 type Provider interface {
 	Configure()
@@ -41,11 +42,10 @@ const (
 )
 
 var (
-	indexTemplate *template.Template
-	sessstore     *sessions.CookieStore
-	log           *zap.SugaredLogger
-	fastlog       *zap.Logger
-	provider      Provider
+	sessstore *sessions.CookieStore
+	log       *zap.SugaredLogger
+	fastlog   *zap.Logger
+	provider  Provider
 )
 
 // Configure see main.go configure()
@@ -57,9 +57,6 @@ func Configure() {
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 	sessstore.Options.SameSite = cookie.SameSite()
-
-	log.Debugf("handlers.Configure() attempting to parse templates with cfg.RootDir: %s", cfg.RootDir)
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
 
 	provider = getProvider()
 	provider.Configure()

@@ -1,3 +1,13 @@
+/*
+
+Copyright 2020 The Vouch Proxy Authors.
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
+MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied.
+
+*/
+
 package cfg
 
 import (
@@ -30,7 +40,7 @@ type Config struct {
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
-		MaxAge   int    `mapstructure:"maxAge"`
+		MaxAge   int    `mapstructure:"maxAge"` // in minutes
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
 		Compress bool   `mapstructure:"compress"`
@@ -179,8 +189,8 @@ func Configure() {
 
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
-		Logging.setLogLevel(zap.DebugLevel)
 		log.Debug("`go test` detected, not loading regular config")
+		Logging.setLogLevel(zap.WarnLevel)
 		return
 	}
 
@@ -194,8 +204,8 @@ func Configure() {
 
 }
 
-// TestConfiguration Confirm the Configuration is valid
-func TestConfiguration() {
+// ValidateConfiguration confirm the Configuration is valid
+func ValidateConfiguration() {
 	if Cfg.Testing {
 		// Logging.setLogLevel(zap.DebugLevel)
 		Logging.setDevelopmentLogger()
@@ -232,6 +242,7 @@ func InitForTestPurposes() {
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+	Logging.setLogLevel(zapcore.WarnLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
 	// basepath := filepath.Dir(b)
