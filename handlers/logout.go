@@ -17,15 +17,15 @@ import (
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
-	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in `%s.post_logout_redirect_uris`", cfg.Branding.LCName)
 
 // LogoutHandler /logout
 // Destroys Vouch session
-// If oauth.logout_url present in conf, also redirects to destroy session at oauth provider
+// If oauth.end_session_endpoint present in conf, also redirects to destroy session at oauth provider
 // If "url" param present in request, also redirects to that (after destroying one or both sessions)
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/logout")
@@ -35,7 +35,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-		
+
 	var token = ""
 	if claims != nil {
 		token = claims.PIdToken
@@ -66,7 +66,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		if (!redirectValid) {
+		if !redirectValid {
 			responses.Error400(w, r, fmt.Errorf("%w: %s", errUnauthRedirURL, redirectURL))
 			return
 		}
@@ -79,7 +79,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error(err)
 		}
-	
+
 		q := newRedirectURL.Query()
 		if redirectURL != "" {
 			q.Add("post_logout_redirect_uri", redirectURL)

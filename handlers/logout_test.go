@@ -45,7 +45,7 @@ func TestLogoutHandler(t *testing.T) {
 			if rr.Code != tt.wantcode {
 				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
 			}
-			if (rr.Code == http.StatusFound && rr.Header().Get("Location") != tt.url) {
+			if rr.Code == http.StatusFound && rr.Header().Get("Location") != tt.url {
 				t.Errorf("LogoutHandler() redirect = %s, want %s", rr.Header().Get("Location"), tt.url)
 			}
 		})
@@ -78,16 +78,16 @@ func TestProviderLogoutHandler(t *testing.T) {
 			if rr.Code != tt.wantcode {
 				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
 			}
-			if (rr.Code == http.StatusFound) {
+			if rr.Code == http.StatusFound {
 				wanted := tt.url
 				req, _ := http.NewRequest("GET", cfg.GenOAuth.LogoutURL, nil)
-			
+
 				q := req.URL.Query()
 				q.Add("post_logout_redirect_uri", wanted)
 				req.URL.RawQuery = q.Encode()
 				wanted = req.URL.String()
 
-				if (rr.Header().Get("Location") != wanted) {
+				if rr.Header().Get("Location") != wanted {
 					t.Errorf("LogoutHandler() redirect = %s, want %s", rr.Header().Get("Location"), wanted)
 				}
 			}
