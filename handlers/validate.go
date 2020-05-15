@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 	"go.uber.org/zap"
 )
@@ -23,13 +22,13 @@ var (
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
-	jwt := common.FindJWT(r)
+	jwt := jwtmanager.FindJWT(r)
 	if jwt == "" {
 		send401or200PublicAccess(w, r, errNoJWT)
 		return
 	}
 
-	claims, err := common.ClaimsFromJWT(jwt)
+	claims, err := jwtmanager.ClaimsFromJWT(jwt)
 	if err != nil {
 		send401or200PublicAccess(w, r, err)
 		return

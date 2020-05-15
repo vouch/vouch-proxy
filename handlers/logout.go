@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/vouch/vouch-proxy/handlers/common"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
+	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 )
 
 var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in `%s.post_logout_redirect_uris`", cfg.Branding.LCName)
@@ -18,8 +18,8 @@ var errUnauthRedirURL = fmt.Errorf("/logout The requested url is not present in 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/logout")
 
-	jwt := common.FindJWT(r)
-	claims, err := common.ClaimsFromJWT(jwt)
+	jwt := jwtmanager.FindJWT(r)
+	claims, err := jwtmanager.ClaimsFromJWT(jwt)
 	if err != nil {
 		log.Error(err)
 	}
