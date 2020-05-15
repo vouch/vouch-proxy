@@ -100,7 +100,21 @@ var (
 )
 
 func getValidRequestedURL(r *http.Request) (string, error) {
-	urlparam := r.URL.Query().Get("url")
+	// nginx is configured with...
+	// `return 302 https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;`
+	// because `url=$scheme://$http_host$request_uri` might be..
+	// `url=http://protectedapp.yourdomain.com/hello?arg1=val1&arg2=val2`
+	// it causes `arg2=val2` to get lost if a regular evaluation of the `url` param is performedwith...
+	//   urlparam := r.URL.Query().Get("url")
+	// so instead we extract in manually
+
+	urlparam := r.URL.RawQuery
+	urlparam = strings.Split(urlparam, "&vouch-failcount")[0]
+	urlparam = strings.TrimPrefix(urlparam, "url=")
+	log.Debugf("raw URL is %s", urlparam)
+
+	// urlparam := r.URL.Query().Get("url")
+	// log.Debugf("url URL is %s", urlparam)
 
 	if urlparam == "" {
 		return "", errNoURL
@@ -150,7 +164,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 func loginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var lurl = ""
+	var lurl string
 
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
@@ -158,10 +172,10 @@ func loginURL(r *http.Request, state string) string {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
 		domain := domains.Matches(r.Host)
-		log.Debugf("looking for callback_url matching  %v", domain)
+		log.Debugf("/login looking for callback_url matching  %v", domain)
 		for i, v := range cfg.GenOAuth.RedirectURLs {
 			if strings.Contains(v, domain) {
-				log.Debugf("redirect value matched at [%d]=%v", i, v)
+				log.Debugf("/login  redirect value matched at [%d]=%v", i, v)
 				cfg.OAuthClient.RedirectURL = v
 				break
 			}

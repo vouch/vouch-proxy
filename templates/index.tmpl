@@ -10,15 +10,16 @@
   <a href="https://github.com/vouch/vouch-proxy"><img src="/static/img/multicolor_V_500x500.png"/></a>
   <a href="https://github.com/vouch/vouch-proxy"><span>Vouch Proxy</span></a>
 </div>
+
+<h1>{{ .Msg }}</h1>
+
 {{ if .Testing }}
 <p class="test">
 <h2>-- test mode --</h2>
 The config file includes <code>testing: true</code>
 <p/>
 All 302 redirects will be captured and presented as links here
-{{ end }}
 
-<h1>{{ .Msg }}</h1>
 
 <ul>
   <li><a href="/login">login</a></li>
@@ -30,6 +31,7 @@ All 302 redirects will be captured and presented as links here
   {{ end }}
 {{ end }}
 </ul>
+{{ end }}
 
 For support, please contact your network administrator or whomever configured Nginx to use Vouch Proxy.
 <p/>

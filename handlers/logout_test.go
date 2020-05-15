@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -36,6 +36,7 @@ func TestLogoutHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("GET", "/logout?url="+tt.url, nil)
+			req.Host = "myapp.example.com"
 			if err != nil {
 				t.Fatal(err)
 			}

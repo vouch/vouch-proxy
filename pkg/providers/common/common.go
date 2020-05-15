@@ -1,8 +1,8 @@
 /*
 
 Copyright 2020 The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -39,7 +39,7 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bo
 	if setpid {
 		if providerToken.Extra("id_token") != nil {
 			// Certain providers (eg. gitea) don't provide an id_token
-			// and it's not neccessary for the authentication phase
+			// and it's not necessary for the authentication phase
 			ptokens.PIdToken = providerToken.Extra("id_token").(string)
 		} else {
 			log.Debugf("id_token missing - may not be supported by this provider")

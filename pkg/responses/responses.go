@@ -11,7 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package responses
 
 import (
-	"fmt"
+	"errors"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -30,8 +30,11 @@ type Index struct {
 
 var (
 	indexTemplate *template.Template
+	errorTemplate *template.Template
 	log           *zap.SugaredLogger
 	fastlog       *zap.Logger
+
+	errNotAuthorized = errors.New("not authorized")
 )
 
 // Configure see main.go configure()
@@ -51,6 +54,15 @@ func RenderIndex(w http.ResponseWriter, msg string) {
 	}
 }
 
+// RenderError html error page
+// something terse for the end user
+func RenderError(w http.ResponseWriter, msg string) {
+	log.Debugf("rendering error for user: %s", msg)
+	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
+		log.Error(err)
+	}
+}
+
 // OK200 returns "200 OK"
 func OK200(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte("200 OK\n"))
@@ -59,7 +71,7 @@ func OK200(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Redirect302 302 redirect to the specificed rURL
+// Redirect302 redirect to the specificed rURL
 func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	if cfg.Cfg.Testing {
 		cfg.Cfg.TestURLs = append(cfg.Cfg.TestURLs, rURL)
@@ -69,25 +81,31 @@ func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	http.Redirect(w, r, rURL, http.StatusFound)
 }
 
-// Error400 400 Bad Request
-// returned when the requesed url param for /login or /logout is bd
+// Error400 Bad Request
 func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set("X-Vouch-Error", e.Error())
-	http.Error(w, e.Error(), http.StatusBadRequest)
+	w.WriteHeader(http.StatusBadRequest)
+	RenderError(w, "400 Bad Request")
 }
 
-// Error401 the standard error
+// Error401 Unauthorized the standard error
 // this is captured by nginx, which converts the 401 into 302 to the login page
 func Error401(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set("X-Vouch-Error", e.Error())
 	http.Error(w, e.Error(), http.StatusUnauthorized)
+	// RenderError(w, "401 Unauthorized")
 }
 
-// Error401na send 401 not authorized
-func Error401na(w http.ResponseWriter, r *http.Request) {
-	Error401(w, r, fmt.Errorf("not authorized"))
+// Error403 Forbidden
+// if there's an error during /auth or if they don't pass validation in /auth
+func Error403(w http.ResponseWriter, r *http.Request, e error) {
+	log.Error(e)
+	cookie.ClearCookie(w, r)
+	w.Header().Set("X-Vouch-Error", e.Error())
+	w.WriteHeader(http.StatusForbidden)
+	RenderError(w, "403 Forbidden")
 }
