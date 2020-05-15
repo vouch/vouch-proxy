@@ -48,6 +48,7 @@ func cacheConfigure() {
 // JWTCacheHandler looks for a JWT and...
 // returns a cached response
 // or passes the JWT in the context
+// tests for JWTCacheHandler are present in `handlers/validate_test.go` to avoid circular imports
 func JWTCacheHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// return http.HandlerFunc(func(w CaptureWriter, r *http.Request) {
@@ -57,28 +58,31 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 
 		jwt := FindJWT(r)
 		// check to see if we have headers cached for this jwt
-		if resp, found := Cache.Get(jwt); found {
-			// found it in cache!
-			logger.Debug("/validate found response headers for jwt in cache")
-			// TODO: instead of the copy for each, can we just append the whole blob?
-			// or better still can we just cache the entire response including 200OK?
-			for k, v := range resp.(http.Header) {
-				w.Header().Add(k, strings.Join(v, ","))
+		if jwt != "" {
+			if resp, found := Cache.Get(jwt); found {
+				// found it in cache!
+				logger.Debug("/validate found response headers for jwt in cache")
+				// TODO: instead of the copy for each, can we just append the whole blob?
+				// or better still can we just cache the entire response including 200OK?
+				for k, v := range resp.(http.Header) {
+					w.Header().Add(k, strings.Join(v, ","))
 
+				}
+
+				responses.OK200(w, r)
+
+				return
 			}
-
-			responses.OK200(w, r)
-
-			return
 		}
 
 		ctx := context.Background()
 		next.ServeHTTP(w, r.WithContext(ctx))
 
-		// cache the response against this jwt
 		go func() {
-			// Cache.SetDefault(jwt, v.RawDump())
-			Cache.SetDefault(jwt, w.Header().Clone())
+			if jwt != "" {
+				// cache the response against this jwt
+				Cache.SetDefault(jwt, w.Header().Clone())
+			}
 		}()
 
 	})
