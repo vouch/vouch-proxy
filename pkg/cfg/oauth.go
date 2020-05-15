@@ -29,7 +29,7 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud {
-		return errors.New("configuration error: Unkown oauth provider: " + GenOAuth.Provider)
+		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks
 	switch {
