@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,12 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/structs"
+)
+
+var (
+	errSessionNotFound = errors.New("/auth could not retrieve session")
+	errInvalidState    = errors.New("/auth the state nonce returned by the IdP does not match the value stored in the session")
+	errURLNotFound     = errors.New("/auth could not retrieve URL from session")
 )
 
 // CallbackHandler /auth
@@ -43,10 +50,10 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// did the IdP return an error when they redirected back to /auth
-	errorState := r.URL.Query().Get("error")
-	if errorState != "" {
+	errorIDP := r.URL.Query().Get("error")
+	if errorIDP != "" {
 		errorDescription := r.URL.Query().Get("error_description")
-		responses.Error401(w, r, fmt.Errorf("/auth Error state: %s - %s", errorState, errorDescription))
+		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
 		return
 	}
 
@@ -88,7 +95,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Redirect302(w, r, requestedURL)
 		return
 	}
-	// otherwise serve an html page
+	// otherwise serve an error (why isn't there a )
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
