@@ -13,15 +13,15 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/vouch/vouch-proxy/handlers/adfs"
-	"github.com/vouch/vouch-proxy/handlers/common"
-	"github.com/vouch/vouch-proxy/handlers/github"
-	"github.com/vouch/vouch-proxy/handlers/google"
-	"github.com/vouch/vouch-proxy/handlers/homeassistant"
-	"github.com/vouch/vouch-proxy/handlers/indieauth"
-	"github.com/vouch/vouch-proxy/handlers/nextcloud"
-	"github.com/vouch/vouch-proxy/handlers/openid"
-	"github.com/vouch/vouch-proxy/handlers/openstax"
+	"github.com/vouch/vouch-proxy/pkg/providers/adfs"
+	"github.com/vouch/vouch-proxy/pkg/providers/common"
+	"github.com/vouch/vouch-proxy/pkg/providers/github"
+	"github.com/vouch/vouch-proxy/pkg/providers/google"
+	"github.com/vouch/vouch-proxy/pkg/providers/homeassistant"
+	"github.com/vouch/vouch-proxy/pkg/providers/indieauth"
+	"github.com/vouch/vouch-proxy/pkg/providers/nextcloud"
+	"github.com/vouch/vouch-proxy/pkg/providers/openid"
+	"github.com/vouch/vouch-proxy/pkg/providers/openstax"
 
 	"go.uber.org/zap"
 

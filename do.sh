@@ -288,13 +288,16 @@ _has_license() {
 }
 
 profile() {
-  echo "for profiling to work you may need uncomment the code in main.go"
+  echo "for profiling to work you may need to uncomment the code in main.go"
   build
   ./vouch-proxy -profile
   go tool pprof -http=0.0.0.0:19091 http://0.0.0.0:9090/debug/pprof/profile?seconds=10
-
 }
 
+gofmt() {
+  # segfault's without exec, hmmm
+  exec gofmt -w -s .
+}
 
 usage() {
    cat <<EOF
@@ -303,6 +306,7 @@ usage() {
      $0 build                  - go build
      $0 install                - move binary to ${GOPATH}/bin/vouch
      $0 goget                  - get all dependencies
+     $0 gofmt                  - gofmt the entire code base
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
@@ -325,7 +329,7 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license'|'profile')
+   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license'|'profile'|'gofmt')
    shift
    $ARG $*
    ;;

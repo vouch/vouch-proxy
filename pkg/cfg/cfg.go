@@ -418,7 +418,7 @@ func setDefaults() {
 		Cfg.Port = 9090
 	}
 
-	// bare minimum for healthcheck acheived
+	// bare minimum for healthcheck achieved
 	if *CmdLine.IsHealthCheck {
 		return
 	}
