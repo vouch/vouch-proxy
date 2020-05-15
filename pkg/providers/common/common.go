@@ -15,28 +15,29 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/structs"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
 var log *zap.SugaredLogger
 
-// configure see main.go configure()
+// Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
 }
 
 // PrepareTokensAndClient setup the client, usually for a UserInfo request
-func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bool) (*http.Client, *oauth2.Token, error) {
+func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProviderToken bool) (*http.Client, *oauth2.Token, error) {
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
 		return nil, nil, err
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
 
-	if setpid {
+	if setProviderToken {
 		if providerToken.Extra("id_token") != nil {
 			// Certain providers (eg. gitea) don't provide an id_token
 			// and it's not necessary for the authentication phase
@@ -46,7 +47,7 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setpid bo
 		}
 	}
 
-	log.Debugf("ptokens: %+v", ptokens)
+	log.Debugf("ptokens: accessToken length: %d, IdToken length: %d", len(ptokens.PAccessToken), len(ptokens.PIdToken))
 
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 	return client, providerToken, err

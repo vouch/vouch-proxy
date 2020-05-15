@@ -90,11 +90,9 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-	log.Debugf("token: %v", token)
 
 	// log.Debugf("token: %v", token)
-	log.Debugf("token expires: %d", claims.StandardClaims.ExpiresAt)
-	log.Debugf("diff from now: %d", claims.StandardClaims.ExpiresAt-time.Now().Unix())
+	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
 	// token -> string. Only server knows this secret (foobar).
 	ss, err := token.SignedString([]byte(cfg.Cfg.JWT.Secret))
@@ -103,7 +101,10 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 		log.Errorf("signed token error: %s", err)
 	}
 	if cfg.Cfg.JWT.Compress {
-		return compressAndEncodeTokenString(ss)
+		ss, err = compressAndEncodeTokenString(ss)
+		if ss == "" || err != nil {
+			log.Errorf("compressed token error: %s", err)
+		}
 	}
 	return ss
 }
@@ -141,10 +142,10 @@ func SiteInToken(site string, token *jwt.Token) bool {
 
 // ParseTokenString converts signed token to jwt struct
 func ParseTokenString(tokenString string) (*jwt.Token, error) {
-	log.Debugf("tokenString %s", tokenString)
+	log.Debugf("tokenString length: %d", len(tokenString))
 	if cfg.Cfg.JWT.Compress {
 		tokenString = decodeAndDecompressTokenString(tokenString)
-		log.Debugf("decompressed tokenString %s", tokenString)
+		log.Debugf("decompressed tokenString length %d", len(tokenString))
 	}
 
 	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -184,19 +185,6 @@ func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
 	return ptokenClaims, nil
 }
 
-// PTokenToUsername returns the Username in the validated ptoken
-func PTokenToUsername(ptoken *jwt.Token) (string, error) {
-	return ptoken.Claims.(*VouchClaims).Username, nil
-
-	// var ptokenClaims VouchClaims
-	// ptokenClaims, err := PTokenClaims(ptoken)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return "", err
-	// }
-	// return ptokenClaims.Username, nil
-}
-
 func decodeAndDecompressTokenString(encgzipss string) string {
 
 	var gzipss []byte
@@ -219,20 +207,20 @@ func decodeAndDecompressTokenString(encgzipss string) string {
 	return string(ss)
 }
 
-func compressAndEncodeTokenString(ss string) string {
+func compressAndEncodeTokenString(ss string) (string, error) {
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
 	if _, err := zw.Write([]byte(ss)); err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	if err := zw.Close(); err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	ret := base64.URLEncoding.EncodeToString(buf.Bytes())
 	// ret := url.QueryEscape(buf.String())
-	log.Debugf("compressed string: %s", ret)
-	return ret
+	log.Debugf("token compressed: was %d bytes, now %d", len(ss), len(ret))
+	return ret, nil
 }
 
 // FindJWT look for JWT in Cookie, JWT Header, Authorization Header (OAuth2 Bearer Token)
@@ -271,17 +259,14 @@ func ClaimsFromJWT(jwt string) (*VouchClaims, error) {
 
 	jwtParsed, err := ParseTokenString(jwt)
 	if err != nil {
-		// it didn't parse, which means its bad, start over
-		log.Error("jwtParsed returned error, clearing cookie")
-		return claims, err
+		return nil, err
 	}
 
 	claims, err = PTokenClaims(jwtParsed)
 	if err != nil {
 		// claims = jwtmanager.PTokenClaims(jwtParsed)
 		// if claims == &jwtmanager.VouchClaims{} {
-		return claims, err
+		return nil, err
 	}
-	log.Debugf("JWT Claims: %+v", claims)
 	return claims, nil
 }
