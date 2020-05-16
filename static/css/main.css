@@ -1,25 +1,51 @@
+@charset "UTF-8";
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: BlinkMacSystemFont, -apple-system, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    'Helvetica', 'Arial', sans-serif;
+}
+
+code,
+pre {
+  -moz-osx-font-smoothing: auto;
+  -webkit-font-smoothing: auto;
+  font-family: monospace;
+}
+
 body {
-    background-color: #ffffff;
+  background-color: #ffffff;
+  margin: 5px 10px;
 }
 
 .top img {
-    height: 50px;
-    width: 50px;
-    margin: 10px;
-    vertical-align: middle
+  height: 50px;
+  width: 50px;
+  margin: 10px;
+  vertical-align: middle;
 }
 
 .top span {
-    margin: 5px;
-    font-size: 1.5em;
+  margin: 5px;
+  font-size: 1.5em;
 }
 
 .top a {
-    text-decoration: none;
-    color: #000000;
+  text-decoration: none;
 }
-    
+
+a {
+  color: #000000;
+}
+
+.content {
+  margin: 5px 10px;
+}
 
 .test {
-    clear: both;
+  clear: both;
 }
