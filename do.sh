@@ -259,6 +259,10 @@ license() {
     mv ${FILE}_licensed $FILE
     echo "added license to the header of $FILE"
   fi
+
+  # and then format the codebase
+  gofmt
+
 }
 
 _print_license() {
@@ -295,7 +299,7 @@ profile() {
 }
 
 gofmt() {
-  # segfault's without exec, hmmm
+  # segfault's without exec since it would just call this function infinitely :)
   exec gofmt -w -s .
 }
 
