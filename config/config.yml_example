@@ -43,6 +43,12 @@ vouch:
   - alice@yourdomain.com
   - joe@yourdomain.com
 
+  # only used for github orgs/teams
+  # teamWhitelist:
+  # - vouch
+  # - myOrg
+  # - myOrg/myTeam
+
   jwt:
     # secret - a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
