@@ -3,7 +3,14 @@
   <head>
     <link rel="icon" type="image/png" href="/static/img/favicon.ico" />
     <link rel="stylesheet" href="/static/css/main.css" />
-    <title>Vouch Proxy: {{ .Msg }}</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=7"
+    />
+    <title>Vouch Proxy - {{ .Msg }}</title>
   </head>
   <body>
 <div class="top">
@@ -11,6 +18,7 @@
   <a href="https://github.com/vouch/vouch-proxy"><span>Vouch Proxy</span></a>
 </div>
 
+<div class="content">
 <h1>{{ .Msg }}</h1>
 
 {{ if .Testing }}
@@ -35,7 +43,8 @@ All 302 redirects will be captured and presented as links here
 
 For support, please contact your network administrator or whomever configured Nginx to use Vouch Proxy.
 <p/>
-For help with <a href="https://github.com/vouch/vouch-proxy">Vouch Proxy</a> or to file a bug report, please see the project page at <a href="https://github.com/vouch/vouch-proxy">https://github.com/vouch/vouch-proxy</a>
+For help with <a href="https://github.com/vouch/vouch-proxy">Vouch Proxy</a> or to file a bug report, please visit <a href="https://github.com/vouch/vouch-proxy">https://github.com/vouch/vouch-proxy</a>
 <p/>
+</div>
   </body>
 </html>
