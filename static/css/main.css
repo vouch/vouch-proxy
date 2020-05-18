@@ -38,7 +38,8 @@ body {
   text-decoration: none;
 }
 
-a {
+.top a,
+.bottom a {
   color: #000000;
 }
 
