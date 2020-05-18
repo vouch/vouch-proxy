@@ -64,7 +64,7 @@ type Config struct {
 		Claims        []string          `mapstructure:"claims"`
 		AccessToken   string            `mapstructure:"accesstoken"`
 		IDToken       string            `mapstructure:"idtoken"`
-		ClaimsCleaned map[string]string // each of the Claims is mapped to the actual Claims header
+		ClaimsCleaned map[string]string // the rawClaim is mapped to the actual claims header
 	}
 	Session struct {
 		Name string `mapstructure:"name"`
@@ -90,7 +90,7 @@ type oauthConfig struct {
 	UserInfoURL     string   `mapstructure:"user_info_url"`
 	UserTeamURL     string   `mapstructure:"user_team_url"`
 	UserOrgURL      string   `mapstructure:"user_org_url"`
-	PreferredDomain string   `mapstructure:"preferredDomain"`
+	PreferredDomain string   `mapstructre:"preferredDomain"`
 }
 
 // OAuthProviders holds the stings for
@@ -310,7 +310,6 @@ func parseConfig() {
 		}
 
 		if len(oldConfig.Domains) != 0 {
-			// change `lasso` to `vouch` please
 			log.Errorf(`
 
 IMPORTANT!
@@ -329,9 +328,6 @@ please update your config file to change '%s:' to '%s:' as per %s
 // https://pkg.go.dev/github.com/spf13/viper@v1.6.3?tab=doc#Unmarshal
 // https://pkg.go.dev/github.com/mitchellh/mapstructure?tab=doc#DecoderConfig
 func checkConfigFileWellFormed() error {
-	if err := checkDeprecated(); err != nil {
-		log.Errorf("cfg: please update your config.yml: %s", err)
-	}
 	opt := func(dc *mapstructure.DecoderConfig) {
 		dc.ErrorUnused = true
 	}
