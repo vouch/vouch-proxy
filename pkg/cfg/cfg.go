@@ -21,8 +21,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"golang.org/x/oauth2"
-
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
 	"go.uber.org/zap"
@@ -76,35 +74,6 @@ type Config struct {
 	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris"`
 }
 
-// oauth config items endoint for access
-type oauthConfig struct {
-	Provider        string   `mapstructure:"provider"`
-	ClientID        string   `mapstructure:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret"`
-	AuthURL         string   `mapstructure:"auth_url"`
-	TokenURL        string   `mapstructure:"token_url"`
-	LogoutURL       string   `mapstructure:"end_session_endpoint"`
-	RedirectURL     string   `mapstructure:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"`
-	Scopes          []string `mapstructure:"scopes"`
-	UserInfoURL     string   `mapstructure:"user_info_url"`
-	UserTeamURL     string   `mapstructure:"user_team_url"`
-	UserOrgURL      string   `mapstructure:"user_org_url"`
-	PreferredDomain string   `mapstructre:"preferredDomain"`
-}
-
-// OAuthProviders holds the stings for
-type OAuthProviders struct {
-	Google        string
-	GitHub        string
-	IndieAuth     string
-	ADFS          string
-	OIDC          string
-	HomeAssistant string
-	OpenStax      string
-	Nextcloud     string
-}
-
 type branding struct {
 	LCName    string // lower case
 	UCName    string // upper case
@@ -117,29 +86,6 @@ type branding struct {
 var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "lasso", "https://github.com/vouch/vouch-proxy"}
-
-	// GenOAuth exported OAuth config variable
-	// TODO: I think GenOAuth and OAuthConfig can be combined!
-	// perhaps by https://golang.org/doc/effective_go.html#embedding
-	GenOAuth *oauthConfig
-
-	// OAuthClient is the configured client which will call the provider
-	// this actually carries the oauth2 client ala oauthclient.Client(oauth2.NoContext, providerToken)
-	OAuthClient *oauth2.Config
-	// OAuthopts authentication options
-	OAuthopts oauth2.AuthCodeOption
-
-	// Providers static strings to test against
-	Providers = &OAuthProviders{
-		Google:        "google",
-		GitHub:        "github",
-		IndieAuth:     "indieauth",
-		ADFS:          "adfs",
-		OIDC:          "oidc",
-		HomeAssistant: "homeassistant",
-		OpenStax:      "openstax",
-		Nextcloud:     "nextcloud",
-	}
 
 	// RequiredOptions must have these fields set for minimum viable config
 	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
@@ -255,6 +201,10 @@ func InitForTestPurposesWithProvider(provider string) {
 	// Configure()
 	// setRootDir()
 	parseConfig()
+	if err := configureOauth(); err == nil {
+		setProviderDefaults()
+	}
+
 	setDefaults()
 	// setDevelopmentLogger()
 
@@ -503,12 +453,6 @@ func setDefaults() {
 	}
 	if viper.IsSet(Branding.LCName + ".test_url") {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
-	}
-
-	// OAuth defaults and client configuration
-	err := UnmarshalKey("oauth", &GenOAuth)
-	if err == nil {
-		setProviderDefaults()
 	}
 }
 
