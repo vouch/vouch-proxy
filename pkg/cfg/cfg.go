@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/mitchellh/mapstructure"
-
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
 	"go.uber.org/zap"
@@ -28,6 +28,11 @@ import (
 )
 
 // Config vouch jwt cookie configuration
+// Note to developers!  Any new config elements
+// should use `snake_case` such as `post_logout_redirect_uris`
+// in certain situations you'll need to add both a `mapstructure` tag used by viper
+// as well as a `envconfig` tag used by https://github.com/kelseyhightower/envconfig
+// though most of the time envconfig will use the struct key's name: VOUCH_PORT VOUCH_JWT_MAXAGE
 type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
@@ -58,6 +63,7 @@ type Config struct {
 		QueryString   string            `mapstructure:"querystring"`
 		Redirect      string            `mapstructure:"redirect"`
 		Success       string            `mapstructure:"success"`
+		Error         string            `mapstructure:"error"`
 		ClaimHeader   string            `mapstructure:"claimheader"`
 		Claims        []string          `mapstructure:"claims"`
 		AccessToken   string            `mapstructure:"accesstoken"`
@@ -71,21 +77,20 @@ type Config struct {
 	TestURL            string   `mapstructure:"test_url"`
 	TestURLs           []string `mapstructure:"test_urls"`
 	Testing            bool     `mapstructure:"testing"`
-	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris"`
+	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris" envconfig:"post_logout_redirect_uris"`
 }
 
 type branding struct {
-	LCName    string // lower case
-	UCName    string // upper case
-	CcName    string // camel case
-	FullName  string // Vouch Proxy
-	OldLCName string // lasso
-	URL       string // https://github.com/vouch/vouch-proxy
+	LCName   string // lower case vouch
+	UCName   string // UPPER CASE VOUCH
+	CcName   string // camelCase Vouch
+	FullName string // Vouch Proxy
+	URL      string // https://github.com/vouch/vouch-proxy
 }
 
 var (
 	// Branding that's our name
-	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "lasso", "https://github.com/vouch/vouch-proxy"}
+	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "https://github.com/vouch/vouch-proxy"}
 
 	// RequiredOptions must have these fields set for minimum viable config
 	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
@@ -126,6 +131,15 @@ const (
 )
 
 // Configure called at the very top of main()
+// the order of config follows the Viper conventions...
+//
+// The priority of the sources is the following:
+// 1. comand line flags
+// 2. env. variables
+// 3. config file
+// 4. defaults
+//
+// so we process these in backwards order (defaults then config file)
 func Configure() {
 
 	Logging.configureFromCmdline()
@@ -140,12 +154,33 @@ func Configure() {
 		return
 	}
 
-	parseConfig()
-	Logging.configure()
 	setDefaults()
+	parseConfigFile()
+	// configureFromEnvVars()
+	configureFromEnv()
+
+	fixConfigOptions()
+	Logging.configure()
+	if err := configureOauth(); err == nil {
+		setProviderDefaults()
+	}
 	cleanClaimsHeaders()
 	if *CmdLine.port != -1 {
 		Cfg.Port = *CmdLine.port
+	}
+
+}
+
+// using envconfig
+// https://github.com/kelseyhightower/envconfig
+func configureFromEnv() {
+	err := envconfig.Process(Branding.UCName, Cfg)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	err = envconfig.Process("OAUTH", GenOAuth)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 
 }
@@ -180,45 +215,8 @@ func setRootDir() {
 	}
 }
 
-// InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
-func InitForTestPurposes() {
-	InitForTestPurposesWithProvider("")
-}
-
-// InitForTestPurposesWithProvider just for testing
-func InitForTestPurposesWithProvider(provider string) {
-	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
-	Logging.setLogLevel(zapcore.WarnLevel)
-	setRootDir()
-	// _, b, _, _ := runtime.Caller(0)
-	// basepath := filepath.Dir(b)
-	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
-	if configEnv == "" {
-		if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(RootDir, "config/testing/test_config.yml")); err != nil {
-			log.Error(err)
-		}
-	}
-	// Configure()
-	// setRootDir()
-	parseConfig()
-	if err := configureOauth(); err == nil {
-		setProviderDefaults()
-	}
-
-	setDefaults()
-	// setDevelopmentLogger()
-
-	// Needed to override the provider, which is otherwise set via yml
-	if provider != "" {
-		GenOAuth.Provider = provider
-		setProviderDefaults()
-	}
-	cleanClaimsHeaders()
-
-}
-
 // parseConfig parse the config file
-func parseConfig() {
+func parseConfigFile() {
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 
 	if configEnv != "" {
@@ -252,26 +250,40 @@ func parseConfig() {
 		log.Error(err)
 	}
 
-	if len(Cfg.Domains) == 0 {
-		// then lets check for "lasso"
-		var oldConfig = &Config{}
-		if err = UnmarshalKey(Branding.OldLCName, &oldConfig); err != nil {
-			log.Error(err)
-		}
-
-		if len(oldConfig.Domains) != 0 {
-			log.Errorf(`
-
-IMPORTANT!
-
-please update your config file to change '%s:' to '%s:' as per %s
-			`, Branding.OldLCName, Branding.LCName, Branding.URL)
-			Cfg = oldConfig
-		}
-	}
-
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
+}
+
+func fixConfigOptions() {
+
+	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
+		log.Warnf("setting `%s.cookie.maxage` to `%s.jwt.maxage` value of %d minutes (curently set to %d minutes)", Branding.LCName, Branding.LCName, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge)
+		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
+	}
+
+	// headers defaults
+	if !viper.IsSet(Branding.LCName + ".headers.redirect") {
+		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
+	}
+
+	// jwt defaults
+	if len(Cfg.JWT.Secret) == 0 {
+		Cfg.JWT.Secret = getOrGenerateJWTSecret()
+	}
+
+	if len(Cfg.Session.Key) == 0 {
+		log.Warn("generating random session.key")
+		rstr, err := securerandom.Base64OfBytes(base64Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Cfg.Session.Key = rstr
+	}
+
+	if Cfg.TestURL != "" {
+		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
+	}
+
 }
 
 // use viper and mapstructure check to see if
@@ -417,4 +429,43 @@ func cleanClaimsHeaders() error {
 	}
 	Cfg.Headers.ClaimsCleaned = cleanedHeaders
 	return nil
+}
+
+// InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
+func InitForTestPurposes() {
+	InitForTestPurposesWithProvider("")
+}
+
+// InitForTestPurposesWithProvider just for testing
+func InitForTestPurposesWithProvider(provider string) {
+	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+	Logging.setLogLevel(zapcore.WarnLevel)
+	setRootDir()
+	// _, b, _, _ := runtime.Caller(0)
+	// basepath := filepath.Dir(b)
+	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
+	if configEnv == "" {
+		if err := os.Setenv(Branding.UCName+"_CONFIG", filepath.Join(RootDir, "config/testing/test_config.yml")); err != nil {
+			log.Error(err)
+		}
+	}
+	// Configure()
+	// setRootDir()
+	setDefaults()
+	parseConfigFile()
+	configureFromEnv()
+	if err := configureOauth(); err == nil {
+		setProviderDefaults()
+	}
+	fixConfigOptions()
+
+	// setDevelopmentLogger()
+
+	// Needed to override the provider, which is otherwise set via yml
+	if provider != "" {
+		GenOAuth.Provider = provider
+		setProviderDefaults()
+	}
+	cleanClaimsHeaders()
+
 }

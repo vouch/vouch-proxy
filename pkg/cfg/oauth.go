@@ -22,9 +22,8 @@ import (
 
 var (
 	// GenOAuth exported OAuth config variable
-	// TODO: I think GenOAuth and OAuthConfig can be combined!
-	// perhaps by https://golang.org/doc/effective_go.html#embedding
-	GenOAuth *oauthConfig
+	// TODO: GenOAuth and OAuthClient should be combined
+	GenOAuth = &oauthConfig{}
 
 	// OAuthClient is the configured client which will call the provider
 	// this actually carries the oauth2 client ala oauthclient.Client(oauth2.NoContext, providerToken)
@@ -58,19 +57,21 @@ type OAuthProviders struct {
 }
 
 // oauth config items endoint for access
+// `envconfig` tag is for env var support
+// https://github.com/kelseyhightower/envconfig
 type oauthConfig struct {
 	Provider        string   `mapstructure:"provider"`
-	ClientID        string   `mapstructure:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret"`
-	AuthURL         string   `mapstructure:"auth_url"`
-	TokenURL        string   `mapstructure:"token_url"`
-	LogoutURL       string   `mapstructure:"end_session_endpoint"`
-	RedirectURL     string   `mapstructure:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"`
+	ClientID        string   `mapstructure:"client_id" envconfig:"client_id"`
+	ClientSecret    string   `mapstructure:"client_secret" envconfig:"client_secret"`
+	AuthURL         string   `mapstructure:"auth_url" envconfig:"auth_url"`
+	TokenURL        string   `mapstructure:"token_url" envconfig:"token_url"`
+	LogoutURL       string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
+	RedirectURL     string   `mapstructure:"callback_url"  envconfig:"callback_url"`
+	RedirectURLs    []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
 	Scopes          []string `mapstructure:"scopes"`
-	UserInfoURL     string   `mapstructure:"user_info_url"`
-	UserTeamURL     string   `mapstructure:"user_team_url"`
-	UserOrgURL      string   `mapstructure:"user_org_url"`
+	UserInfoURL     string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
+	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
+	UserOrgURL      string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
 	PreferredDomain string   `mapstructure:"preferredDomain"`
 }
 

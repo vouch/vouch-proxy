@@ -11,6 +11,9 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,4 +72,150 @@ func Test_claimToHeader(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_configureFromEnvCfg(t *testing.T) {
+
+	// each of these env vars holds a..
+	// string
+	// get all the values
+	senv := []string{"VOUCH_LOGLEVEL", "VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT",
+		"VOUCH_HEADERS_USER", "VOUCH_HEADERS_QUERYSTRING", "VOUCH_HEADERS_REDIRECT", "VOUCH_HEADERS_SUCCESS", "VOUCH_HEADERS_ERROR",
+		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
+		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY"}
+	// array of strings
+	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
+	// int
+	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE"}
+	// bool
+	benv := []string{"VOUCH_ALLOWALLUSERS", "VOUCH_PUBLICACCESS", "VOUCH_JWT_COMPRESS", "VOUCH_COOKIE_SECURE",
+		"VOUCH_COOKIE_HTTPONLY", "VOUCH_TESTING"}
+
+	// populate environmental variables
+	svalue := "svalue"
+	for _, v := range senv {
+		os.Setenv(v, svalue)
+	}
+	savalue := []string{"arrayone", "arraytwo", "arraythree"}
+	for _, v := range saenv {
+		os.Setenv(v, strings.Join(savalue, ","))
+		t.Logf("savalue: %s", savalue)
+	}
+	ivalue := 1234
+	for _, v := range ienv {
+		os.Setenv(v, fmt.Sprint(ivalue))
+	}
+	bvalue := false
+	for _, v := range benv {
+		os.Setenv(v, fmt.Sprint(bvalue))
+	}
+
+	// run the thing
+	configureFromEnv()
+	scfg := []string{Cfg.LogLevel, Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT,
+		Cfg.Headers.User, Cfg.Headers.QueryString, Cfg.Headers.Redirect, Cfg.Headers.Success, Cfg.Headers.Error,
+		Cfg.Headers.ClaimHeader, Cfg.Headers.AccessToken, Cfg.Headers.IDToken, Cfg.Cookie.Name, Cfg.Cookie.Domain,
+		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key,
+	}
+
+	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
+	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge}
+	bcfg := []bool{Cfg.AllowAllUsers, Cfg.PublicAccess, Cfg.JWT.Compress,
+		Cfg.Cookie.Secure,
+		Cfg.Cookie.HTTPOnly,
+		Cfg.Testing,
+	}
+
+	tests := []struct {
+		name string
+	}{
+		// TODO: Add test cases.
+		{"Cfg struct field should be populated from env var"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i, v := range scfg {
+				assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
+			}
+			for _, v := range sacfg {
+				assert.Equal(t, savalue, v, "v is %+s not %+s", v, savalue)
+			}
+			for _, v := range icfg {
+				assert.Equal(t, ivalue, v, "v is %+s not %+s", v, ivalue)
+			}
+			for _, v := range bcfg {
+				assert.Equal(t, bvalue, v, "v is %+s not %+s", v, bvalue)
+			}
+		})
+	}
+
+	os.Clearenv()
+	os.Setenv(Branding.UCName+"_ROOT", RootDir)
+
+}
+
+func Test_configureFromEnvOAuth(t *testing.T) {
+
+	// each of these env vars holds a..
+	// string
+	// get all the values
+	senv := []string{
+		"OAUTH_PROVIDER", "OAUTH_CLIENT_ID", "OAUTH_CLIENT_SECRET", "OAUTH_AUTH_URL", "OAUTH_TOKEN_URL",
+		"OAUTH_END_SESSION_ENDPOINT", "OAUTH_CALLBACK_URL", "OAUTH_USER_INFO_URL", "OAUTH_USER_TEAM_URL", "OAUTH_USER_ORG_URL",
+		"OAUTH_PREFERREDDOMAIN",
+	}
+	// array of strings
+	saenv := []string{"OAUTH_CALLBACK_URLS", "OAUTH_SCOPES"}
+
+	// populate environmental variables
+	svalue := "svalue"
+	for _, v := range senv {
+		os.Setenv(v, svalue)
+	}
+	savalue := []string{"arrayone", "arraytwo", "arraythree"}
+	for _, v := range saenv {
+		os.Setenv(v, strings.Join(savalue, ","))
+		t.Logf("savalue: %s", savalue)
+	}
+
+	// run the thing
+	configureFromEnv()
+
+	scfg := []string{
+		GenOAuth.Provider,
+		GenOAuth.ClientID,
+		GenOAuth.ClientSecret,
+		GenOAuth.AuthURL,
+		GenOAuth.TokenURL,
+		GenOAuth.LogoutURL,
+		GenOAuth.RedirectURL,
+		GenOAuth.UserInfoURL,
+		GenOAuth.UserTeamURL,
+		GenOAuth.UserOrgURL,
+		GenOAuth.PreferredDomain,
+	}
+	sacfg := [][]string{
+		GenOAuth.RedirectURLs,
+		GenOAuth.Scopes,
+	}
+
+	tests := []struct {
+		name string
+	}{
+		// TODO: Add test cases.
+		{"OAuth struct field should be populated from env var"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i, v := range scfg {
+				assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
+			}
+			for i, v := range sacfg {
+				assert.Equal(t, savalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, savalue))
+			}
+		})
+	}
+	os.Clearenv()
+	os.Setenv(Branding.UCName+"_ROOT", RootDir)
+
 }
