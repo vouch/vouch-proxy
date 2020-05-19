@@ -85,7 +85,7 @@ func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
-	w.Header().Set("X-Vouch-Error", e.Error())
+	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusBadRequest)
 	RenderError(w, "400 Bad Request")
 }
@@ -95,7 +95,7 @@ func Error400(w http.ResponseWriter, r *http.Request, e error) {
 func Error401(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
-	w.Header().Set("X-Vouch-Error", e.Error())
+	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	http.Error(w, e.Error(), http.StatusUnauthorized)
 	// RenderError(w, "401 Unauthorized")
 }
@@ -105,7 +105,7 @@ func Error401(w http.ResponseWriter, r *http.Request, e error) {
 func Error403(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
 	cookie.ClearCookie(w, r)
-	w.Header().Set("X-Vouch-Error", e.Error())
+	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusForbidden)
 	RenderError(w, "403 Forbidden")
 }
