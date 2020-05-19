@@ -350,110 +350,20 @@ func basicTest() error {
 // setDefaults set default options for most items
 func setDefaults() {
 
-	// this should really be done by Viper up in parseConfig but..
-	// nested defaults is currently *broken*
-	// https://github.com/spf13/viper/issues/309
-	// viper.SetDefault("listen", "0.0.0.0")
-	// viper.SetDefault(Cfg.Port, 9090)
-	// viper.SetDefault("Headers.SSO", "X-"+Branding.CcName+"-Token")
-	// viper.SetDefault("Headers.Redirect", "X-"+Branding.CcName+"-Requested-URI")
-	// viper.SetDefault("Cookie.Name", "Vouch")
-
-	// network defaults
-	if !viper.IsSet(Branding.LCName + ".listen") {
-		Cfg.Listen = "0.0.0.0"
+	viper.SetConfigName(".defaults")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(filepath.Join(RootDir, "config"))
+	viper.ReadInConfig()
+	if err := viper.UnmarshalKey(Branding.LCName, &Cfg); err != nil {
+		log.Error(err)
 	}
-
-	if !viper.IsSet(Branding.LCName + ".port") {
-		Cfg.Port = 9090
-	}
+	log.Debugf("setDefaults from .defaults.yml %+v", Cfg)
 
 	// bare minimum for healthcheck achieved
 	if *CmdLine.IsHealthCheck {
 		return
 	}
 
-	if !viper.IsSet(Branding.LCName + ".allowAllUsers") {
-		Cfg.AllowAllUsers = false
-	}
-	if !viper.IsSet(Branding.LCName + ".publicAccess") {
-		Cfg.PublicAccess = false
-	}
-
-	// jwt defaults
-	if !viper.IsSet(Branding.LCName + ".jwt.secret") {
-		Cfg.JWT.Secret = getOrGenerateJWTSecret()
-	}
-	if !viper.IsSet(Branding.LCName + ".jwt.issuer") {
-		Cfg.JWT.Issuer = Branding.CcName
-	}
-	if !viper.IsSet(Branding.LCName + ".jwt.maxAge") {
-		Cfg.JWT.MaxAge = 240
-	}
-	if !viper.IsSet(Branding.LCName + ".jwt.compress") {
-		Cfg.JWT.Compress = true
-	}
-
-	// cookie defaults
-	if !viper.IsSet(Branding.LCName + ".cookie.name") {
-		Cfg.Cookie.Name = Branding.CcName + "Cookie"
-	}
-	if !viper.IsSet(Branding.LCName + ".cookie.secure") {
-		Cfg.Cookie.Secure = false
-	}
-	if !viper.IsSet(Branding.LCName + ".cookie.httpOnly") {
-		Cfg.Cookie.HTTPOnly = true
-	}
-	if !viper.IsSet(Branding.LCName + ".cookie.maxAge") {
-		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
-	} else {
-		// it is set!  is it bigger than jwt.maxage?
-		if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
-			log.Warnf("setting `%s.cookie.maxage` to `%s.jwt.maxage` value of %d minutes (curently set to %d minutes)", Branding.LCName, Branding.LCName, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge)
-			Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
-		}
-	}
-
-	// headers defaults
-	if !viper.IsSet(Branding.LCName + ".headers.jwt") {
-		Cfg.Headers.JWT = "X-" + Branding.CcName + "-Token"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.querystring") {
-		Cfg.Headers.QueryString = "access_token"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.redirect") {
-		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.user") {
-		Cfg.Headers.User = "X-" + Branding.CcName + "-User"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.success") {
-		Cfg.Headers.Success = "X-" + Branding.CcName + "-Success"
-	}
-	if !viper.IsSet(Branding.LCName + ".headers.claimheader") {
-		Cfg.Headers.ClaimHeader = "X-" + Branding.CcName + "-IdP-Claims-"
-	}
-
-	// session
-	if !viper.IsSet(Branding.LCName + ".session.name") {
-		Cfg.Session.Name = Branding.CcName + "Session"
-	}
-	if !viper.IsSet(Branding.LCName + ".session.key") {
-		log.Warn("generating random session.key")
-		rstr, err := securerandom.Base64OfBytes(base64Bytes)
-		if err != nil {
-			log.Fatal(err)
-		}
-		Cfg.Session.Key = rstr
-	}
-
-	// testing convenience variable
-	if !viper.IsSet(Branding.LCName + ".testing") {
-		Cfg.Testing = false
-	}
-	if viper.IsSet(Branding.LCName + ".test_url") {
-		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
-	}
 }
 
 func claimToHeader(claim string) (string, error) {
