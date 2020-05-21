@@ -57,6 +57,7 @@ func Configure() {
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 	sessstore.Options.SameSite = cookie.SameSite()
+	sessstore.Options.MaxAge = 300
 
 	provider = getProvider()
 	provider.Configure()
