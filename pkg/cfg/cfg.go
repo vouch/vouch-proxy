@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
@@ -92,9 +93,6 @@ var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "https://github.com/vouch/vouch-proxy"}
 
-	// RequiredOptions must have these fields set for minimum viable config
-	RequiredOptions = []string{"oauth.provider", "oauth.client_id"}
-
 	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
 	RootDir string
 
@@ -114,6 +112,9 @@ var (
 	Cfg = &Config{}
 	// IsHealthCheck see main.go
 	IsHealthCheck = false
+
+	errConfigNotFound = errors.New("configuration file not found")
+	errConfigIsBad    = errors.New("configuration file not found")
 )
 
 type cmdLineFlags struct {
@@ -155,9 +156,14 @@ func Configure() {
 	}
 
 	setDefaults()
-	parseConfigFile()
-	// configureFromEnvVars()
-	configureFromEnv()
+	configFileErr := parseConfigFile()
+
+	didConfigFromEnv := configureFromEnv()
+
+	if !didConfigFromEnv && configFileErr != nil {
+		// then it's probably config file not found
+		log.Fatal(configFileErr)
+	}
 
 	fixConfigOptions()
 	Logging.configure()
@@ -173,31 +179,36 @@ func Configure() {
 
 // using envconfig
 // https://github.com/kelseyhightower/envconfig
-func configureFromEnv() {
+func configureFromEnv() bool {
+	preEnvConfig := *Cfg
 	err := envconfig.Process(Branding.UCName, Cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	preEnvGenOAuth := *GenOAuth
 	err = envconfig.Process("OAUTH", GenOAuth)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
+	// did anything change?
+	if !reflect.DeepEqual(preEnvConfig, *Cfg) ||
+		!reflect.DeepEqual(preEnvGenOAuth, *GenOAuth) {
+		log.Debugf("preEnvConfig %+v", preEnvConfig)
+		log.Debugf("Cfg %+v", Cfg)
+		log.Infof("%s configuration set from Environmental Variables", Branding.FullName)
+		return true
+	}
+	return false
 }
 
 // ValidateConfiguration confirm the Configuration is valid
-func ValidateConfiguration() {
+func ValidateConfiguration() error {
 	if Cfg.Testing {
 		// Logging.setLogLevel(zap.DebugLevel)
 		Logging.setDevelopmentLogger()
 	}
 
-	errT := basicTest()
-	if errT != nil {
-		log.Panic(errT)
-	}
-
-	log.Debugf("viper settings %+v", viper.AllSettings())
+	return basicTest()
 }
 
 func setRootDir() {
@@ -216,7 +227,7 @@ func setRootDir() {
 }
 
 // parseConfig parse the config file
-func parseConfigFile() {
+func parseConfigFile() error {
 	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 
 	if configEnv != "" {
@@ -236,8 +247,7 @@ func parseConfigFile() {
 	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
-		log.Fatalf("Fatal error config file: %s", err.Error())
-		log.Panic(err)
+		return fmt.Errorf("%w: %s", errConfigNotFound, err)
 	}
 
 	if err = checkConfigFileWellFormed(); err != nil {
@@ -250,8 +260,11 @@ func parseConfigFile() {
 		log.Error(err)
 	}
 
+	log.Debugf("viper settings %+v", viper.AllSettings())
+
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
+	return nil
 }
 
 func fixConfigOptions() {
@@ -321,13 +334,16 @@ func basicTest() error {
 		return err
 	}
 
-	for _, opt := range RequiredOptions {
-		if !viper.IsSet(opt) {
-			return errors.New("configuration error: required configuration option " + opt + " is not set")
-		}
+	if GenOAuth.Provider == "" {
+		return errors.New("configuration error: required configuration option 'oauth.provider' is not set")
 	}
+	if GenOAuth.ClientID == "" {
+		return errors.New("configuration error: required configuration option 'oauth.client_id' is not set")
+	}
+
 	// Domains is required _unless_ Cfg.AllowAllUsers is set
-	if !viper.IsSet(Branding.LCName+".allowAllUsers") && !viper.IsSet(Branding.LCName+".domains") {
+	if (!Cfg.AllowAllUsers && len(Cfg.Domains) == 0) ||
+		(Cfg.AllowAllUsers && len(Cfg.Domains) > 0) {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
 	}
 

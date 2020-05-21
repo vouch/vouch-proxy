@@ -93,10 +93,12 @@ func configure() {
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
 
-	cfg.ValidateConfiguration()
-
 	logger = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
+
+	if err := cfg.ValidateConfiguration(); err != nil {
+		logger.Fatal(err)
+	}
 
 	domains.Configure()
 	jwtmanager.Configure()

@@ -10,4 +10,5 @@ config/secret
 pkg/model/storage-test.db
 .vscode/*
 coverage.out
-coverage.html
+coverage.html.env_google
+.env*
