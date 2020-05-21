@@ -13,11 +13,17 @@ package cfg
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func setUp(configFile string) {
+	os.Setenv("VOUCH_CONFIG", filepath.Join(os.Getenv("VOUCH_ROOT"), configFile))
+	InitForTestPurposes()
+}
 
 func TestConfigParsing(t *testing.T) {
 	InitForTestPurposes()
@@ -30,6 +36,21 @@ func TestConfigParsing(t *testing.T) {
 	assert.Equal(t, Cfg.Port, 9090)
 
 	assert.NotEmpty(t, Cfg.JWT.MaxAge)
+
+}
+func TestConfigEnvPrecedence(t *testing.T) {
+	t.Cleanup(cleanupEnv)
+
+	envVar := "OAUTH_CLIENT_SECRET"
+	envVal := "testing123"
+
+	os.Setenv(envVar, envVal)
+	// Configure()
+	setUp("/config/testing/handler_login_url.yml")
+
+	assert.Equal(t, envVal, GenOAuth.ClientSecret)
+
+	// assert.NotEmpty(t, Cfg.JWT.MaxAge)
 
 }
 
@@ -75,7 +96,7 @@ func Test_claimToHeader(t *testing.T) {
 }
 
 func Test_configureFromEnvCfg(t *testing.T) {
-
+	t.Cleanup(cleanupEnv)
 	// each of these env vars holds a..
 	// string
 	// get all the values
@@ -149,12 +170,10 @@ func Test_configureFromEnvCfg(t *testing.T) {
 		})
 	}
 
-	os.Clearenv()
-	os.Setenv(Branding.UCName+"_ROOT", RootDir)
-
 }
 
 func Test_configureFromEnvOAuth(t *testing.T) {
+	t.Cleanup(cleanupEnv)
 
 	// each of these env vars holds a..
 	// string
@@ -215,7 +234,12 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 			}
 		})
 	}
+}
+
+func cleanupEnv() {
 	os.Clearenv()
 	os.Setenv(Branding.UCName+"_ROOT", RootDir)
+	Cfg = &Config{}
+	GenOAuth = &oauthConfig{}
 
 }

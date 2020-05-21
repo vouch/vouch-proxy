@@ -11,15 +11,8 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
-
-func setUp(configFile string) {
-	os.Setenv("VOUCH_CONFIG", filepath.Join(os.Getenv("VOUCH_ROOT"), configFile))
-	InitForTestPurposes()
-}
 
 func Test_checkCallbackConfig(t *testing.T) {
 	setUp("/config/testing/handler_login_url.yml")
