@@ -29,7 +29,7 @@ Please do let us know when you have deployed Vouch Proxy with your preffered IdP
 
 If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
 
-## Installation
+## Installation and Configuration
 
 Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L27-L29) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L68-L69) to `yourdomain.com`.
 
@@ -135,11 +135,34 @@ server {
 }
 ```
 
-An example of using Vouch Proxy with Nginx cacheing of the proxied validation request is available in [issue #76](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743).
-
-If you're protecting an API with Vouch Proxy you may need to configure Nginx to handle `OPTIONS` requests in the `/validate` block [issue #216](https://github.com/vouch/vouch-proxy/issues/216).
-
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
+
+## Configuring Vouch Proxy using Environmental Variables
+
+Here's a minimal setup using Google OAuth...
+
+```bash
+VOUCH_DOMAINS=yourdomain.com \
+  OAUTH_PROVIDER=google \
+  OAUTH_CLIENT_ID=1234 \
+  OAUTH_CLIENT_SECRET=secretsecret \
+  OAUTH_CALLBACK_URL=https://vouch.yourdomain.com/auth \
+  ./vouch-proxy
+```
+
+Environmental variable names are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
+
+All lists with multiple values must be comma separated: `VOUCH_DOMAINS="yourdomain.com,yourotherdomain.com"`
+
+## More advanced configurations
+
+- [cacheing of the Vouch Proxy validation response in Nginx](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743)
+- [handleing `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
+- [validation by GitHub Team or GitHub Org](https://github.com/vouch/vouch-proxy/pull/205)
+- [running on a Raspberry Pi using the ARM based Docker image](https://github.com/vouch/vouch-proxy/pull/247)
+- [Kubernetes architecture post ingress](https://github.com/vouch/vouch-proxy/pull/263#issuecomment-628297832)
+
+Please do help us to expand this list.
 
 ## Running from Docker
 
@@ -151,9 +174,26 @@ docker run -d \
     voucher/vouch-proxy
 ```
 
-The [voucher/vouch-proxy](https://hub.docker.com/r/voucher/vouch-proxy/) Docker image is an automated build on Docker Hub. In addition to `voucher/vouch-proxy:latest` (based on [scratch](https://docs.docker.com/samples/library/scratch/)) there are versioned images as `voucher/vouch-proxy:x.y.z` and an [alpine](https://docs.docker.com/samples/library/alpine/) based `voucher/vouch-proxy:alpine` for the current version.
+or
 
-[https://hub.docker.com/r/voucher/vouch-proxy/builds/](https://hub.docker.com/r/voucher/vouch-proxy/builds/)
+```bash
+docker run -d \
+    -p 9090:9090 \
+    --name vouch-proxy \
+    -e VOUCH_DOMAINS=yourdomain.com
+    -e OAUTH_PROVIDER=google
+    -e OAUTH_CLIENT_ID=1234
+    -e OAUTH_CLIENT_SECRET=secretsecret
+    -e OAUTH_CALLBACK_URL=https://vouch.yourdomain.com/auth
+    voucher/vouch-proxy
+```
+
+Automated container builds for each Vouch Proxy release are available from [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/). Each release produces..
+
+- `voucher/vouch-proxy:latest`
+- `voucher/vouch-proxy:x.y.z`
+- `voucher/vouch-proxy:alpine`
+- `voucher/vouch-proxy:latest-arm`
 
 ## Kubernetes Nginx Ingress
 

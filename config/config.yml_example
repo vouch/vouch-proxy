@@ -5,18 +5,22 @@
 
 # be aware of the yaml indentation, the only top level elements are `vouch` and `oauth`. 
 
+# Vouch Proxy can also be configured using Environmental Variables.  The associated env var for
+# each configuration is shown such as VOUCH_LOGLEVEL.
+
 vouch:
-  # logLevel: debug
+  # logLevel: debug # VOUCH_LOGLEVEL
   logLevel: info
 
-  # testing - force all 302 redirects to be rendered as a webpage with a link
+  # testing: false - VOUCH_TESTING
+  # force all 302 redirects to be rendered as a webpage with a link
   # if you're having problems, turn on testing
   testing: true
 
-  listen: 0.0.0.0
-  port: 9090
+  listen: 0.0.0.0  # VOUCH_LISTEN
+  port: 9090       # VOUCH_PORT
 
-  # domains -
+  # domains - VOUCH_DOMAINS
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
   # you usually *don't* want to list every individual website that will be protected
@@ -28,21 +32,22 @@ vouch:
   - yourdomain.com
   - yourotherdomain.com
 
-  # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider - VOUCH_ALLOWALLUSERS
   # allowAllUsers: false
 
-  # Setting publicAccess: true will accept all requests, even without a cookie. 
+  # Setting publicAccess: true will accept all requests, even without a cookie.  - VOUCH_PUBLICACCESS
   # If the user is logged in, the cookie will be validated and the user header will be set.
   # You will need to direct people to the Vouch Proxy login page from your application.
   # publicAccess: false
 
-  # whiteList - (optional) allows only the listed usernames
+  # whiteList (optional) allows only the listed usernames - VOUCH_WHITELIST
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
   whiteList:
   - bob@yourdomain.com
   - alice@yourdomain.com
   - joe@yourdomain.com
 
+  # teamWhitelist - VOUCH_TEAMWHITELIST
   # only used for github orgs/teams
   # teamWhitelist:
   # - vouch
@@ -50,7 +55,8 @@ vouch:
   # - myOrg/myTeam
 
   jwt:
-    # secret - a random string used to cryptographically sign the jwt
+    # secret - VOUCH_JWT_SECRET
+    # a random string used to cryptographically sign the jwt
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then Vouch Proxy will..
     # - look for the secret in `./config/secret`
@@ -59,39 +65,39 @@ vouch:
     # you'll want them all to have the same secret
     secret: your_random_string
 
-    issuer: Vouch
+    # issuer: Vouch # VOUCH_JWT_ISSUER
 
-    # number of minutes until jwt expires
+    # number of minutes until jwt expires - VOUCH_JWT_MAXAGE
     maxAge: 240
 
-    # compress the jwt
-    compress: true
+    # compress the jwt - VOUCH_JWT_COMPRESS
+    compress: true 
 
   cookie: 
-    # name of cookie to store the jwt
+    # name of cookie to store the jwt - VOUCH_COOKIE_NAME
     name: VouchCookie
 
     # optionally force the domain of the cookie to set
-    # domain: yourdomain.com
+    # domain: yourdomain.com # VOUCH_COOKIE_DOMAIN
 
-    # Set `secure: false` when protecting a non-https site such as http://app.yourdmain.com
+    # Set `secure: false` when protecting a non-https site such as http://app.yourdmain.com - VOUCH_COOKIE_SECURE
     secure: true
 
-    httpOnly: true
+    # httpOnly: true # VOUCH_COOKIE_HTTPONLY
 
-    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed. - VOUCH_COOKIE_MAXAGE
     maxAge: 14400
 
-    # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests.
+    # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests. - VOUCH_COOKIE_SAMESITE
     # Possible attribute values lax, strict, none.
     # If attribute not specified then cross-site behaviour will depend on the browser used. If sameSite=none then secure must be set to true
     # More context: https://github.com/vouch/vouch-proxy/issues/210
     sameSite: lax
 
   session:
-    # name of session variable stored locally
+    # name of session variable stored locally - VOUCH_SESSION_NAME
     name: VouchSession
-    # key - a cryptographic string used to store the session variable
+    # key - a cryptographic string used to store the session variable - VOUCH_SESSION_KEY
     # if the key is not set here then it is generated at startup and stored in memory
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # you only want to set this if you're running multiple user facing vouch.yourdomain.com instances
@@ -100,9 +106,9 @@ vouch:
 
 
   headers:
-    jwt: X-Vouch-Token
-    querystring: access_token
-    redirect: X-Vouch-Requested-URI
+    jwt: X-Vouch-Token                # VOUCH_HEADERS_JWT
+    querystring: access_token         # VOUCH_HEADERS_QUERYSTRING
+    redirect: X-Vouch-Requested-URI   # VOUCH_HEADERS_REDIRECT
 
     # GENERAL WARNING ABOUT claims AND tokens
     # all of these config elements can cause performance impacts due to the amount of information being 
@@ -112,7 +118,7 @@ vouch:
     # see `large_client_header_buffers` http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
     # and `proxy_buffer_size` http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
 
-    # claims - a list of claims that will be stored in the JWT and passed down to applications via headers
+    # claims - a list of claims that will be stored in the JWT and passed down to applications via headers - VOUCH_HEADERS_CLAIMS
     # By default claims are sent down as headers with a prefix of X-Vouch-IdP-Claims-ClaimKey
     # Only when a claim is found in the user's info will the header exist.  This is optional.  These are case sensitive.
     claims:
@@ -126,19 +132,20 @@ vouch:
     #   $auth_resp_x_vouch_idp_claims_given-name
     # see https://github.com/vouch/vouch-proxy/issues/183 regarding claims and header naming
 
-    # claimheader - Customizable claim header prefix (instead of default `X-Vouch-IdP-Claims-`) 
+    # claimheader - Customizable claim header prefix (instead of default `X-Vouch-IdP-Claims-`) - VOUCH_HEADERS_CLAIMHEADER
     # claimheader: My-Custom-Claim-Prefix
 
-    # accesstoken - Pass the user's access token from the provider.  This is useful if you need to pass the IdP token to a downstream
+    # accesstoken - Pass the user's access token from the provider.  This is useful if you need to pass the IdP token to a downstream - VOUCH_HEADERS_ACCESSTOKEN
     # application. This is optional.
     # accesstoken: X-Vouch-IdP-AccessToken
-    # idtoken - Pass the user's Id token from the provider.  This is useful if you need to pass this token to a downstream
+    # idtoken - Pass the user's Id token from the provider.  This is useful if you need to pass this token to a downstream - VOUCH_HEADERS_IDTOKEN
     # application. This is optional.
     # idtoken: X-Vouch-IdP-IdToken
 
-  # test_url - add this URL to the page which vouch displays during testing (a convenience for testing)
+  # test_url - add this URL to the page which vouch displays during testing (a convenience for testing) - VOUCH_TESTURL
   test_url: http://yourdomain.com
 
+  # post_logout_redirect_uris - VOUCH_POST_LOGOUT_REDIRECT_URIS
   # in order to prevent redirection attacks all redirected URLs to /logout must be specified
   # the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
   # in line with the OIDC spec https://openid.net/specs/openid-connect-session-1_0.html#RedirectionAfterLogout
@@ -151,10 +158,30 @@ vouch:
     # you may be daisy chaining to your IdP
     - https://myorg.okta.com/oauth2/123serverid/v1/logout?post_logout_redirect_uri=http://myapp.yourdomain.com/login
 
+
 #
-# OAuth Provider
+# OAuth
+#
+
+# environmental variables for OAuth config:
+#   provider:              OAUTH_PROVIDER
+#   client_id:             OAUTH_CLIENT_ID
+#   client_secret:         OAUTH_CLIENT_SECRET
+#   auth_url:              OAUTH_AUTH_URL
+#   token_url:             OAUTH_TOKEN_URL
+#   end_session_endpoint:  OAUTH_END_SESSION_ENDPOINT
+#   callback_url:          OAUTH_CALLBACK_URL
+#   user_info_url:         OAUTH_USER_INFO_URL
+#   user_team_url:         OAUTH_USER_TEAM_URL
+#   user_org_url:          OAUTH_USER_ORG_URL
+#   preferreddomain:       OAUTH_PREFERREDDOMAIN
+#   callback_urls:         OAUTH_CALLBACK_URLS
+#   scopes:                OAUTH_SCOPES
+
+#
 # configure ONLY ONE of the following oauth providers
 #
+
 oauth:
 
   # Google
@@ -208,4 +235,5 @@ oauth:
   client_id: http://yourdomain.com
   auth_url: https://indielogin.com/auth
   callback_url: http://vouch.yourdomain.com:9090/auth
-  
+
+
