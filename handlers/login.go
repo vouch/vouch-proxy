@@ -155,7 +155,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 
 	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
 	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
-		return "", fmt.Errorf("%w: mismatch between requested destination URL and %s.cookie.secure %v (the cookie will not be visible to https)", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
+		return "", fmt.Errorf("%w: mismatch between requested destination URL and '%s.cookie.secure: %v' (the cookie is only visible to 'https' but the requested site is 'http')", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
 	}
 
 	return urlparam, nil
