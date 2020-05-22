@@ -375,12 +375,12 @@ func basicTest() error {
 	return nil
 }
 
-// setDefaults set default options for most items
+// setDefaults set default options for most items from `.defaults.yml` in the root dir
 func setDefaults() {
 
 	viper.SetConfigName(".defaults")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(filepath.Join(RootDir, "config"))
+	viper.AddConfigPath(RootDir)
 	viper.ReadInConfig()
 	if err := viper.UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
