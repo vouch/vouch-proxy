@@ -13,6 +13,11 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/gorilla/sessions"
+	"go.uber.org/zap"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/providers/adfs"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/providers/github"
@@ -22,12 +27,6 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/providers/nextcloud"
 	"github.com/vouch/vouch-proxy/pkg/providers/openid"
 	"github.com/vouch/vouch-proxy/pkg/providers/openstax"
-
-	"go.uber.org/zap"
-
-	"github.com/gorilla/sessions"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
@@ -57,6 +56,7 @@ func Configure() {
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 	sessstore.Options.SameSite = cookie.SameSite()
+	sessstore.Options.MaxAge = 300 // give the user five minutes to log in at the IdP
 
 	provider = getProvider()
 	provider.Configure()

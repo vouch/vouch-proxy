@@ -88,6 +88,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		// clear out the session value
 		session.Values["requestedURL"] = ""
 		session.Values[requestedURL] = 0
+		session.Options.MaxAge = -1
 		if err = session.Save(r, w); err != nil {
 			log.Error(err)
 		}

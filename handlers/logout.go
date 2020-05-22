@@ -43,15 +43,14 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	cookie.ClearCookie(w, r)
 	log.Debug("/logout deleting session")
-	sessstore.MaxAge(-1)
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
+	session.Options.MaxAge = -1
 	if err != nil {
 		log.Error(err)
 	}
 	if err = session.Save(r, w); err != nil {
 		log.Error(err)
 	}
-	sessstore.MaxAge(300)
 
 	providerLogoutURL := cfg.GenOAuth.LogoutURL
 	redirectURL := r.URL.Query().Get("url")
