@@ -2,7 +2,7 @@ name: "Push Notification"
 on: [push, pull_request, create]
 
 jobs:
-  test:
+  notify-irc:
     runs-on: ubuntu-latest
     steps:
       - name: irc push
