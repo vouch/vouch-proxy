@@ -62,7 +62,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ptokens := structs.PTokens{}
 
 	if err := getUserInfo(r, &user, &customClaims, &ptokens); err != nil {
-		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successflu login at the OAuth provider: %w", err))
+		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successful login at the OAuth provider: %w", err))
 		return
 	}
 	log.Debugf("/auth Claims from userinfo: %+v", customClaims)

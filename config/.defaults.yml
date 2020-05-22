@@ -1,0 +1,60 @@
+# default values for Vouch Proxy
+# this is related to Env Vars
+# https://github.com/vouch/vouch-proxy/issues/132
+# https://github.com/vouch/vouch-proxy/pull/134
+
+# you don't want to mess with these
+vouch:
+  logLevel: info
+  testing: false
+  listen: 0.0.0.0
+  port: 9090
+  # domains:
+  allowAllUsers: false
+  publicAccess: false
+  # whiteList:
+  # teamWhitelist:
+
+  jwt:
+    #   secret:
+    issuer: Vouch
+    maxAge: 240
+    compress: true
+
+  cookie:
+    name: VouchCookie
+    # domain:
+    secure: true
+    httpOnly: true
+    maxAge: 240
+    # sameSite:
+
+  session:
+    name: VouchSession
+    # key:
+
+  headers:
+    jwt: X-Vouch-Token
+    user: X-Vouch-User
+    success: X-Vouch-Success
+    error: X-Vouch-Error
+    querystring: access_token
+    redirect: X-Vouch-Requested-URI
+    # claims:
+    claimheader: X-Vouch-IdP-Claims-
+    accesstoken: X-Vouch-IdP-AccessToken
+    idtoken: X-Vouch-IdP-IdToken
+  # test_url:
+  # post_logout_redirect_uris:
+# oauth:
+#   provider:
+#   client_id:
+#   client_secret:
+#   callback_url:
+#   callback_urls:
+#   preferredDomain:
+#   auth_url:
+#   token_url:
+#   user_info_url:
+#   end_session_endpoint:
+#   scopes:
