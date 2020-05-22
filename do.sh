@@ -9,7 +9,8 @@ cd $SDIR
 
 export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 
-IMAGE=voucher/vouch-proxy
+IMAGE=voucher/vouch-proxy:latest
+ALPINE=voucher/vouch-proxy:alpine
 GOIMAGE=golang:1.14
 NAME=vouch-proxy
 HTTPPORT=9090
@@ -40,6 +41,10 @@ dbuild () {
   docker build -f Dockerfile -t $IMAGE .
 }
 
+dbuildalpine () {  
+  docker build -f Dockerfile.alpine -t $ALPINE .
+}
+
 gobuildstatic () {
   export CGO_ENABLED=0
   export GOOS=linux
@@ -47,12 +52,12 @@ gobuildstatic () {
 }
 
 drun () {
-   if [ "$(docker ps | grep $NAME)" ]; then
-      docker stop $NAME
-      docker rm $NAME
-   fi
+  if [ "$(docker ps | grep $NAME)" ]; then
+    docker stop $NAME
+    docker rm $NAME
+  fi
 
-   CMD="docker run --rm -i -t 
+  CMD="docker run --rm -i -t 
     -p ${HTTPPORT}:${HTTPPORT} 
     --name $NAME 
     -v ${SDIR}/config:/config 
@@ -60,6 +65,11 @@ drun () {
 
     echo $CMD
     $CMD
+}
+
+drunalpine () {
+  IMAGE=$ALPINE
+  drun $*
 }
 
 
@@ -313,6 +323,8 @@ usage() {
      $0 gofmt                  - gofmt the entire code base
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
+     $0 dbuildalpine           - build docker container for alpine
+     $0 drunalpine [args]      - run docker container for alpine
      $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
      $0 test_logging           - test the logging output
      $0 coverage               - coverage report
@@ -333,7 +345,26 @@ EOF
 ARG=$1;
 
 case "$ARG" in
-   'run'|'build'|'dbuild'|'drun'|'install'|'test'|'goget'|'gogo'|'watch'|'gobuildstatic'|'coverage'|'stats'|'usage'|'bug_report'|'test_logging'|'license'|'profile'|'gofmt')
+   'run' \
+   |'build' \
+   |'dbuild' \
+   |'drun' \
+   |'dbuildalpine' \
+   |'drunalpine' \
+   |'install' \
+   |'test' \
+   |'goget' \
+   |'gogo' \
+   |'watch' \
+   |'gobuildstatic' \
+   |'coverage' \
+   |'stats' \
+   |'usage' \
+   |'bug_report' \
+   |'test_logging' \
+   |'license' \
+   |'profile' \
+   |'gofmt')
    shift
    $ARG $*
    ;;
