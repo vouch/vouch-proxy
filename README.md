@@ -195,6 +195,7 @@ Automated container builds for each Vouch Proxy release are available from [Dock
 - `voucher/vouch-proxy:latest`
 - `voucher/vouch-proxy:x.y.z`
 - `voucher/vouch-proxy:alpine`
+- `voucher/vouch-proxy:alpine-x.y.z`
 - `voucher/vouch-proxy:latest-arm`
 
 ## Kubernetes Nginx Ingress
