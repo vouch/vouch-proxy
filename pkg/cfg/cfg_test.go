@@ -100,7 +100,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	// each of these env vars holds a..
 	// string
 	// get all the values
-	senv := []string{"VOUCH_LOGLEVEL", "VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT",
+	senv := []string{"VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT",
 		"VOUCH_HEADERS_USER", "VOUCH_HEADERS_QUERYSTRING", "VOUCH_HEADERS_REDIRECT", "VOUCH_HEADERS_SUCCESS", "VOUCH_HEADERS_ERROR",
 		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
 		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY"}
@@ -117,7 +117,11 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	for _, v := range senv {
 		os.Setenv(v, svalue)
 	}
+	// "VOUCH_LOGLEVEL" is special since logging is occuring during these tests, needs to be an actual level
+	os.Setenv("VOUCH_LOGLEVEL", "debug")
+
 	savalue := []string{"arrayone", "arraytwo", "arraythree"}
+
 	for _, v := range saenv {
 		os.Setenv(v, strings.Join(savalue, ","))
 		t.Logf("savalue: %s", savalue)
@@ -133,7 +137,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 
 	// run the thing
 	configureFromEnv()
-	scfg := []string{Cfg.LogLevel, Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT,
+	scfg := []string{Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT,
 		Cfg.Headers.User, Cfg.Headers.QueryString, Cfg.Headers.Redirect, Cfg.Headers.Success, Cfg.Headers.Error,
 		Cfg.Headers.ClaimHeader, Cfg.Headers.AccessToken, Cfg.Headers.IDToken, Cfg.Cookie.Name, Cfg.Cookie.Domain,
 		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key,
@@ -155,6 +159,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, Cfg.LogLevel, "debug", "Cfg.LogLevel is not debug")
 			for i, v := range scfg {
 				assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
 			}
