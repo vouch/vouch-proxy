@@ -27,8 +27,6 @@ func Configure() {
 }
 
 // Matches returns one of the domains we're configured for
-// TODO return all matches
-// Matches return the first match of the
 func Matches(s string) string {
 	if strings.Contains(s, ":") {
 		// then we have a port and we just want to check the host
@@ -37,13 +35,15 @@ func Matches(s string) string {
 		s = split[0]
 	}
 
-	for i, v := range cfg.Cfg.Domains {
-		if s == v || strings.HasSuffix(s, "."+v) {
-			log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
-			return v
+	if len(cfg.Cfg.Domains) > 0 {
+		for i, v := range cfg.Cfg.Domains {
+			if s == v || strings.HasSuffix(s, "."+v) {
+				log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
+				return v
+			}
 		}
+		log.Warnf("domain %s not found in any domains %v", s, cfg.Cfg.Domains)
 	}
-	log.Warnf("domain %s not found in any domains %v", s, cfg.Cfg.Domains)
 	return ""
 }
 
