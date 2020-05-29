@@ -194,7 +194,15 @@ func configureFromEnv() bool {
 	if !reflect.DeepEqual(preEnvConfig, *Cfg) ||
 		!reflect.DeepEqual(preEnvGenOAuth, *GenOAuth) {
 		log.Debugf("preEnvConfig %+v", preEnvConfig)
-		log.Debugf("Cfg %+v", Cfg)
+		// Mask sensitive configuration items before logging
+		maskedCfg := *Cfg
+		if len(Cfg.Session.Key) != 0 {
+			maskedCfg.Session.Key = "XXXXXXXX"
+		}
+		if len(Cfg.JWT.Secret) != 0 {
+			maskedCfg.JWT.Secret = "XXXXXXXX"
+		}
+		log.Debugf("Cfg %+v", maskedCfg)
 		log.Infof("%s configuration set from Environmental Variables", Branding.FullName)
 		return true
 	}
