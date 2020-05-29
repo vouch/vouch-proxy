@@ -175,6 +175,7 @@ func Configure() {
 		Cfg.Port = *CmdLine.port
 	}
 
+	logConfigIfDebug()
 }
 
 // using envconfig
@@ -235,7 +236,6 @@ func setRootDir() {
 			log.Panic(errEx)
 		}
 		RootDir = filepath.Dir(ex)
-		log.Debugf("cfg.RootDir: %s", RootDir)
 	}
 }
 
@@ -272,12 +272,15 @@ func parseConfigFile() error {
 	if err = UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
-
-	log.Debugf("viper settings %+v", viper.AllSettings())
-
 	// don't log the secret!
 	// log.Debugf("secret: %s", string(Cfg.JWT.Secret))
 	return nil
+}
+
+// consolidate config related Log.Debugf() calls so that they can be placed *after* we set the logLevel
+func logConfigIfDebug() {
+	log.Debugf("cfg.RootDir: %s", RootDir)
+	log.Debugf("viper settings %+v", viper.AllSettings())
 }
 
 func fixConfigOptions() {
@@ -398,7 +401,8 @@ func setDefaults() {
 	if err := viper.UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
-	log.Debugf("setDefaults from .defaults.yml %+v", Cfg)
+	// keep this here for development, we're still pre configurating of LogLevel
+	// log.Debugf("setDefaults from .defaults.yml %+v", Cfg)
 
 	// bare minimum for healthcheck achieved
 	if *CmdLine.IsHealthCheck {
@@ -437,7 +441,7 @@ func claimToHeader(claim string) (string, error) {
 	claim = Cfg.Headers.ClaimHeader + http.CanonicalHeaderKey(claim)
 	if claim != was {
 		log.Infof("%s.header.claims %s will be forwarded downstream in the Header %s", Branding.CcName, was, claim)
-		log.Debugf("nginx will popultate the variable $auth_resp_%s", strings.ReplaceAll(strings.ToLower(claim), "-", "_"))
+		log.Debugf("nginx will populate the variable $auth_resp_%s", strings.ReplaceAll(strings.ToLower(claim), "-", "_"))
 	}
 	// log.Errorf("%s.header.claims %s will be forwarded in the Header %s", Branding.CcName, was, claim)
 	return claim, nil
