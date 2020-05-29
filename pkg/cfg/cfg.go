@@ -193,6 +193,11 @@ func configureFromEnv() bool {
 	// did anything change?
 	if !reflect.DeepEqual(preEnvConfig, *Cfg) ||
 		!reflect.DeepEqual(preEnvGenOAuth, *GenOAuth) {
+
+		// set logLevel before calling Log.Debugf()
+		if preEnvConfig.LogLevel != Cfg.LogLevel {
+			Logging.setLogLevelString(Cfg.LogLevel)
+		}
 		log.Debugf("preEnvConfig %+v", preEnvConfig)
 		// Mask sensitive configuration items before logging
 		maskedCfg := *Cfg
