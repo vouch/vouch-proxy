@@ -86,9 +86,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var lURL = loginURL(r, state)
-	log.Debugf("redirecting to oauthURL %s", lURL)
-	responses.Redirect302(w, r, lURL)
+	var oURL = oauthLoginURL(r, state)
+	log.Debugf("redirecting to oauthURL %s", oURL)
+	responses.Redirect302(w, r, oURL)
 }
 
 var (
@@ -161,7 +161,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	return urlparam, nil
 }
 
-func loginURL(r *http.Request, state string) string {
+func oauthLoginURL(r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var lurl string
@@ -171,15 +171,25 @@ func loginURL(r *http.Request, state string) string {
 	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
-		domain := domains.Matches(r.Host)
-		log.Debugf("/login looking for callback_url matching  %v", domain)
-		for i, v := range cfg.GenOAuth.RedirectURLs {
-			if strings.Contains(v, domain) {
-				log.Debugf("/login  redirect value matched at [%d]=%v", i, v)
-				cfg.OAuthClient.RedirectURL = v
-				break
+		// cfg.OAuthClient.RedirectURL is set in cfg
+		// this checks the multiple redirect case for mulitple matching domains
+		if len(cfg.GenOAuth.RedirectURLs) > 0 {
+			found := false
+			domain := domains.Matches(r.Host)
+			log.Debugf("/login looking for callback_url matching %s", domain)
+			for _, v := range cfg.GenOAuth.RedirectURLs {
+				if strings.Contains(v, domain) {
+					found = true
+					log.Debugf("/login callback_url set to %s", v)
+					cfg.OAuthClient.RedirectURL = v
+					break
+				}
+			}
+			if !found {
+				log.Infof("/login no callback_url matched %s (is the `Host` header being passed to Vouch Proxy?)", domain)
 			}
 		}
+		// Google and a few other IdPs allow other options to be set
 		if cfg.OAuthopts != nil {
 			lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 		} else {
