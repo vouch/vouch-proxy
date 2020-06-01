@@ -153,6 +153,7 @@ func setDefaultsGoogle() {
 		ClientSecret: GenOAuth.ClientSecret,
 		Scopes:       GenOAuth.Scopes,
 		Endpoint:     google.Endpoint,
+		RedirectURL:  GenOAuth.RedirectURL,
 	}
 	if GenOAuth.PreferredDomain != "" {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)

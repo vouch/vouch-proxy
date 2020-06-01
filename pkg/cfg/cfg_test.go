@@ -154,7 +154,6 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		// TODO: Add test cases.
 		{"Cfg struct field should be populated from env var"},
 	}
 	for _, tt := range tests {
@@ -226,7 +225,6 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		// TODO: Add test cases.
 		{"OAuth struct field should be populated from env var"},
 	}
 	for _, tt := range tests {
@@ -246,5 +244,4 @@ func cleanupEnv() {
 	os.Setenv(Branding.UCName+"_ROOT", RootDir)
 	Cfg = &Config{}
 	GenOAuth = &oauthConfig{}
-
 }

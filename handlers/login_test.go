@@ -12,8 +12,12 @@ package handlers
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 func Test_getValidRequestedURL(t *testing.T) {
@@ -50,6 +54,46 @@ func Test_getValidRequestedURL(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("getValidRequestedURL() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestLoginHandler(t *testing.T) {
+	handler := http.HandlerFunc(LoginHandler)
+
+	tests := []struct {
+		name       string
+		configFile string
+		wantcode   int
+	}{
+		{"general test", "/config/testing/handler_login_url.yml", http.StatusFound},
+		{"general test", "/config/testing/handler_login_redirecturls.yml", http.StatusFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setUp(tt.configFile)
+
+			req, err := http.NewRequest("GET", "/logout?url=http://myapp.example.com/login", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantcode {
+				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
+			}
+
+			// confirm the OAuthClient has a properly configured
+			redirectURL, err := url.Parse(rr.Header()["Location"][0])
+			if err != nil {
+				t.Fatal(err)
+			}
+			redirectParam := redirectURL.Query().Get("redirect_uri")
+			assert.NotEmpty(t, cfg.OAuthClient.RedirectURL, "cfg.OAuthClient.RedirectURL is empty")
+			assert.NotEmpty(t, redirectParam, "redirect_uri should not be empty when redirected to google oauth")
+
 		})
 	}
 }

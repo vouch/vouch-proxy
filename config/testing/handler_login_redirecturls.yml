@@ -1,0 +1,19 @@
+vouch:
+  domains:
+    - example.com
+    - other.com
+
+  cookie:
+    secure: false
+
+  jwt:
+    secret: testingsecret
+
+oauth:
+  provider: google
+  client_id: 1234567
+  client_secret: testingsecret
+  auth_url: https://indielogin.com/auth
+  callback_urls:
+    - http://vouch.example.com:9090/auth
+    - http://vouch.other.com:9090/auth
