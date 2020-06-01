@@ -129,7 +129,7 @@ _redact_exit () {
 }
 
 _redact() {
-  SECRET_FIELDS=("client_id client_secret secret")
+  SECRET_FIELDS=("client_id client_secret secret ClientSecret ClientID")
   while IFS= read -r LINE; do
     for i in $SECRET_FIELDS; do
       LINE=$(echo "$LINE" | sed -r "s/${i}..[[:graph:]]*\>/${i}: XXXXXXXXXXX/g")

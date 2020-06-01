@@ -281,6 +281,7 @@ func parseConfigFile() error {
 func logConfigIfDebug() {
 	log.Debugf("cfg.RootDir: %s", RootDir)
 	log.Debugf("viper settings %+v", viper.AllSettings())
+	log.Debugf("cfg.GenOauth %+v", GenOAuth)
 }
 
 func fixConfigOptions() {
