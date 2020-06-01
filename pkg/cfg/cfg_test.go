@@ -117,7 +117,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	for _, v := range senv {
 		os.Setenv(v, svalue)
 	}
-	// "VOUCH_LOGLEVEL" is special since logging is occuring during these tests, needs to be an actual level
+	// "VOUCH_LOGLEVEL" is special since logging is occurring during these tests, needs to be an actual level
 	os.Setenv("VOUCH_LOGLEVEL", "debug")
 
 	savalue := []string{"arrayone", "arraytwo", "arraythree"}

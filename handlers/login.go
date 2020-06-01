@@ -172,7 +172,7 @@ func oauthLoginURL(r *http.Request, state string) string {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
 	} else {
 		// cfg.OAuthClient.RedirectURL is set in cfg
-		// this checks the multiple redirect case for mulitple matching domains
+		// this checks the multiple redirect case for multiple matching domains
 		if len(cfg.GenOAuth.RedirectURLs) > 0 {
 			found := false
 			domain := domains.Matches(r.Host)
