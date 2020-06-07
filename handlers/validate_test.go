@@ -209,12 +209,14 @@ func TestJWTCacheHandler(t *testing.T) {
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
-	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	jwt := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	badjwt := strings.ReplaceAll(jwt, "a", "z")
+	badjwt = strings.ReplaceAll(badjwt, "b", "x")
 
 	c := &http.Cookie{
 		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
 		Name:    cfg.Cfg.Cookie.Name,
-		Value:   userTokenString,
+		Value:   jwt,
 		Expires: time.Now().Add(1 * time.Hour),
 		Domain:  cfg.Cfg.Cookie.Domain,
 	}
@@ -228,22 +230,38 @@ func TestJWTCacheHandler(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		cookie   *http.Cookie
-		wantcode int
+		name      string
+		cookie    *http.Cookie
+		bearerJWT string
+		wantcode  int
 	}{
-		{"authorized", c, http.StatusOK},
-		{"authorized", c, http.StatusOK}, // because we're testing the cacheing we run these multiple times
-		{"notauthorized", cBlank, http.StatusUnauthorized},
-		{"notauthorized", cBlank, http.StatusUnauthorized},
-		{"authorized", c, http.StatusOK},
+		// because we're testing the cacheing we run these multiple times
+		{"authorized 1", c, "", http.StatusOK},
+		{"authorized 2", c, "", http.StatusOK},
+		{"notauthorized 1", cBlank, "", http.StatusUnauthorized},
+		{"notauthorized 2", cBlank, "", http.StatusUnauthorized},
+		{"authorized 3", c, "", http.StatusOK},
+		{"bearer 1", nil, jwt, http.StatusOK},
+		{"badBearer 1", nil, badjwt, http.StatusUnauthorized},
+		// {"badBearer", nil, badjwt, http.StatusUnauthorized},
+		{"bearer 2", nil, jwt, http.StatusOK},
+		{"badBearer 2", nil, badjwt, http.StatusUnauthorized},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("GET", "/validate", nil)
 			req.Host = "myapp.example.com"
-			req.AddCookie(tt.cookie)
+
+			if tt.cookie != nil {
+				req.AddCookie(tt.cookie)
+			}
+
+			// https://github.com/vouch/vouch-proxy/issues/278
+			if tt.bearerJWT != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.bearerJWT)
+			}
+
 			if err != nil {
 				t.Fatal(err)
 			}

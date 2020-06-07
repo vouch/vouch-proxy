@@ -19,6 +19,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 )
 
 // Index variables passed to index.tmpl
@@ -54,9 +55,9 @@ func RenderIndex(w http.ResponseWriter, msg string) {
 	}
 }
 
-// RenderError html error page
+// renderError html error page
 // something terse for the end user
-func RenderError(w http.ResponseWriter, msg string) {
+func renderError(w http.ResponseWriter, msg string) {
 	log.Debugf("rendering error for user: %s", msg)
 	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
 		log.Error(err)
@@ -87,25 +88,37 @@ func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusBadRequest)
-	RenderError(w, "400 Bad Request")
+	addErrandCancelRequest(r)
+	renderError(w, "400 Bad Request")
 }
 
 // Error401 Unauthorized the standard error
 // this is captured by nginx, which converts the 401 into 302 to the login page
 func Error401(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
+	addErrandCancelRequest(r)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	http.Error(w, e.Error(), http.StatusUnauthorized)
-	// RenderError(w, "401 Unauthorized")
+	// renderError(w, "401 Unauthorized")
 }
 
 // Error403 Forbidden
 // if there's an error during /auth or if they don't pass validation in /auth
 func Error403(w http.ResponseWriter, r *http.Request, e error) {
 	log.Error(e)
+	addErrandCancelRequest(r)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusForbidden)
-	RenderError(w, "403 Forbidden")
+	renderError(w, "403 Forbidden")
+}
+
+// cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`
+func addErrandCancelRequest(r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	ctx = context.WithValue(ctx, cfg.ErrCtx, true)
+	*r = *r.Clone(ctx)
+	cancel() // we're done
+	return
 }

@@ -129,6 +129,10 @@ const (
 	// for a Base64 string we need 44 characters to get 32bytes (6 bits per char)
 	minBase64Length = 44
 	base64Bytes     = 32
+
+	// ErrCtx set or check the http request context to see if it has errored
+	// see `responses.Error401` and `jwtmanager.JWTCacheHandler` for example
+	ErrCtx = "isErr"
 )
 
 // Configure called at the very top of main()

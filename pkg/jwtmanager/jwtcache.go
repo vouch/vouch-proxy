@@ -11,7 +11,6 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package jwtmanager
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -75,42 +74,13 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx := context.Background()
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 
-		go func() {
-			if jwt != "" {
-				// cache the response against this jwt
-				Cache.SetDefault(jwt, w.Header().Clone())
-			}
-		}()
-
+		if jwt != "" &&
+			r.Context().Err() == nil { // r.Context().Done() is still open
+			// cache the response headers for this jwt
+			// log.Debug("setting cache for %+v", w.Header().Clone())
+			Cache.SetDefault(jwt, w.Header().Clone())
+		}
 	})
 }
-
-// func (cr *CachedResponse) Write(b []byte) (int, error) {
-// 	cr.rawResponse = append(cr.rawResponse, b[:]...)
-// 	return cr.CaptureWriter.Write(b)
-// }
-
-// // Header calls http.Writer.Header()
-// func (cr *CachedResponse) Header() http.Header {
-// 	return cr.CaptureWriter.Header()
-// }
-
-// // WriteHeader calls http.Writer.WriteHeader(code)
-// func (cr *CachedResponse) WriteHeader(code int) {
-// 	cr.CaptureWriter.WriteHeader(code)
-// }
-
-// // RawDump constructs the contents to be cached
-// func (cr *CachedResponse) RawDump() []byte {
-// 	var dump bytes.Buffer
-// 	for k, v := range cr.Header().Clone() {
-// 		dump.WriteString(fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
-// 		dump.WriteRune('\n')
-// 	}
-// 	dump.WriteRune('\n')
-// 	dump.Write(cr.rawResponse)
-// 	return dump.Bytes()
-// }
