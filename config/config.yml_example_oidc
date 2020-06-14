@@ -13,7 +13,10 @@ vouch:
   # - OR -
   # instead of setting specific domains you may prefer to allow all users...
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # and vouch.cookie.domain to your callback_url domain.
   # allowAllUsers: true
+  # cookie:
+  #   domain: yourdomain.com
 
 oauth:
   # Generic OpenID Connect
