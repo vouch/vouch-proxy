@@ -20,6 +20,50 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
+func Test_normalizeLoginURL(t *testing.T) {
+	setUp("/config/testing/handler_login_url.yml")
+	tests := []struct {
+		name    string
+		url     string
+		want    string
+		wantErr bool
+	}{
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		{"extra params", "http://host/login?url=http://host/path&p2=2", "http://host/path?p2=2", false},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// Even though the p1 param is not a login param, we do not interpret is as part of the url param because it precedes it
+		{"prior params", "http://host/login?p1=1&url=http://host/path", "http://host/path", true},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// We assume vouch-* is a login param and do not fold it into url
+		{"vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// We assume x-vouch-* is a login param and do not fold it into url
+		{"x-vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// Even though p1 is not a login param, we do not interpret is as part of url because it follows a login param (vouch-*)
+		{"params after vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2&p3=3", "http://host/path", true},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// Even though p1 is not a login param, we do not interpret is as part of url because it follows a login param (x-vouch-*)
+		{"params after x-vouch-* params", "http://host/login?url=http://host/path&x-vouch-xxx=2&p3=3", "http://host/path", true},
+		// This is not an RFC-compliant URL; it combines all the aspects above
+		{"all params", "http://host/login?p1=1&url=http://host/path?p2=2&p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+		// This is an RFC-compliant URL
+		{"all params", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, _ := url.Parse(tt.url)
+			got, err := normalizeLoginURLParam(u)
+			if got.String() != tt.want {
+				t.Errorf("normalizeLoginURLParam() = %v, want %v", got, tt.want)
+			}
+			if (err != nil) != tt.wantErr {
+				t.Errorf("normalizeLoginURLParam() err = %v", err)
+			}
+		})
+	}
+}
+
 func Test_getValidRequestedURL(t *testing.T) {
 	setUp("/config/testing/handler_login_url.yml")
 	r := &http.Request{}
