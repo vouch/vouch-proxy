@@ -48,7 +48,7 @@ func Test_normalizeLoginURL(t *testing.T) {
 		// This is not an RFC-compliant URL; it combines all the aspects above
 		{"all params", "http://host/login?p1=1&url=http://host/path?p2=2&p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
 		// This is an RFC-compliant URL
-		{"all params", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+		{"all params (encoded)", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
