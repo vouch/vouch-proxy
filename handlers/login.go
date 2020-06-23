@@ -121,7 +121,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 	strayParams := false // Will be true if stray params are found
 	urlParamDone := false // Will be true when we're done building urlParam (but we're still checking for stray params)
 
-	for _, param := range strings.Split(loginURL.RawQuery, "&") {
+	for _, param := range regexp.MustCompile("[&;]").Split(loginURL.RawQuery, -1) {
 		paramKeyVal := strings.Split(param, "=")
 		paramKey := paramKeyVal[0]
 		lcParamKey := strings.ToLower(paramKey)

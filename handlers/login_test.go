@@ -55,6 +55,11 @@ func Test_normalizeLoginURL(t *testing.T) {
 		{"all params", "http://host/login?p1=1&url=http://host/path?p2=2&p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
 		// This is an RFC-compliant URL
 		{"all params (encoded)", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+		// This is not an RFC-compliant URL; it combines all the aspects above, and it uses semicolons as parameter separators
+		// Note that when we fold a stray param into the url param, we always do so with &s
+		{"all params (semicolons)", "http://host/login?p1=1;url=http://host/path?p2=2;p3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2&p3=3", true},
+		// This is an RFC-compliant URL that uses semicolons as parameter separators
+		{"all params (encoded, semicolons)", "http://host/login?p1=1;url=http%3a%2f%2fhost/path%3fp2=2%3bp3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2;p3=3", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
