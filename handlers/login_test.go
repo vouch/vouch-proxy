@@ -35,10 +35,16 @@ func Test_normalizeLoginURL(t *testing.T) {
 		{"prior params", "http://host/login?p1=1&url=http://host/path", "http://host/path", true},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		// We assume vouch-* is a login param and do not fold it into url
-		{"vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		{"vouch-* params after", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// We assume vouch-* is a login param and do not fold it into url
+		{"vouch-* params before", "http://host/login?vouch-xxx=1&url=http://host/path", "http://host/path", false},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		// We assume x-vouch-* is a login param and do not fold it into url
-		{"x-vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		{"x-vouch-* params after", "http://host/login?url=http://host/path&vouch-xxx=2", "http://host/path", false},
+		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
+		// We assume x-vouch-* is a login param and do not fold it into url
+		{"x-vouch-* params before", "http://host/login?x-vouch-xxx=1&url=http://host/path", "http://host/path", false},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		// Even though p1 is not a login param, we do not interpret is as part of url because it follows a login param (vouch-*)
 		{"params after vouch-* params", "http://host/login?url=http://host/path&vouch-xxx=2&p3=3", "http://host/path", true},
