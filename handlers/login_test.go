@@ -28,8 +28,13 @@ func Test_normalizeLoginURL(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
+		// the documentation since v0.4.0 has shown this URL in the README as the 302 redirect
+		{"as per README", "http://host/login?url=http://host/path?p2=2&vouch-failcount=3&X-Vouch-Token=TOKEN&error=anerror", "http://host/path?p2=2", false},
+		{"as per README (blanks)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
+		{"as per README (blanks, mixed with semi)", "http://host/login?url=http://host/path?p2=2;p=3&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
-		{"extra params", "http://host/login?url=http://host/path&p2=2", "http://host/path?p2=2", false},
+		{"extra params", "http://host/login?url=http://host/path?p2=2", "http://host/path?p2=2", false},
+		{"extra params (blank)", "http://host/login?url=http://host/path?p2=", "http://host/path?p2=", false},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		// Even though the p1 param is not a login param, we do not interpret is as part of the url param because it precedes it
 		{"prior params", "http://host/login?p1=1&url=http://host/path", "http://host/path", true},
@@ -88,6 +93,7 @@ func Test_getValidRequestedURL(t *testing.T) {
 		{"redirection chaining", "http://example.com/dest?url=https://", "", true},
 		{"redirection chaining upper case", "http://example.com/dest?url=HTTPS://someplaceelse.com", "", true},
 		{"redirection chaining no protocol", "http://example.com/dest?url=//someplaceelse.com", "", true},
+		{"redirection chaining escaped https://", "http://example.com/dest?url=https%3a%2f%2fsomeplaceelse.com", "", true},
 		{"data uri", "http://example.com/dest?url=data:text/plain,Example+Text", "", true},
 		{"javascript uri", "http://example.com/dest?url=javascript:alert(1)", "", true},
 		{"not in domain", "http://somewherelse.com/", "", true},
@@ -95,8 +101,7 @@ func Test_getValidRequestedURL(t *testing.T) {
 		{"should be fine", "http://example.com/", "http://example.com/", false},
 		{"multiple query param", "http://example.com/?strange=but-true&also-strange=but-false", "http://example.com/?strange=but-true&also-strange=but-false", false},
 		{"multiple query params, one of them bad", "http://example.com/?strange=but-true&also-strange=but-false&strange-but-bad=https://badandstrange.com", "", true},
-
-		// TODO: Add test cases.
+		{"multiple query params, one of them bad (escaped)", "http://example.com/?strange=but-true&also-strange=but-false&strange-but-bad=https%3a%2f%2fbadandstrange.com", "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
