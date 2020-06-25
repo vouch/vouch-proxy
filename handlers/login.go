@@ -139,6 +139,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 				urlParam = parsed
 			} else if !isVouchParam {
 				// Non-vouch param before url param is a stray param
+				log.Infof("Stray param in login request (%s)", paramKey)
 				strayParams = true
 			} // else vouch param before url param, doesn't change outcome
 		} else {
@@ -156,12 +157,14 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 				}
 			} else {
 				// Non-vouch param after vouch param is a stray param
+				log.Infof("Stray param in login request (%s)", paramKey)
 				strayParams = true
 			}
 		}
 	}
 
 	// Check if there were stray parameters to decide whether to return an error
+	log.Debugf("Login url param normalized to '%s'", urlParam.String())
 	if strayParams {
 		return urlParam, errLoginStrayParams
 	} else {
