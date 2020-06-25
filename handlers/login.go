@@ -92,44 +92,101 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	errNoURL      = errors.New("no destination URL requested")
-	errInvalidURL = errors.New("requested destination URL appears to be invalid")
-	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
-	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
-	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	errNoURL            = errors.New("no destination URL requested")
+	errInvalidURL       = errors.New("requested destination URL appears to be invalid")
+	errURLNotHTTP       = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
+	errLoginStrayParams = errors.New("login request included unrecognized parameters")
+	errDangerQS         = errors.New("requested destination URL has a dangerous query string")
+	badStrings          = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	reAmpSemi           = regexp.MustCompile("[&;]")
 )
 
+// inspect login query params to located the url param, while taking into account that the login URL may be
+// presented in an RFC-non-compliant way (for example, it is common for the url param to
+// not have its own query params property encoded, leading to URLs like
+// http://host/login?X-Vouch-Token=token&url=http://host/path?param=value&param2=value2&vouch-failcount=value3
+// where some params -- here X-Vouch-Token and vouch-failcount -- belong to login, and some others
+// -- here param and param2 -- belong to the url param of login)
+// The algorithm is as follows:
+// * All login params starting with vouch- or x-vouch- (case insensitively) are treated as true login params
+// * The "error" login param (case sensitively) is treated as true login param
+// * All other login params are treated as non-login params
+// * All non-login params between the url param and the first true login param are folded into the url param
+// * All remaining non-login params are considered stray non-login params
+// * Error is returned if the url cannot be parsed *or* it contains stray non-login params
+// * For the benefit of unit-testing, if the url contains stray non-login params, it's
+// returned anyway (in addition to error return)
+func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
+	// url.URL.Query return a map and therefore makes no guarantees about param order
+	// Therefore we have to ascertain the param order by inspecting the raw query
+	var urlParam *url.URL = nil // Will be url.URL for the url param
+	strayParams := false        // Will be true if stray params are found
+	urlParamDone := false       // Will be true when we're done building urlParam (but we're still checking for stray params)
+
+	for _, param := range reAmpSemi.Split(loginURL.RawQuery, -1) {
+		paramKeyVal := strings.Split(param, "=")
+		paramKey := paramKeyVal[0]
+		lcParamKey := strings.ToLower(paramKey)
+		isVouchParam := strings.HasPrefix(lcParamKey, cfg.Branding.LCName) || strings.HasPrefix(lcParamKey, "x-"+cfg.Branding.LCName) || paramKey == "error"
+
+		if urlParam == nil {
+			// Still looking for url param
+			if paramKey == "url" {
+				// Found it
+				parsed, e := url.Parse(loginURL.Query().Get("url"))
+				if e != nil {
+					return nil, e // failure to parse url param
+				}
+
+				urlParam = parsed
+			} else if !isVouchParam {
+				// Non-vouch param before url param is a stray param
+				log.Infof("Stray param in login request (%s)", paramKey)
+				strayParams = true
+			} // else vouch param before url param, doesn't change outcome
+		} else {
+			// Looking at params after url param
+			if !urlParamDone && isVouchParam {
+				// First vouch param after url param
+				urlParamDone = true
+				// But keep going to check for strays
+			} else if !urlParamDone {
+				// Non-vouch param after url and before first vouch param, fold it into urlParam
+				if urlParam.RawQuery == "" {
+					urlParam.RawQuery = param
+				} else {
+					urlParam.RawQuery = urlParam.RawQuery + "&" + param
+				}
+			} else if !isVouchParam {
+				// Non-vouch param after vouch param is a stray param
+				log.Infof("Stray param in login request (%s)", paramKey)
+				strayParams = true
+			} // else vouch param after vouch param, doesn't change outcome
+		}
+	}
+
+	// if there were stray parameters return an error
+	log.Debugf("Login url param normalized to '%s'", urlParam)
+	if strayParams {
+		return urlParam, errLoginStrayParams
+	}
+	return urlParam, nil
+
+}
+
 func getValidRequestedURL(r *http.Request) (string, error) {
-	// nginx is configured with...
-	// `return 302 https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;`
-	// because `url=$scheme://$http_host$request_uri` might be..
-	// `url=http://protectedapp.yourdomain.com/hello?arg1=val1&arg2=val2`
-	// it causes `arg2=val2` to get lost if a regular evaluation of the `url` param is performedwith...
-	//   urlparam := r.URL.Query().Get("url")
-	// so instead we extract in manually
+	u, err := normalizeLoginURLParam(r.URL)
 
-	urlparam := r.URL.RawQuery
-	urlparam = strings.Split(urlparam, "&vouch-failcount")[0]
-	urlparam = strings.TrimPrefix(urlparam, "url=")
-	log.Debugf("raw URL is %s", urlparam)
+	if err != nil {
+		return "", fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
+	}
 
-	// urlparam := r.URL.Query().Get("url")
-	// log.Debugf("url URL is %s", urlparam)
-
-	if urlparam == "" {
+	if u == nil || u.String() == "" {
 		return "", errNoURL
 	}
-	if !strings.HasPrefix(strings.ToLower(urlparam), "http://") && !strings.HasPrefix(strings.ToLower(urlparam), "https://") {
-		return "", errURLNotHTTP
-	}
-	u, err := url.Parse(urlparam)
-	if err != nil {
-		return "", fmt.Errorf("won't parse: %w %s", errInvalidURL, err)
-	}
 
-	_, err = url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return "", fmt.Errorf("query string won't parse: %w %s", errInvalidURL, err)
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", errURLNotHTTP
 	}
 
 	for _, v := range u.Query() {
@@ -158,7 +215,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		return "", fmt.Errorf("%w: mismatch between requested destination URL and '%s.cookie.secure: %v' (the cookie is only visible to 'https' but the requested site is 'http')", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
 	}
 
-	return urlparam, nil
+	return u.String(), nil
 }
 
 func oauthLoginURL(r *http.Request, state string) string {
