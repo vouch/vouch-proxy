@@ -108,6 +108,7 @@ var (
 // -- here param and param2 -- belong to the url param of login)
 // The algorithm is as follows:
 // * All login params starting with vouch- or x-vouch- (case insensitively) are treated as true login params
+// * The "error" login param (case sensitively) is treated as true login param
 // * All other login params are treated as non-login params
 // * All non-login params between the url param and the first true login param are folded into the url param
 // * All remaining non-login params are considered stray non-login params
@@ -125,7 +126,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 		paramKeyVal := strings.Split(param, "=")
 		paramKey := paramKeyVal[0]
 		lcParamKey := strings.ToLower(paramKey)
-		isVouchParam := strings.HasPrefix(lcParamKey, "vouch-") || strings.HasPrefix(lcParamKey, "x-vouch-")
+		isVouchParam := strings.HasPrefix(lcParamKey, "vouch-") || strings.HasPrefix(lcParamKey, "x-vouch-") || paramKey == "error"
 
 		if urlParam == nil {
 			// Still looking for url param
