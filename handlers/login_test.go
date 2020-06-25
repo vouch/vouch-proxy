@@ -28,10 +28,6 @@ func Test_normalizeLoginURL(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// the documentation since v0.4.0 has shown this URL in the README as the 302 redirect
-		{"as per README", "http://host/login?url=http://host/path?p2=2&vouch-failcount=3&X-Vouch-Token=TOKEN&error=anerror", "http://host/path?p2=2", false},
-		{"as per README (blanks)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
-		{"as per README (blanks, mixed with semi)", "http://host/login?url=http://host/path?p2=2;p=3&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		{"extra params", "http://host/login?url=http://host/path?p2=2", "http://host/path?p2=2", false},
 		{"extra params (blank)", "http://host/login?url=http://host/path?p2=", "http://host/path?p2=", false},
@@ -65,6 +61,11 @@ func Test_normalizeLoginURL(t *testing.T) {
 		{"all params (semicolons)", "http://host/login?p1=1;url=http://host/path?p2=2;p3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2&p3=3", true},
 		// This is an RFC-compliant URL that uses semicolons as parameter separators
 		{"all params (encoded, semicolons)", "http://host/login?p1=1;url=http%3a%2f%2fhost/path%3fp2=2%3bp3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2;p3=3", true},
+		// Real world tests
+		// There are from vouch README since c0.4.0 (recommended nginx setting for 302 redirect)
+		{"Vouch README (with error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=3&X-Vouch-Token=TOKEN&error=anerror", "http://host/path?p2=2", false},
+		{"Vouch README (blank error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
+		{"Vouch README (semicolons, blank error)", "http://host/login?url=http://host/path?p2=2;p3=3&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2&p3=3", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
