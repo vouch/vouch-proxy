@@ -34,7 +34,7 @@ vouch:
 
   # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider - VOUCH_ALLOWALLUSERS
   # allowAllUsers: false
-  # Set vouch.cookie.domain in the below instead of vouch.domains when enabling allowAllUsers.
+  # vouch.cookie.domain must be set below when enabling allowAllUsers
 
   # Setting publicAccess: true will accept all requests, even without a cookie.  - VOUCH_PUBLICACCESS
   # If the user is logged in, the cookie will be validated and the user header will be set.
