@@ -53,9 +53,9 @@ func Test_normalizeLoginURL(t *testing.T) {
 		// Even though p1 is not a login param, we do not interpret is as part of url because it follows a login param (x-vouch-*)
 		{"params after x-vouch-* params", "http://host/login?url=http://host/path&x-vouch-xxx=2&p3=3", "http://host/path", true},
 		// This is not an RFC-compliant URL; it combines all the aspects above
-		{"all params", "http://host/login?p1=1&url=http://host/path?p2=2&p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+		{"all params", "http://host/login?p1=1&url=http://host/path?p2=2&p3=3&x-vouch-xxx=4&vouch=5&error=6&p7=7", "http://host/path?p2=2&p3=3", true},
 		// This is an RFC-compliant URL
-		{"all params (encoded)", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&p5=5", "http://host/path?p2=2&p3=3", true},
+		{"all params (encoded)", "http://host/login?p1=1&url=http%3a%2f%2fhost/path%3fp2=2%26p3=3&x-vouch-xxx=4&vouch=5&error=6&p7=7", "http://host/path?p2=2&p3=3", true},
 		// This is not an RFC-compliant URL; it combines all the aspects above, and it uses semicolons as parameter separators
 		// Note that when we fold a stray param into the url param, we always do so with &s
 		{"all params (semicolons)", "http://host/login?p1=1;url=http://host/path?p2=2;p3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2&p3=3", true},

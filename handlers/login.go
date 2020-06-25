@@ -156,11 +156,11 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 				} else {
 					urlParam.RawQuery = urlParam.RawQuery + "&" + param
 				}
-			} else {
+			} else if !isVouchParam {
 				// Non-vouch param after vouch param is a stray param
 				log.Infof("Stray param in login request (%s)", paramKey)
 				strayParams = true
-			}
+			} // else vouch param after vouch param, doesn't change outcome
 		}
 	}
 
