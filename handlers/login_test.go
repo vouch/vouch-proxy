@@ -158,3 +158,43 @@ func TestLoginHandler(t *testing.T) {
 		})
 	}
 }
+func TestLoginErrTooManyRedirects(t *testing.T) {
+
+	handler := http.HandlerFunc(LoginHandler)
+
+	setUp("/config/testing/handler_login_url.yml")
+
+	tests := []struct {
+		name        string
+		wantcode    int
+		numRequests int
+	}{
+		{"try the URL a few times", http.StatusFound, failCountLimit}, // after we make successive number of requests up to the failCountLimit ``
+		{"then fail ErrTooManyRedirects", http.StatusBadRequest, 1},   // then we generate the error and return `400 Bad Request`
+	}
+
+	var rr *httptest.ResponseRecorder
+	req, err := http.NewRequest("GET", "/logout?url=http://myapp.example.com/login", nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			for i := 0; i < tt.numRequests; i++ {
+				if err != nil {
+					t.Fatal(err)
+				}
+				rr = httptest.NewRecorder()
+				handler.ServeHTTP(rr, req)
+
+				if rr.Code != tt.wantcode {
+					t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
+				}
+
+				for _, c := range rr.Result().Cookies() {
+					req.AddCookie(c)
+				}
+
+			}
+
+		})
+	}
+}
