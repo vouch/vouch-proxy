@@ -63,9 +63,12 @@ func Test_normalizeLoginURL(t *testing.T) {
 		{"all params (encoded, semicolons)", "http://host/login?p1=1;url=http%3a%2f%2fhost/path%3fp2=2%3bp3=3;x-vouch-xxx=4;p5=5", "http://host/path?p2=2;p3=3", true},
 		// Real world tests
 		// since v0.4.0 the vouch README has specified an Nginx config including a 302 redirect in the following format...
-		{"Vouch README (with error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=3&X-Vouch-Token=TOKEN&error=anerror", "http://host/path?p2=2", false},
-		{"Vouch README (blank error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
-		{"Vouch README (semicolons, blank error)", "http://host/login?url=http://host/path?p2=2;p3=3&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2&p3=3", false},
+		{"Vouch Proxy README (with error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=3&X-Vouch-Token=TOKEN&error=anerror", "http://host/path?p2=2", false},
+		{"Vouch Proxy README (blank error)", "http://host/login?url=http://host/path?p2=2&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2", false},
+		{"Vouch Proxy README (semicolons, blank error)", "http://host/login?url=http://host/path?p2=2;p3=3&vouch-failcount=&X-Vouch-Token=&error=", "http://host/path?p2=2&p3=3", false},
+		// Nginx Ingress controler for Kubernetes adds the parameter `rd` to these calls
+		// https://github.com/vouch/vouch-proxy/issues/289
+		{"rd param appended by Nginx Ingress", "http://host/login?url=http://host/path?p2=2&p3=3&vouch-failcount=&X-Vouch-Token=&error=&rd=http%3a%2f%2fhost/path%3fp2=2%3bp3=3", "http://host/path?p2=2&p3=3", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
