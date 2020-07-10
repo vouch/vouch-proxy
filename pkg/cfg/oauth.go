@@ -37,7 +37,7 @@ var (
 		GitHub:        "github",
 		IndieAuth:     "indieauth",
 		ADFS:          "adfs",
-		Azure:		   "azure",
+		Azure:         "azure",
 		OIDC:          "oidc",
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
