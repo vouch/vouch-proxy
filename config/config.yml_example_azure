@@ -1,0 +1,25 @@
+# vouch config
+# bare minimum to get vouch running with Azure AD
+# https://github.com/vouch/vouch-proxy/issues/290
+
+vouch:
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate to Azure AD
+  allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    # secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    #  domain: yourdomain.com
+
+oauth:
+  provider: azure
+  client_id: 123456789
+  client_secret: ********
+  auth_url: https://login.microsoftonline.com/.../oauth2/v2.0/authorize
+  token_url: https://login.microsoftonline.com/.../oauth2/v2.0/token
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: https://vouch.yourdomain/auth
