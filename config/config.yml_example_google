@@ -6,7 +6,17 @@ vouch:
   domains:
   - yourdomain.com
   - yourotherdomain.com
-  
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    #  domain: yourdomain.com
+
+
 oauth:
   provider: google
   # get credentials from...
@@ -16,5 +26,5 @@ oauth:
   callback_urls: 
     - http://yourdomain.com:9090/auth
     - http://yourotherdomain.com:9090/auth
-  preferredDomain: yourdomain.com
-  # endpoints set from https://godoc.org/golang.org/x/oauth2/google
+  preferredDomain: yourdomain.com # be careful with this option, it may conflict with chrome on Android 
+  # endpoints are set from https://godoc.org/golang.org/x/oauth2/google

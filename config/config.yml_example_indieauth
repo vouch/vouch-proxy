@@ -6,11 +6,17 @@ vouch:
   # domains:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
-  domains:
-  - yourdomain.com
+  # domains:
+  # - yourdomain.com
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
 
   # Setting publicAccess: true will accept all requests, even without a cookie. 
   publicAccess: true

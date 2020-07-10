@@ -5,14 +5,21 @@ vouch:
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate to ADFS
   allowAllUsers: true
 
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    # secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    #  domain: yourdomain.com
+
+
 oauth:
   provider: adfs
   client_id: k8s
   client_secret: sauceSecret
-  auth_url: https://adfs.example.com/adfs/oauth2/authorize/
-  token_url: https://adfs.example.com/adfs/oauth2/token/
+  auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
+  token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
   scopes:
     - openid
     - email
     - profile
-  callback_url: https://vouch.example.com/auth
+  callback_url: https://vouch.yourdomain.com/auth

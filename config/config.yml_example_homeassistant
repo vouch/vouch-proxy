@@ -11,17 +11,19 @@ vouch:
   domains:
   - yourdomain.com
 
-  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
-  allowAllUsers: false
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # allowAllUsers: true
+
+  # cookie:
+    # secure: false           # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    # domain: yourdomain.com  # vouch.cookie.domain must be set when enabling allowAllUsers
+
 
   # whiteList - (optional) allows only the listed usernames
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
   # using static value for HomeAssistant
   whiteList:
   - homeassistant
-
-  # Setting publicAccess: true will accept all requests, even without a cookie. 
-  publicAccess: false
 
 oauth:
   # HomeAssistant Auth

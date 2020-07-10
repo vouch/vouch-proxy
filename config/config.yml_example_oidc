@@ -15,8 +15,12 @@ vouch:
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   # and set vouch.cookie.domain to the domain you wish to protect
   # allowAllUsers: true
-  # cookie:
-  #   domain: yourdomain.com
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
 
 oauth:
   # Generic OpenID Connect
