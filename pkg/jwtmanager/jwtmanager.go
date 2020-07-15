@@ -36,8 +36,8 @@ type VouchClaims struct {
 	Username     string   `json:"username"`
 	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	CustomClaims map[string]interface{}
-	PAccessToken string
-	PIdToken     string
+//	PAccessToken string
+//	PIdToken     string
 	jwt.StandardClaims
 }
 
