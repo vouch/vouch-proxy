@@ -44,6 +44,26 @@ func (u *User) PrepareUserData() {
 	}
 }
 
+// AzureUser is a retrieved and authenticated user from Azure AD
+type AzureUser struct {
+	User
+	Sub string `json:"sub"`
+	UPN string `json:"upn"`
+}
+
+func (u *AzureUser) PrepareUserData() {
+	// AzureAD uses the 'upn' (UserPrincipleName) field to store the email address of the user
+	// See https://docs.microsoft.com/en-us/azure/active-directory/hybrid/plan-connect-userprincipalname
+
+	if u.Username == "" {
+		u.Username = u.UPN
+	}
+
+	if u.Email == "" {
+		u.Email = u.UPN
+	}
+}
+
 // GoogleUser is a retrieved and authentiacted user from Google.
 // unused!
 // TODO: see if these should be pointers to the *User object as per

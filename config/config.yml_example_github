@@ -15,6 +15,13 @@ vouch:
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
   # allowAllUsers: true
 
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    #  domain: yourdomain.com
+
+
   # set teamWhitelist: to list of teams and/or GitHub organizations
   # When putting an organization id without a slash, it will allow all (public) members from the organization.
   # The client will try to read the private organization membership using the client credentials, if that's not possible

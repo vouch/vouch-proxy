@@ -37,6 +37,7 @@ var (
 		GitHub:        "github",
 		IndieAuth:     "indieauth",
 		ADFS:          "adfs",
+		Azure:         "azure",
 		OIDC:          "oidc",
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
@@ -50,6 +51,7 @@ type OAuthProviders struct {
 	GitHub        string
 	IndieAuth     string
 	ADFS          string
+	Azure         string
 	OIDC          string
 	HomeAssistant string
 	OpenStax      string
@@ -87,6 +89,7 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.IndieAuth &&
 		GenOAuth.Provider != Providers.HomeAssistant &&
 		GenOAuth.Provider != Providers.ADFS &&
+		GenOAuth.Provider != Providers.Azure &&
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud {
@@ -135,7 +138,7 @@ func setProviderDefaults() {
 		setDefaultsADFS()
 		configureOAuthClient()
 	} else {
-		// IndieAuth, OIDC, OpenStax, Nextcloud
+		// IndieAuth, OIDC, OpenStax, Nextcloud, Azure
 		configureOAuthClient()
 	}
 }

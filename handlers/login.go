@@ -26,7 +26,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var errTooManyRedirects = errors.New("too many redirects for requested URL")
+// see https://github.com/vouch/vouch-proxy/issues/282
+var errTooManyRedirects = errors.New("Too many unsuccessful authorization attempts for the requested URL")
+
+const failCountLimit = 6
 
 // LoginHandler /login
 // currently performs a 302 redirect to Google
@@ -78,9 +81,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
-	if failcount > 2 {
+	if failcount > failCountLimit {
 		var vouchError = r.URL.Query().Get("error")
-		responses.Error400(w, r, fmt.Errorf("/login %w for %s - %s", errTooManyRedirects, requestedURL, vouchError))
+		responses.Error400(w, r, fmt.Errorf("/login %w %s %s", errTooManyRedirects, requestedURL, vouchError))
 		return
 	}
 
@@ -92,15 +95,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	errNoURL      = errors.New("no destination URL requested")
-	errInvalidURL = errors.New("requested destination URL appears to be invalid")
-	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
+	errNoURL            = errors.New("no destination URL requested")
+	errInvalidURL       = errors.New("requested destination URL appears to be invalid")
+	errURLNotHTTP       = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
 	errLoginStrayParams = errors.New("login request included unrecognized parameters")
-	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
-	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	errDangerQS         = errors.New("requested destination URL has a dangerous query string")
+	badStrings          = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	reAmpSemi           = regexp.MustCompile("[&;]")
 )
 
-// Inspect login query params to located the url param, while taking into account that the login URL may be
+// inspect login query params to located the url param, while taking into account that the login URL may be
 // presented in an RFC-non-compliant way (for example, it is common for the url param to
 // not have its own query params property encoded, leading to URLs like
 // http://host/login?X-Vouch-Token=token&url=http://host/path?param=value&param2=value2&vouch-failcount=value3
@@ -109,24 +113,28 @@ var (
 // The algorithm is as follows:
 // * All login params starting with vouch- or x-vouch- (case insensitively) are treated as true login params
 // * The "error" login param (case sensitively) is treated as true login param
+// * The "rd" login param (case sensitively) added by nginx ingress is treated as true login param https://github.com/vouch/vouch-proxy/issues/289
 // * All other login params are treated as non-login params
 // * All non-login params between the url param and the first true login param are folded into the url param
 // * All remaining non-login params are considered stray non-login params
 // * Error is returned if the url cannot be parsed *or* it contains stray non-login params
-// * For the benefit of unit-testing, if the url contains stray non-login params, it's 
+// * For the benefit of unit-testing, if the url contains stray non-login params, it's
 // returned anyway (in addition to error return)
 func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 	// url.URL.Query return a map and therefore makes no guarantees about param order
 	// Therefore we have to ascertain the param order by inspecting the raw query
 	var urlParam *url.URL = nil // Will be url.URL for the url param
-	strayParams := false // Will be true if stray params are found
-	urlParamDone := false // Will be true when we're done building urlParam (but we're still checking for stray params)
+	strayParams := false        // Will be true if stray params are found
+	urlParamDone := false       // Will be true when we're done building urlParam (but we're still checking for stray params)
 
-	for _, param := range regexp.MustCompile("[&;]").Split(loginURL.RawQuery, -1) {
+	for _, param := range reAmpSemi.Split(loginURL.RawQuery, -1) {
 		paramKeyVal := strings.Split(param, "=")
 		paramKey := paramKeyVal[0]
 		lcParamKey := strings.ToLower(paramKey)
-		isVouchParam := strings.HasPrefix(lcParamKey, "vouch-") || strings.HasPrefix(lcParamKey, "x-vouch-") || paramKey == "error"
+		isVouchParam := strings.HasPrefix(lcParamKey, cfg.Branding.LCName) ||
+			strings.HasPrefix(lcParamKey, "x-"+cfg.Branding.LCName) ||
+			paramKey == "error" ||
+			paramKey == "rd"
 
 		if urlParam == nil {
 			// Still looking for url param
@@ -134,7 +142,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 				// Found it
 				parsed, e := url.Parse(loginURL.Query().Get("url"))
 				if e != nil {
-					return nil, e // Straight up failure to parse url param
+					return nil, e // failure to parse url param
 				}
 
 				urlParam = parsed
@@ -146,7 +154,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 		} else {
 			// Looking at params after url param
 			if !urlParamDone && isVouchParam {
-				// First vouch param after url param 
+				// First vouch param after url param
 				urlParamDone = true
 				// But keep going to check for strays
 			} else if !urlParamDone {
@@ -164,13 +172,12 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 		}
 	}
 
-	// Check if there were stray parameters to decide whether to return an error
-	log.Debugf("Login url param normalized to '%s'", urlParam.String())
+	// if there were stray parameters return an error
+	log.Debugf("Login url param normalized to '%s'", urlParam)
 	if strayParams {
 		return urlParam, errLoginStrayParams
-	} else {
-		return urlParam, nil
 	}
+	return urlParam, nil
 
 }
 
@@ -181,7 +188,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		return "", fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
 	}
 
-	if u == nil {
+	if u == nil || u.String() == "" {
 		return "", errNoURL
 	}
 

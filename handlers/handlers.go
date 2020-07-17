@@ -19,6 +19,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/providers/adfs"
+	"github.com/vouch/vouch-proxy/pkg/providers/azure"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/providers/github"
 	"github.com/vouch/vouch-proxy/pkg/providers/google"
@@ -69,6 +70,8 @@ func getProvider() Provider {
 		return indieauth.Provider{}
 	case cfg.Providers.ADFS:
 		return adfs.Provider{}
+	case cfg.Providers.Azure:
+		return azure.Provider{}
 	case cfg.Providers.HomeAssistant:
 		return homeassistant.Provider{}
 	case cfg.Providers.OpenStax:
