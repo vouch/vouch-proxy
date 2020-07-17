@@ -134,8 +134,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 		lcParamKey := strings.ToLower(paramKey)
 		isVouchParam := strings.HasPrefix(lcParamKey, cfg.Branding.LCName) ||
 			strings.HasPrefix(lcParamKey, "x-"+cfg.Branding.LCName) ||
-			paramKey == "error" ||
-			paramKey == "rd"
+			paramKey == "error"
 
 		if urlParam == nil {
 			// Still looking for url param
