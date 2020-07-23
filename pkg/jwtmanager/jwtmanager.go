@@ -36,8 +36,8 @@ type VouchClaims struct {
 	Username     string   `json:"username"`
 	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
 	CustomClaims map[string]interface{}
-//	PAccessToken string
-//	PIdToken     string
+	PAccessToken string
+	PIdToken     string
 	jwt.StandardClaims
 }
 
@@ -84,6 +84,15 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 		ptokens.PAccessToken,
 		ptokens.PIdToken,
 		StandardClaims,
+	}
+
+	// https://github.com/vouch/vouch-proxy/issues/287
+	if cfg.Cfg.Headers.AccessToken == "" {
+		claims.PAccessToken = ""
+	} 
+
+	if cfg.Cfg.Headers.IDToken == "" {
+		claims.PIdToken = ""
 	}
 
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
