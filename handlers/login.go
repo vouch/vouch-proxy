@@ -134,7 +134,8 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 		lcParamKey := strings.ToLower(paramKey)
 		isVouchParam := strings.HasPrefix(lcParamKey, cfg.Branding.LCName) ||
 			strings.HasPrefix(lcParamKey, "x-"+cfg.Branding.LCName) ||
-			paramKey == "error"
+			paramKey == "error" || // Used by VouchProxy login
+			paramKey == "rd" // Passed to VouchProxy by nginx-ingress and then ignored (see #289)
 
 		if urlParam == nil {
 			// Still looking for url param
