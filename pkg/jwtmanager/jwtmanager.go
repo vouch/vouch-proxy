@@ -86,6 +86,15 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 		StandardClaims,
 	}
 
+	// https://github.com/vouch/vouch-proxy/issues/287
+	if cfg.Cfg.Headers.AccessToken == "" {
+		claims.PAccessToken = ""
+	} 
+
+	if cfg.Cfg.Headers.IDToken == "" {
+		claims.PIdToken = ""
+	}
+
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims

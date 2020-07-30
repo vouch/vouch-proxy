@@ -42,8 +42,9 @@ vouch:
     redirect: X-Vouch-Requested-URI
     # claims:
     claimheader: X-Vouch-IdP-Claims-
-    accesstoken: X-Vouch-IdP-AccessToken
-    idtoken: X-Vouch-IdP-IdToken
+    # https://github.com/vouch/vouch-proxy/issues/287
+    # accesstoken: X-Vouch-IdP-AccessToken
+    # idtoken: X-Vouch-IdP-IdToken
   # test_url:
   # post_logout_redirect_uris:
 # oauth:

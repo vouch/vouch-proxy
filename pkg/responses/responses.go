@@ -117,7 +117,7 @@ func Error403(w http.ResponseWriter, r *http.Request, e error) {
 // cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`
 func addErrandCancelRequest(r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
-	ctx = context.WithValue(ctx, cfg.ErrCtx, true)
+	ctx = context.WithValue(ctx, cfg.ErrCtxKey, true)
 	*r = *r.Clone(ctx)
 	cancel() // we're done
 	return

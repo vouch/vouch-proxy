@@ -130,10 +130,14 @@ const (
 	minBase64Length = 44
 	base64Bytes     = 32
 
-	// ErrCtx set or check the http request context to see if it has errored
+	// ErrCtxKey set or check the http request context to see if it has errored
 	// see `responses.Error401` and `jwtmanager.JWTCacheHandler` for example
-	ErrCtx = "isErr"
+	ErrCtxKey ctxKey = 0
 )
+
+// use a typed ctxKey to avoid context key collission
+// https://blog.golang.org/context#TOC_3.2.
+type ctxKey int
 
 // Configure called at the very top of main()
 // the order of config follows the Viper conventions...
