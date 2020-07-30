@@ -165,6 +165,7 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 - [running on a Raspberry Pi using the ARM based Docker image](https://github.com/vouch/vouch-proxy/pull/247)
 - [Kubernetes architecture post ingress](https://github.com/vouch/vouch-proxy/pull/263#issuecomment-628297832)
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
+- [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 
 Please do help us to expand this list.
 
