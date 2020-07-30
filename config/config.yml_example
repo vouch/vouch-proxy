@@ -1,6 +1,6 @@
 # vouch config
 
-# you should probably start with one of the other configs in the example directory
+# you should probably start with one of the other example configs in this directory
 # Vouch Proxy does a fairly good job of setting its config to sane defaults
 
 # be aware of the yaml indentation, the only top level elements are `vouch` and `oauth`. 
@@ -36,7 +36,7 @@ vouch:
   # allowAllUsers: false
   # vouch.cookie.domain must be set below when enabling allowAllUsers
 
-  # Setting publicAccess: true will accept all requests, even without a cookie.  - VOUCH_PUBLICACCESS
+  # Setting publicAccess: true will accept all requests, even without a valid jwt/cookie.  - VOUCH_PUBLICACCESS
   # If the user is logged in, the cookie will be validated and the user header will be set.
   # You will need to direct people to the Vouch Proxy login page from your application.
   # publicAccess: false
