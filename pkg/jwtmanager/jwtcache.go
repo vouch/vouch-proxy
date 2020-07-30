@@ -77,7 +77,9 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 		if jwt != "" &&
-			r.Context().Err() == nil { // r.Context().Done() is still open
+			r.Context().Err() == nil {
+			// see responses.addErrandCancelRequest()
+			// r.Context().Done() is still open
 			// cache the response headers for this jwt
 			// log.Debug("setting cache for %+v", w.Header().Clone())
 			Cache.SetDefault(jwt, w.Header().Clone())

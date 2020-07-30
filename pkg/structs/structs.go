@@ -51,6 +51,7 @@ type AzureUser struct {
 	UPN string `json:"upn"`
 }
 
+// PrepareUserData implement PersonalData interface
 func (u *AzureUser) PrepareUserData() {
 	// AzureAD uses the 'upn' (UserPrincipleName) field to store the email address of the user
 	// See https://docs.microsoft.com/en-us/azure/active-directory/hybrid/plan-connect-userprincipalname
