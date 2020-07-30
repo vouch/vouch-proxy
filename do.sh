@@ -308,11 +308,16 @@ profile() {
   go tool pprof -http=0.0.0.0:19091 http://0.0.0.0:9090/debug/pprof/profile?seconds=10
 }
 
+
 gofmt() {
   # segfault's without exec since it would just call this function infinitely :)
   exec gofmt -w -s .
 }
 
+gosec() {
+  # segfault's without exec since it would just call this function infinitely :)
+  exec gosec ./...
+}
 usage() {
    cat <<EOF
    usage:
@@ -321,6 +326,7 @@ usage() {
      $0 install                - move binary to ${GOPATH}/bin/vouch
      $0 goget                  - get all dependencies
      $0 gofmt                  - gofmt the entire code base
+     $0 gosec                  - gosec security audit of the entire code base
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 dbuildalpine           - build docker container for alpine
@@ -364,6 +370,7 @@ case "$ARG" in
    |'test_logging' \
    |'license' \
    |'profile' \
+   |'gosec' \
    |'gofmt')
    shift
    $ARG $*
