@@ -95,13 +95,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	errNoURL            = errors.New("no destination URL requested")
-	errInvalidURL       = errors.New("requested destination URL appears to be invalid")
-	errURLNotHTTP       = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
-	errLoginStrayParams = errors.New("login request included unrecognized parameters")
-	errDangerQS         = errors.New("requested destination URL has a dangerous query string")
-	badStrings          = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
-	reAmpSemi           = regexp.MustCompile("[&;]")
+	errNoURL      = errors.New("no destination URL requested")
+	errInvalidURL = errors.New("requested destination URL appears to be invalid")
+	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
+	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	reAmpSemi     = regexp.MustCompile("[&;]")
 )
 
 // inspect login query params to located the url param, while taking into account that the login URL may be
@@ -117,15 +116,17 @@ var (
 // * All other login params are treated as non-login params
 // * All non-login params between the url param and the first true login param are folded into the url param
 // * All remaining non-login params are considered stray non-login params
-// * Error is returned if the url cannot be parsed *or* it contains stray non-login params
-// * For the benefit of unit-testing, if the url contains stray non-login params, it's
-// returned anyway (in addition to error return)
-func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
+//
+// Returns
+// * _, _, err: if an error occurred while parsing the URL
+// * URL, empty array, nil: if URL is valid and contains no stray non-login params
+// * URL, array of stray params, nil: if URL is valid and contains stray non-login params
+func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 	// url.URL.Query return a map and therefore makes no guarantees about param order
 	// Therefore we have to ascertain the param order by inspecting the raw query
 	var urlParam *url.URL = nil // Will be url.URL for the url param
-	strayParams := false        // Will be true if stray params are found
 	urlParamDone := false       // Will be true when we're done building urlParam (but we're still checking for stray params)
+	strays := []string{}        // List of stray params
 
 	for _, param := range reAmpSemi.Split(loginURL.RawQuery, -1) {
 		paramKeyVal := strings.Split(param, "=")
@@ -133,8 +134,8 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 		lcParamKey := strings.ToLower(paramKey)
 		isVouchParam := strings.HasPrefix(lcParamKey, cfg.Branding.LCName) ||
 			strings.HasPrefix(lcParamKey, "x-"+cfg.Branding.LCName) ||
-			paramKey == "error" ||
-			paramKey == "rd"
+			paramKey == "error" || // Used by VouchProxy login
+			paramKey == "rd" // Passed to VouchProxy by nginx-ingress and then ignored (see #289)
 
 		if urlParam == nil {
 			// Still looking for url param
@@ -142,14 +143,14 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 				// Found it
 				parsed, e := url.Parse(loginURL.Query().Get("url"))
 				if e != nil {
-					return nil, e // failure to parse url param
+					return nil, []string{}, e // failure to parse url param
 				}
 
 				urlParam = parsed
 			} else if !isVouchParam {
 				// Non-vouch param before url param is a stray param
 				log.Infof("Stray param in login request (%s)", paramKey)
-				strayParams = true
+				strays = append(strays, paramKey)
 			} // else vouch param before url param, doesn't change outcome
 		} else {
 			// Looking at params after url param
@@ -167,22 +168,22 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, error) {
 			} else if !isVouchParam {
 				// Non-vouch param after vouch param is a stray param
 				log.Infof("Stray param in login request (%s)", paramKey)
-				strayParams = true
+				strays = append(strays, paramKey)
 			} // else vouch param after vouch param, doesn't change outcome
 		}
 	}
 
-	// if there were stray parameters return an error
 	log.Debugf("Login url param normalized to '%s'", urlParam)
-	if strayParams {
-		return urlParam, errLoginStrayParams
-	}
-	return urlParam, nil
+	return urlParam, strays, nil
 
 }
 
 func getValidRequestedURL(r *http.Request) (string, error) {
-	u, err := normalizeLoginURLParam(r.URL)
+	u, strays, err := normalizeLoginURLParam(r.URL)
+
+	if len(strays) > 0 {
+		log.Debugf("Stray params in login url (%+q) will be ignored", strays)
+	}
 
 	if err != nil {
 		return "", fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
