@@ -16,19 +16,19 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/google/go-cmp/cmp"
 )
 
 func Test_normalizeLoginURL(t *testing.T) {
 	setUp("/config/testing/handler_login_url.yml")
 	tests := []struct {
-		name    string
-		url     string
-		want    string
+		name      string
+		url       string
+		want      string
 		wantStray []string
-		wantErr bool
+		wantErr   bool
 	}{
 		// This is not an RFC-compliant URL because it does not encode :// in the url param; we accept it anyway
 		{"extra params", "http://host/login?url=http://host/path?p2=2", "http://host/path?p2=2", []string{}, false},
@@ -84,7 +84,7 @@ func Test_normalizeLoginURL(t *testing.T) {
 			}
 			if (err != nil) != tt.wantErr {
 				t.Errorf("normalizeLoginURLParam() err = %v", err)
-			}	
+			}
 		})
 	}
 }

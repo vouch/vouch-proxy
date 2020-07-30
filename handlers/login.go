@@ -95,12 +95,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	errNoURL            = errors.New("no destination URL requested")
-	errInvalidURL       = errors.New("requested destination URL appears to be invalid")
-	errURLNotHTTP       = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
-	errDangerQS         = errors.New("requested destination URL has a dangerous query string")
-	badStrings          = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
-	reAmpSemi           = regexp.MustCompile("[&;]")
+	errNoURL      = errors.New("no destination URL requested")
+	errInvalidURL = errors.New("requested destination URL appears to be invalid")
+	errURLNotHTTP = errors.New("requested destination URL is not a valid URL (does not begin with 'http://' or 'https://')")
+	errDangerQS   = errors.New("requested destination URL has a dangerous query string")
+	badStrings    = []string{"http://", "https://", "data:", "ftp://", "ftps://", "//", "javascript:"}
+	reAmpSemi     = regexp.MustCompile("[&;]")
 )
 
 // inspect login query params to located the url param, while taking into account that the login URL may be
@@ -116,11 +116,11 @@ var (
 // * All other login params are treated as non-login params
 // * All non-login params between the url param and the first true login param are folded into the url param
 // * All remaining non-login params are considered stray non-login params
-// 
+//
 // Returns
 // * _, _, err: if an error occurred while parsing the URL
-// * URL, false, nil: if URL is valid and contains no stray non-login params
-// * URL, true, nil: if URL is valid and contains stray non-login params
+// * URL, empty array, nil: if URL is valid and contains no stray non-login params
+// * URL, array of stray params, nil: if URL is valid and contains stray non-login params
 func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 	// url.URL.Query return a map and therefore makes no guarantees about param order
 	// Therefore we have to ascertain the param order by inspecting the raw query
