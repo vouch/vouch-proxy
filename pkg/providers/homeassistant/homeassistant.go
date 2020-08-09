@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package homeassistant
 
 import (
+	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -31,8 +32,8 @@ func (Provider) Configure() {
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	_, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false)
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+	_, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false, opts...)
 	if err != nil {
 		return err
 	}

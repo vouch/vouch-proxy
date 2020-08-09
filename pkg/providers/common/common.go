@@ -30,8 +30,8 @@ func Configure() {
 }
 
 // PrepareTokensAndClient setup the client, usually for a UserInfo request
-func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProviderToken bool) (*http.Client, *oauth2.Token, error) {
-	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"))
+func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProviderToken bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error) {
+	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"), opts...)
 	if err != nil {
 		return nil, nil, err
 	}

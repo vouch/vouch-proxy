@@ -26,7 +26,7 @@ import (
 
 // Provider provider specific functions
 type Provider struct {
-	PrepareTokensAndClient func(*http.Request, *structs.PTokens, bool) (*http.Client, *oauth2.Token, error)
+	PrepareTokensAndClient func(r *http.Request, ptokens *structs.PTokens, setProviderToken bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error)
 }
 
 var log *zap.SugaredLogger
@@ -38,7 +38,7 @@ func (Provider) Configure() {
 
 // GetUserInfo github user info, calls github api for org and teams
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	client, ptoken, err := me.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)

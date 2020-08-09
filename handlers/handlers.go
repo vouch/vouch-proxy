@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
+	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -34,7 +35,7 @@ import (
 // Provider each Provider must support GetuserInfo
 type Provider interface {
 	Configure()
-	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error
+	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error
 }
 
 const (

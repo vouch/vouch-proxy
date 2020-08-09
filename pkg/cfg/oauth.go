@@ -75,6 +75,7 @@ type oauthConfig struct {
 	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
 	UserOrgURL      string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
 	PreferredDomain string   `mapstructure:"preferredDomain"`
+	CodeChallengeMethod	string	`mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
 }
 
 func configureOauth() error {

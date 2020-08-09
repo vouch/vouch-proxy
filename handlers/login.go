@@ -13,11 +13,13 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/gorilla/sessions"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 
+	cv "github.com/nirasan/go-oauth-pkce-code-verifier"
 	"github.com/theckman/go-securerandom"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -76,6 +78,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	failcount++
 	session.Values[requestedURL] = failcount
 
+	// Add code challenge if enabled
+	if cfg.GenOAuth.CodeChallengeMethod != "" {
+		log.Debugf("Adding code challenge")
+		appendCodeChallenge(*session)
+	}
+
 	log.Debugf("saving session with failcount %d", failcount)
 	if err = session.Save(r, w); err != nil {
 		log.Error(err)
@@ -89,7 +97,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var oURL = oauthLoginURL(r, state)
+	var oURL = oauthLoginURL(*session, r, state)
 	log.Debugf("redirecting to oauthURL %s", oURL)
 	responses.Redirect302(w, r, oURL)
 }
@@ -226,7 +234,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	return u.String(), nil
 }
 
-func oauthLoginURL(r *http.Request, state string) string {
+func oauthLoginURL(session sessions.Session, r *http.Request, state string) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var lurl string
@@ -260,6 +268,11 @@ func oauthLoginURL(r *http.Request, state string) string {
 		} else {
 			lurl = cfg.OAuthClient.AuthCodeURL(state)
 		}
+
+		// append code challenge and code challenge method query parameters if enabled
+		if cfg.GenOAuth.CodeChallengeMethod != "" {
+			lurl = fmt.Sprintf("%s&code_challenge_method=%s&code_challenge=%s", lurl, cfg.GenOAuth.CodeChallengeMethod, session.Values["codeChallenge"].(string))
+		}
 	}
 	// log.Debugf("loginURL %s", url)
 	return lurl
@@ -274,4 +287,24 @@ func generateStateNonce() (string, error) {
 	}
 	state = regExJustAlphaNum.ReplaceAllString(state, "")
 	return state, nil
+}
+
+func appendCodeChallenge(session sessions.Session) {
+	var codeChallenge string
+	var CodeVerifier, _ = cv.CreateCodeVerifier()
+	switch strings.ToUpper(cfg.GenOAuth.CodeChallengeMethod) {
+	case "S256":
+		codeChallenge = CodeVerifier.CodeChallengeS256()
+		break
+	case "PLAIN":
+		codeChallenge = CodeVerifier.CodeChallengePlain()
+		// TODO support plain text code challenge
+		log.Fatal("plain code challenge method is not supported")
+		return
+	default:
+		log.Fatal("Code challenge method %s is invalid", cfg.GenOAuth.CodeChallengeMethod)
+		return
+	}
+	session.Values["codeChallenge"] = codeChallenge
+	session.Values["codeVerifier"] = CodeVerifier.Value
 }
