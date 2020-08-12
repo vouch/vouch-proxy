@@ -185,11 +185,11 @@ or
 docker run -d \
     -p 9090:9090 \
     --name vouch-proxy \
-    -e VOUCH_DOMAINS=yourdomain.com
-    -e OAUTH_PROVIDER=google
-    -e OAUTH_CLIENT_ID=1234
-    -e OAUTH_CLIENT_SECRET=secretsecret
-    -e OAUTH_CALLBACK_URL=https://vouch.yourdomain.com/auth
+    -e VOUCH_DOMAINS=yourdomain.com \
+    -e OAUTH_PROVIDER=google \
+    -e OAUTH_CLIENT_ID=1234 \
+    -e OAUTH_CLIENT_SECRET=secretsecret \
+    -e OAUTH_CALLBACK_URL=https://vouch.yourdomain.com/auth \
     voucher/vouch-proxy
 ```
 
