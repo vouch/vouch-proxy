@@ -22,6 +22,7 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
+	Sub string `json:"sub"`
 	// TODO: set Provider here so that we can pass it to db
 	// populated by db (via mapstructure) or from provider (via json)
 	// Provider   string `json:"provider",mapstructure:"provider"`
@@ -47,7 +48,6 @@ func (u *User) PrepareUserData() {
 // AzureUser is a retrieved and authenticated user from Azure AD
 type AzureUser struct {
 	User
-	Sub string `json:"sub"`
 	UPN string `json:"upn"`
 }
 
@@ -71,7 +71,6 @@ func (u *AzureUser) PrepareUserData() {
 // https://golang.org/doc/effective_go.html#embedding
 type GoogleUser struct {
 	User
-	Sub           string `json:"sub"`
 	GivenName     string `json:"given_name"`
 	FamilyName    string `json:"family_name"`
 	Profile       string `json:"profile"`
@@ -90,7 +89,6 @@ func (u *GoogleUser) PrepareUserData() {
 // ADFSUser Active Directory user record
 type ADFSUser struct {
 	User
-	Sub string `json:"sub"`
 	UPN string `json:"upn"`
 	// UniqueName string `json:"unique_name"`
 	// PwdExp     string `json:"pwd_exp"`
