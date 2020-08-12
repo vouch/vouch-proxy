@@ -188,7 +188,7 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 		"OAUTH_PREFERREDDOMAIN",
 	}
 	// array of strings
-	saenv := []string{"OAUTH_CALLBACK_URLS", "OAUTH_SCOPES"}
+	saenv := []string{"OAUTH_SCOPES"}
 
 	// populate environmental variables
 	svalue := "svalue"
@@ -218,7 +218,6 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 		GenOAuth.PreferredDomain,
 	}
 	sacfg := [][]string{
-		GenOAuth.RedirectURLs,
 		GenOAuth.Scopes,
 	}
 

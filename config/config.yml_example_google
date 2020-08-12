@@ -23,8 +23,10 @@ oauth:
   # https://console.developers.google.com/apis/credentials
   client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
-  callback_urls: 
-    - http://yourdomain.com:9090/auth
-    - http://yourotherdomain.com:9090/auth
   preferredDomain: yourdomain.com # be careful with this option, it may conflict with chrome on Android 
+  callback_urls:
+    - url: http://yourdomain.com:9090/auth
+      domain: yourdomain.com
+    - url: http://yourotherdomain.com:9090/auth
+      domain: yourotherdomain.com
   # endpoints are set from https://godoc.org/golang.org/x/oauth2/google

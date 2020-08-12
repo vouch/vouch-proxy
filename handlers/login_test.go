@@ -166,6 +166,38 @@ func TestLoginHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestLoginHandlerWithMultiple_callbacks(t *testing.T) {
+	handler := http.HandlerFunc(LoginHandler)
+
+	tests := []struct {
+		name       string
+		configFile string
+		wantcode   int
+	}{
+		{"general test", "/config/testing/handler_login_redirecturls.yml", http.StatusFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setUp(tt.configFile)
+
+			req, err := http.NewRequest("GET", "http://login.example.com/login?url=http://myapp.example.com", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantcode {
+				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
+			}
+
+			assert.Equal(t, cfg.OAuthClient.RedirectURL, "http://vouch.example.com:9090/auth")
+		})
+	}
+}
+
 func TestLoginErrTooManyRedirects(t *testing.T) {
 
 	handler := http.HandlerFunc(LoginHandler)

@@ -15,5 +15,8 @@ oauth:
   client_secret: testingsecret
   auth_url: https://indielogin.com/auth
   callback_urls:
-    - http://vouch.example.com:9090/auth
-    - http://vouch.other.com:9090/auth
+    - domain: example.com
+      callback_url: http://vouch.example.com:9090/auth
+    - domain: other.com
+      callback_url: http://vouch.other.com:9090/auth
+

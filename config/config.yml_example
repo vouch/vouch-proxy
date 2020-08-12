@@ -192,8 +192,10 @@ oauth:
   client_id: 
   client_secret: 
   callback_urls:
-    - http://vouch.yourdomain.com:9090/auth
-    - http://vouch.yourotherdomain.com:9090/auth
+    - url: http://vouch.yourdomain.com:9090/auth
+      domain: yourdomain.com
+    - url: http://vouch.yourotherdomain.com:9090/auth
+      domain: yourotherdomain.com
   preferredDomain: yourdomain.com
   # optionally set scopes, defaults to 'email'
   # https://developers.google.com/identity/protocols/googlescopes#google_sign-in

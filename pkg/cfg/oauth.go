@@ -58,6 +58,11 @@ type OAuthProviders struct {
 	Nextcloud     string
 }
 
+type callbacks struct{
+	Domain string
+	URL string
+}
+
 // oauth config items endoint for access
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
@@ -69,7 +74,7 @@ type oauthConfig struct {
 	TokenURL        string   `mapstructure:"token_url" envconfig:"token_url"`
 	LogoutURL       string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
 	RedirectURL     string   `mapstructure:"callback_url"  envconfig:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
+	RedirectURLs    []callbacks `mapstructure:"callback_urls"  envconfig:"callback_urls"`
 	Scopes          []string `mapstructure:"scopes"`
 	UserInfoURL     string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
 	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
@@ -119,7 +124,7 @@ func oauthBasicTest() error {
 	}
 	if len(GenOAuth.RedirectURLs) > 0 {
 		for _, cb := range GenOAuth.RedirectURLs {
-			if err := checkCallbackConfig(cb); err != nil {
+			if err := checkCallbackConfig(cb.URL); err != nil {
 				return err
 			}
 		}

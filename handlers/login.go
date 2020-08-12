@@ -243,10 +243,10 @@ func oauthLoginURL(r *http.Request, state string) string {
 			domain := domains.Matches(r.Host)
 			log.Debugf("/login looking for callback_url matching %s", domain)
 			for _, v := range cfg.GenOAuth.RedirectURLs {
-				if strings.Contains(v, domain) {
+				if v.Domain == domain {
 					found = true
-					log.Debugf("/login callback_url set to %s", v)
-					cfg.OAuthClient.RedirectURL = v
+					log.Debugf("/login callback_url set to %s", v.URL)
+					cfg.OAuthClient.RedirectURL = v.URL
 					break
 				}
 			}
