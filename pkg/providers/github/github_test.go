@@ -171,6 +171,7 @@ func TestGetUserInfo(t *testing.T) {
 		{
 			"avatar_url": "avatar-url",
 			"email": "email@example.com",
+			"id": 123456789,
 			"login": "myusername",
 			"name": "name"
 		}
@@ -188,6 +189,7 @@ func TestGetUserInfo(t *testing.T) {
 	err := provider.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
 
 	assert.Nil(t, err)
+	assert.Equal(t, "123456789", user.Sub)
 	assert.Equal(t, "myusername", user.Username)
 	assert.Equal(t, []string{"myOtherOrg", "myorg/myteam"}, user.TeamMemberships)
 

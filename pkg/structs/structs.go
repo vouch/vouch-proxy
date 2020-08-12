@@ -10,6 +10,8 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
+import "strconv"
+
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
 	Claims map[string]interface{}
@@ -22,6 +24,7 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
+	Sub             string `json:"sub"`
 	Username        string `json:"username"`
 	Name            string `json:"name"`
 	Email           string `json:"email"`
@@ -35,12 +38,20 @@ func (u *User) PrepareUserData() {
 	if u.Username == "" {
 		u.Username = u.Email
 	}
+	if u.Sub == "" {
+		// TODO: SECURITY VULNERABILITY: Using Username for Sub is dangerous if the provider allows the
+		// user to change their username. It is particularly dangerous if the provider does not set
+		// Username because it would likely be trivial for an attacker to impersonate another user by
+		// temporarily changing their email address to the victim's email address. It would be better to
+		// automatically fail authentication if Sub is empty and force all provider integrations to
+		// provide a stable identifier.
+		u.Sub = u.Username
+	}
 }
 
 // AzureUser is a retrieved and authenticated user from Azure AD
 type AzureUser struct {
 	User
-	Sub               string `json:"sub"`
 	UPN               string `json:"upn"`
 	PreferredUsername string `json:"preferred_username"`
 }
@@ -66,7 +77,6 @@ func (u *AzureUser) PrepareUserData() {
 // ADFSUser Active Directory user record
 type ADFSUser struct {
 	User
-	Sub string `json:"sub"`
 	UPN string `json:"upn"`
 	// UniqueName string `json:"unique_name"`
 	// PwdExp     string `json:"pwd_exp"`
@@ -83,6 +93,7 @@ func (u *ADFSUser) PrepareUserData() {
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
+	Id      int    `json:"id"`
 	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
 	// jwt.StandardClaims
@@ -95,6 +106,8 @@ type GitHubTeamMembershipState struct {
 
 // PrepareUserData implement PersonalData interface
 func (u *GitHubUser) PrepareUserData() {
+	// Sub is populated from Id, not Login, because GitHub allows users to change their login.
+	u.Sub = strconv.Itoa(u.Id)
 	// always use the u.Login as the u.Username
 	u.Username = u.Login
 }
@@ -167,6 +180,7 @@ type AlibabaUser struct {
 
 // PrepareUserData implement PersonalData interface
 func (u *AlibabaUser) PrepareUserData() {
+	u.Sub = u.Data.Sub
 	u.Username = u.Data.Username
 	u.Name = u.Data.Nickname
 	u.Email = u.Data.Email
