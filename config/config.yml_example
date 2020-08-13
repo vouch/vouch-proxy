@@ -229,6 +229,9 @@ oauth:
     - email
     - profile
   callback_url: http://vouch.yourdomain.com:9090/auth
+  # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
+  # resolves issue https://github.com/vouch/vouch-proxy/issues/303
+  code_challenge_method: S256
 
   # IndieAuth
   # https://indielogin.com/api

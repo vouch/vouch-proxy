@@ -97,7 +97,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var oURL = oauthLoginURL(*session, r, state)
+	var oURL = oauthLoginURL(r, *session)
 	log.Debugf("redirecting to oauthURL %s", oURL)
 	responses.Redirect302(w, r, oURL)
 }
@@ -234,11 +234,11 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	return u.String(), nil
 }
 
-func oauthLoginURL(session sessions.Session, r *http.Request, state string) string {
+func oauthLoginURL(r *http.Request, session sessions.Session) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var lurl string
-
+	var state string = session.Values["state"].(string)
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
 		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
