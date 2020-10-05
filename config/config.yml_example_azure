@@ -23,3 +23,4 @@ oauth:
     - email
     - profile
   callback_url: https://vouch.yourdomain/auth
+  azure_token: id_token # access_token and id_token supported

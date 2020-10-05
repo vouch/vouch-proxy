@@ -75,6 +75,7 @@ type oauthConfig struct {
 	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
 	UserOrgURL      string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
 	PreferredDomain string   `mapstructure:"preferredDomain"`
+	AzureToken      string   `mapstructure:"azure_token" envconfig:"azure_token"`
 }
 
 func configureOauth() error {
@@ -137,6 +138,9 @@ func setProviderDefaults() {
 	} else if GenOAuth.Provider == Providers.ADFS {
 		setDefaultsADFS()
 		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.Azure {
+		setDefaultsAzure()
+		configureOAuthClient()
 	} else {
 		// IndieAuth, OIDC, OpenStax, Nextcloud, Azure
 		configureOAuthClient()
@@ -167,6 +171,20 @@ func setDefaultsGoogle() {
 func setDefaultsADFS() {
 	log.Info("configuring ADFS OAuth")
 	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
+}
+
+func setDefaultsAzure() {
+	log.Info("configuring Azure OAuth")
+	if len(GenOAuth.AzureToken) == 0 {
+		log.Info("Using Default Azure Token: access_token")
+		GenOAuth.AzureToken = "access_token"
+	} else if GenOAuth.AzureToken == "access_token" {
+		log.Info("Using Azure Token: access_token")
+	} else if GenOAuth.AzureToken == "id_token" {
+		log.Info("Using Azure Token: id_token")
+	} else {
+		log.Error("Azure Token must be either access_token or id_token")
+	}
 }
 
 func setDefaultsGitHub() {
