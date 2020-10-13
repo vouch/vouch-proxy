@@ -1,0 +1,23 @@
+vouch:
+  logLevel: debug
+
+  case_insensitive_emails: false
+  
+  case_insensitive_email_domains:
+    - example1.com
+
+  whiteList:
+    # these should work if cases do not match with incoming email
+    - test@example1.com
+    - test@sub.example1.com
+    # these should not work if cases do not match with incoming email
+    - test@example2.com
+
+  jwt:
+    secret: testingsecret
+
+oauth:
+  provider: indieauth
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth

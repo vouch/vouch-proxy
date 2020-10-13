@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -105,6 +106,17 @@ func verifyUser(u interface{}) (bool, error) {
 
 	user := u.(structs.User)
 
+	/*
+	 * these steps happen in the WhiteList case (2nd case)
+	 *
+	 * 1. check if were verifying email or username
+	 * 1a. if username, skip to old behaviour
+	 * 1b. if email, continue to next step
+	 * 2. get domain from the email passed in
+	 * 3. match it with whitelist (lowercase both if insensitivity is enabled)
+	 * 3a. if matched, then verify case insensitively, else verify case sensitively
+	 */
+
 	switch {
 
 	// AllowAllUsers
@@ -114,8 +126,25 @@ func verifyUser(u interface{}) (bool, error) {
 
 	// WhiteList
 	case len(cfg.Cfg.WhiteList) != 0:
+		// If the username is from a case insensitive domain then we should perform case insensitive checks on the whitelist
+		caseInsensitiveEmails := cfg.Cfg.CaseInsensitiveEmails
+
+		if !caseInsensitiveEmails {
+			for _, caseInsensitiveDomain := range cfg.Cfg.CaseInsensitiveEmailDomains {
+				// Guarantees that
+				// 1) the username is an email
+				// 2) the username should be treated case-insensitively
+				if strings.HasSuffix(strings.ToLower(user.Username), "@"+strings.ToLower(caseInsensitiveDomain)) {
+					caseInsensitiveEmails = true
+				}
+			}
+		}
+
+		// TODO: parse whiteList to make this more strict
+		isEmail := strings.Contains(user.Username, "@")
+
 		for _, wl := range cfg.Cfg.WhiteList {
-			if user.Username == wl {
+			if user.Username == wl || (isEmail && caseInsensitiveEmails && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 				return true, nil
 			}
