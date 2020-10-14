@@ -34,6 +34,7 @@ var (
 // TODO: check go packages for this feature
 // From https://golangcode.com/validate-an-email-address/
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
 // isEmailValid checks if the email provided passes the required structure and length.
 func isEmailValid(e string) bool {
 	if len(e) < 3 || len(e) > 254 {
@@ -113,11 +114,11 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
-func checkIfCaseInsensitive(user *structs.User) bool {
+func isUsernameCaseInsensitive(user *structs.User) bool {
 	if cfg.Cfg.CaseInsensitiveEmails {
 		return true
 	}
-	
+
 	lowerUsername := strings.ToLower(user.Username)
 	for _, caseInsensitiveDomain := range cfg.Cfg.CaseInsensitiveEmailDomains {
 		// Guarantees that
@@ -133,9 +134,9 @@ func checkIfCaseInsensitive(user *structs.User) bool {
 
 // verifyUser validates that the domains match for the user
 func verifyUser(u interface{}) (bool, error) {
-	
+
 	user := u.(structs.User)
-	
+
 	switch {
 
 	// AllowAllUsers
@@ -146,12 +147,12 @@ func verifyUser(u interface{}) (bool, error) {
 	// WhiteList
 	case len(cfg.Cfg.WhiteList) != 0:
 		// If the username is from a case insensitive domain then we should perform case insensitive checks on the whitelist
-		caseInsensitiveEmail := checkIfCaseInsensitive(&user)
-		
+		usernameIsCaseInsensitive := isUsernameCaseInsensitive(&user)
+
 		for _, wl := range cfg.Cfg.WhiteList {
 			// Case sensitivity should only apply to email-based usernames
 			// if user.Username == wl || (user.Username == user.Email) && caseInsensitiveEmail && strings.ToLower(user.Username) == strings.ToLower(wl)) {
-			if user.Username == wl || (isEmailValid(user.Username) && caseInsensitiveEmail && strings.ToLower(user.Username) == strings.ToLower(wl)) {
+			if user.Username == wl || (isEmailValid(user.Username) && usernameIsCaseInsensitive && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 				return true, nil
 			}
