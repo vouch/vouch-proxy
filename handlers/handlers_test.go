@@ -113,16 +113,13 @@ func TestVerifyUserNegative(t *testing.T) {
 }
 func TestVerifyUserPositiveCaseInsensitiveEmailDomains(t *testing.T) {
 	setUp("/config/testing/handler_case_insensitive_email_domains.yml")
-	users := []*(structs.User){
+	users := []*structs.User{
 		// domain having mixed case
-		&structs.User{Username: "test@example1.com", Email: "something@else.com", Name: "Test Name"},
 		&structs.User{Username: "test@EXAMPLE1.com", Email: "something@else.com", Name: "Test Name"},
 		// local being mixed case
-		&structs.User{Username: "test@example1.com", Email: "something@else.com", Name: "Test Name"},
 		&structs.User{Username: "TEST@example1.com", Email: "something@else.com", Name: "Test Name"},
-		// exists in whitelist, control test
-		&structs.User{Username: "test@example2.com", Email: "something@else.com", Name: "Test Name"},
 	}
+
 	for _, user := range users {
 		ok, err := verifyUser(*user)
 		assert.True(t, ok)
@@ -139,6 +136,7 @@ func TestVerifyUserNegativeCaseInsensitiveEmailDomains(t *testing.T) {
 		// sub domain should not be affected by domain
 		&structs.User{Username: "TEST@sub.example1.com", Email: "something@else.com", Name: "Test Name"},
 	}
+
 	for _, user := range users {
 		ok, err := verifyUser(*user)
 		assert.False(t, ok)
@@ -146,40 +144,40 @@ func TestVerifyUserNegativeCaseInsensitiveEmailDomains(t *testing.T) {
 	}
 }
 
-func TestVerifyUserPositiveCaseInsensitiveEmails(t *testing.T) {
+func TestVerifyUserPositiveCaseInsensitiveEmails(t *testing.T) {	
 	setUp("/config/testing/handler_case_insensitive_emails.yml")
 
-	// caps
-	user := &structs.User{Username: "TEST@example.com", Email: "something@else.com", Name: "Test Name"}
-	ok, err := verifyUser(*user)
-
-	assert.True(t, ok)
-	assert.Nil(t, err)
-
-	// caps and subdomain
-	user = &structs.User{Username: "TEST@sub.example.com", Email: "something@else.com", Name: "Test Name"}
-	ok, err = verifyUser(*user)
-
-	assert.True(t, ok)
-	assert.Nil(t, err)
-
-	// domain is mixed case
-	user = &structs.User{Username: "TEST@sub.EXAMPLE.com", Email: "something@else.com", Name: "Test Name"}
-	ok, err = verifyUser(*user)
-
-	assert.True(t, ok)
-	assert.Nil(t, err)
+	tests := []struct {
+		name string
+		user *structs.User
+	} {
+		{ name: "email is caps", user: &structs.User{Username: "TEST@example.com", Email: "something@else.com", Name: "Test Name" } },
+		{ name: "email is caps with subdomain", user: &structs.User{Username: "TEST@sub.example.com", Email: "something@else.com", Name: "Test Name" } },
+		{ name: "email is caps with mixed submain", user: &structs.User{Username: "TEST@sub.EXAMPLE.com", Email: "something@else.com", Name: "Test Name" } },
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ok, err := verifyUser(*tt.user)
+			assert.True(t, ok, "Expected user to be verified")
+			assert.Nil(t, err, "Expected error to be nil")
+		})
+	}
 }
 
 func TestVerifyUserNegativeCaseInsensitiveEmails(t *testing.T) {
 	setUp("/config/testing/handler_case_insensitive_emails.yml")
 
 	// ensures username is still case sensitive
-	user := &structs.User{Username: "TEST_USERNAME", Email: "something@else.com", Name: "Test Name"}
-	ok, err := verifyUser(*user)
+	users := []*structs.User{
+		&structs.User{Username: "TEST_USERNAME", Email: "something@else.com", Name: "Test Name"},
+	}
 
-	assert.False(t, ok)
-	assert.NotNil(t, err)
+	for _, user := range users {
+		ok, err := verifyUser(*user)
+		assert.False(t, ok)
+		assert.NotNil(t, err)
+	}
 }
 
 // copied from jwtmanager_test.go

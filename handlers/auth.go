@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -29,6 +30,17 @@ var (
 	errInvalidState    = errors.New("/auth the state nonce returned by the IdP does not match the value stored in the session")
 	errURLNotFound     = errors.New("/auth could not retrieve URL from session")
 )
+
+// TODO: check go packages for this feature
+// From https://golangcode.com/validate-an-email-address/
+var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+// isEmailValid checks if the email provided passes the required structure and length.
+func isEmailValid(e string) bool {
+	if len(e) < 3 && len(e) > 254 {
+		return false
+	}
+	return emailRegex.MatchString(e)
+}
 
 // CallbackHandler /auth
 // - validate info from oauth provider (Google, GitHub, OIDC, etc)
@@ -101,22 +113,29 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
+func checkIfCaseInsensitive(user *structs.User) bool {
+	if cfg.Cfg.CaseInsensitiveEmails {
+		return true
+	}
+	
+	lowerUsername := strings.ToLower(user.Username)
+	for _, caseInsensitiveDomain := range cfg.Cfg.CaseInsensitiveEmailDomains {
+		// Guarantees that
+		// 1) the username is an email
+		// 2) the username should be treated case-insensitively
+		if strings.HasSuffix(lowerUsername, "@"+strings.ToLower(caseInsensitiveDomain)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // verifyUser validates that the domains match for the user
 func verifyUser(u interface{}) (bool, error) {
-
+	
 	user := u.(structs.User)
-
-	/*
-	 * these steps happen in the WhiteList case (2nd case)
-	 *
-	 * 1. check if were verifying email or username
-	 * 1a. if username, skip to old behaviour
-	 * 1b. if email, continue to next step
-	 * 2. get domain from the email passed in
-	 * 3. match it with whitelist (lowercase both if insensitivity is enabled)
-	 * 3a. if matched, then verify case insensitively, else verify case sensitively
-	 */
-
+	
 	switch {
 
 	// AllowAllUsers
@@ -127,24 +146,12 @@ func verifyUser(u interface{}) (bool, error) {
 	// WhiteList
 	case len(cfg.Cfg.WhiteList) != 0:
 		// If the username is from a case insensitive domain then we should perform case insensitive checks on the whitelist
-		caseInsensitiveEmails := cfg.Cfg.CaseInsensitiveEmails
-
-		if !caseInsensitiveEmails {
-			for _, caseInsensitiveDomain := range cfg.Cfg.CaseInsensitiveEmailDomains {
-				// Guarantees that
-				// 1) the username is an email
-				// 2) the username should be treated case-insensitively
-				if strings.HasSuffix(strings.ToLower(user.Username), "@"+strings.ToLower(caseInsensitiveDomain)) {
-					caseInsensitiveEmails = true
-				}
-			}
-		}
-
-		// TODO: parse whiteList to make this more strict
-		isEmail := strings.Contains(user.Username, "@")
-
+		caseInsensitiveEmail := checkIfCaseInsensitive(&user)
+		
 		for _, wl := range cfg.Cfg.WhiteList {
-			if user.Username == wl || (isEmail && caseInsensitiveEmails && strings.ToLower(user.Username) == strings.ToLower(wl)) {
+			// Case sensitivity should only apply to email-based usernames
+			// if user.Username == wl || (user.Username == user.Email) && caseInsensitiveEmail && strings.ToLower(user.Username) == strings.ToLower(wl)) {
+			if user.Username == wl || (isEmailValid(user.Username) && caseInsensitiveEmail && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 				return true, nil
 			}
