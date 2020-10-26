@@ -31,7 +31,6 @@ var (
 	errURLNotFound     = errors.New("/auth could not retrieve URL from session")
 )
 
-// TODO: check go packages for this feature
 // From https://golangcode.com/validate-an-email-address/
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -151,7 +150,6 @@ func verifyUser(u interface{}) (bool, error) {
 
 		for _, wl := range cfg.Cfg.WhiteList {
 			// Case sensitivity should only apply to email-based usernames
-			// if user.Username == wl || (user.Username == user.Email) && caseInsensitiveEmail && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 			if user.Username == wl || (isEmailValid(user.Username) && usernameIsCaseInsensitive && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 				return true, nil

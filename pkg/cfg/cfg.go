@@ -39,8 +39,8 @@ type Config struct {
 	Listen                      string   `mapstructure:"listen"`
 	Port                        int      `mapstructure:"port"`
 	Domains                     []string `mapstructure:"domains"`
-	CaseInsensitiveEmails       bool     `mapstructure:"case_insensitive_emails"`
-	CaseInsensitiveEmailDomains []string `mapstructure:"case_insensitive_email_domains"`
+	CaseInsensitiveEmails       bool     `mapstructure:"case_insensitive_emails" envconfig:"case_insensitive_emails"`
+	CaseInsensitiveEmailDomains []string `mapstructure:"case_insensitive_email_domains" envconfig:"case_insensitive_email_domains"`
 	WhiteList                   []string `mapstructure:"whitelist"`
 	TeamWhiteList               []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers               bool     `mapstructure:"allowAllUsers"`

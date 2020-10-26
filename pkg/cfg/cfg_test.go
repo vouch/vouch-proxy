@@ -105,12 +105,12 @@ func Test_configureFromEnvCfg(t *testing.T) {
 		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
 		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY"}
 	// array of strings
-	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
+	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS", "VOUCH_CASE_INSENSITIVE_EMAIL_DOMAINS"}
 	// int
 	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE"}
 	// bool
 	benv := []string{"VOUCH_ALLOWALLUSERS", "VOUCH_PUBLICACCESS", "VOUCH_JWT_COMPRESS", "VOUCH_COOKIE_SECURE",
-		"VOUCH_COOKIE_HTTPONLY", "VOUCH_TESTING"}
+		"VOUCH_COOKIE_HTTPONLY", "VOUCH_TESTING", "VOUCH_CASE_INSENSITIVE_EMAILS"}
 
 	// populate environmental variables
 	svalue := "svalue"
@@ -143,12 +143,13 @@ func Test_configureFromEnvCfg(t *testing.T) {
 		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key,
 	}
 
-	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
+	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs, Cfg.CaseInsensitiveEmailDomains,}
 	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge}
 	bcfg := []bool{Cfg.AllowAllUsers, Cfg.PublicAccess, Cfg.JWT.Compress,
 		Cfg.Cookie.Secure,
 		Cfg.Cookie.HTTPOnly,
 		Cfg.Testing,
+		Cfg.CaseInsensitiveEmails,
 	}
 
 	tests := []struct {
