@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -73,6 +74,72 @@ func populateSites() {
 	}
 }
 
+func decryptionKey() (interface{}, error) {
+	if strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "HS") {
+		return []byte(cfg.Cfg.JWT.Secret), nil
+	}
+
+	f, err := os.Open(cfg.Cfg.JWT.PublicKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error opening Key %s: %s\n", cfg.Cfg.JWT.PrivateKeyFile, err)
+	}
+
+	keyBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Key: %s\n", err)
+	}
+
+	var key interface{}
+	switch {
+	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "RS"):
+		key, err = jwt.ParseRSAPublicKeyFromPEM(keyBytes)
+	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "ES"):
+		key, err = jwt.ParseECPublicKeyFromPEM(keyBytes)
+	default:
+		// signingMethod should already have been validated, this should not happen
+		return nil, fmt.Errorf("unexpected signing method %s", cfg.Cfg.JWT.SigningMethod)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Key: %s\n", err)
+	}
+
+	return key, nil
+}
+
+func signingKey() (interface{}, error) {
+	if strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "HS") {
+		return []byte(cfg.Cfg.JWT.Secret), nil
+	}
+
+	f, err := os.Open(cfg.Cfg.JWT.PrivateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error opening RSA Key %s: %s\n", cfg.Cfg.JWT.PrivateKeyFile, err)
+	}
+
+	keyBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Key: %s\n", err)
+	}
+
+	var key interface{}
+	switch {
+	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "RS"):
+		key, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
+	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "ES"):
+		key, err = jwt.ParseECPrivateKeyFromPEM(keyBytes)
+	default:
+		// We should have validated this before
+		return nil, fmt.Errorf("unexpected signing method %s", cfg.Cfg.JWT.SigningMethod)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Key: %s\n", err)
+	}
+
+	return key, nil
+}
+
 // CreateUserTokenString converts user to signed jwt
 func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) string {
 	// User`token`
@@ -89,7 +156,7 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 	// https://github.com/vouch/vouch-proxy/issues/287
 	if cfg.Cfg.Headers.AccessToken == "" {
 		claims.PAccessToken = ""
-	} 
+	}
 
 	if cfg.Cfg.Headers.IDToken == "" {
 		claims.PIdToken = ""
@@ -98,14 +165,16 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-
+	token := jwt.NewWithClaims(jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod), claims)
 	// log.Debugf("token: %v", token)
 	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
-	// token -> string. Only server knows this secret (foobar).
-	ss, err := token.SignedString([]byte(cfg.Cfg.JWT.Secret))
-	// ss, err := token.SignedString([]byte("testing"))
+	key, err := signingKey()
+	if err != nil {
+		log.Errorf("%s", err)
+	}
+
+	ss, err := token.SignedString(key)
 	if ss == "" || err != nil {
 		log.Errorf("signed token error: %s", err)
 	}
@@ -116,25 +185,6 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 		}
 	}
 	return ss
-}
-
-// TokenIsValid gett better error reporting
-func TokenIsValid(token *jwt.Token, err error) bool {
-	if token.Valid {
-		return true
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			log.Errorf("token malformed")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			log.Errorf("token expired %s", err)
-		} else {
-			log.Errorf("token unknown error")
-		}
-	} else {
-		log.Errorf("token unknown error")
-	}
-	return false
 }
 
 // SiteInToken searches does the token contain the site?
@@ -157,13 +207,18 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		log.Debugf("decompressed tokenString length %d", len(tokenString))
 	}
 
+	key, err := decryptionKey()
+	if err != nil {
+		log.Errorf("%s", err)
+	}
+
 	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.GetSigningMethod("HS256") {
+		if token.Method != jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(cfg.Cfg.JWT.Secret), nil
+		return key, nil
 	})
 
 }
@@ -181,10 +236,6 @@ func (claims *VouchClaims) SiteInClaims(site string) bool {
 
 // PTokenClaims get all the claims
 func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
-	// func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
-	// return ptoken.Claims, nil
-
-	// return ptoken.Claims.(*VouchClaims), nil
 	ptokenClaims, ok := ptoken.Claims.(*VouchClaims)
 	if !ok {
 		log.Debugf("failed claims: %v %v", ptokenClaims, ptoken.Claims)
@@ -195,7 +246,6 @@ func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
 }
 
 func decodeAndDecompressTokenString(encgzipss string) string {
-
 	var gzipss []byte
 	// gzipss, err := url.QueryUnescape(encgzipss)
 	gzipss, err := base64.URLEncoding.DecodeString(encgzipss)

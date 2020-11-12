@@ -17,7 +17,9 @@ vouch:
     name: VouchTestingSession
 
   jwt:
-    secret: testingSecret
+    signing_method: RS512
+    private_key_file: config/testing/rsa.key
+    public_key_file: config/testing/rsa.pub
 
 oauth:
   provider: indieauth

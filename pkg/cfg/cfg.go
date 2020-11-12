@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -44,10 +45,13 @@ type Config struct {
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
 	JWT           struct {
-		MaxAge   int    `mapstructure:"maxAge"` // in minutes
-		Issuer   string `mapstructure:"issuer"`
-		Secret   string `mapstructure:"secret"`
-		Compress bool   `mapstructure:"compress"`
+		SigningMethod  string `mapstructure:"signing_method"`
+		MaxAge         int    `mapstructure:"maxAge"` // in minutes
+		Issuer         string `mapstructure:"issuer"`
+		Secret         string `mapstructure:"secret"`
+		PrivateKeyFile string `mapstructure:"private_key_file"`
+		PublicKeyFile  string `mapstructure:"public_key_file"`
+		Compress       bool   `mapstructure:"compress"`
 	}
 	Cookie struct {
 		Name     string `mapstructure:"name"`
@@ -293,7 +297,6 @@ func logConfigIfDebug() {
 }
 
 func fixConfigOptions() {
-
 	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
 		log.Warnf("setting `%s.cookie.maxage` to `%s.jwt.maxage` value of %d minutes (curently set to %d minutes)", Branding.LCName, Branding.LCName, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge)
 		Cfg.Cookie.MaxAge = Cfg.JWT.MaxAge
@@ -304,9 +307,23 @@ func fixConfigOptions() {
 		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
 	}
 
+	if len(Cfg.JWT.SigningMethod) == 0 {
+		Cfg.JWT.SigningMethod = "HS256"
+	} else {
+		Cfg.JWT.SigningMethod = strings.ToUpper(Cfg.JWT.SigningMethod)
+	}
+
 	// jwt defaults
-	if len(Cfg.JWT.Secret) == 0 {
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") && len(Cfg.JWT.Secret) == 0 {
 		Cfg.JWT.Secret = getOrGenerateJWTSecret()
+	}
+
+	if len(Cfg.JWT.PrivateKeyFile) > 0 && !path.IsAbs(Cfg.JWT.PrivateKeyFile) {
+		Cfg.JWT.PrivateKeyFile = path.Join(RootDir, Cfg.JWT.PrivateKeyFile)
+	}
+
+	if len(Cfg.JWT.PublicKeyFile) > 0 && !path.IsAbs(Cfg.JWT.PublicKeyFile) {
+		Cfg.JWT.PublicKeyFile = path.Join(RootDir, Cfg.JWT.PublicKeyFile)
 	}
 
 	if len(Cfg.Session.Key) == 0 {
@@ -353,7 +370,6 @@ func Get(key string) string {
 
 // basicTest just a quick sanity check to see if the config is sound
 func basicTest() error {
-
 	// check oauth config
 	if err := oauthBasicTest(); err != nil {
 		return err
@@ -374,11 +390,31 @@ func basicTest() error {
 
 	// issue a warning if the secret is too small
 	log.Debugf("vouch.jwt.secret is %d characters long", len(Cfg.JWT.Secret))
-	if len(Cfg.JWT.Secret) < minBase64Length {
+
+	allowedSigningMethods := map[string]struct{}{
+		"HS256": {}, "HS384": {}, "HS512": {}, // HMAC
+		"RS256": {}, "RS384": {}, "RS512": {}, // RSA
+		"ES256": {}, "ES384": {}, "ES512": {}, // ECDSA
+	}
+	if _, ok := allowedSigningMethods[Cfg.JWT.SigningMethod]; !ok {
+		return fmt.Errorf("configuration error: %s.jwt.signing_method value not allowed", Branding.LCName)
+	}
+
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") && len(Cfg.JWT.Secret) < minBase64Length {
 		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
 			len(Cfg.JWT.Secret),
 			Branding.LCName+".jwt.secret",
 			minBase64Length)
+	}
+
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "RS") || strings.HasPrefix(Cfg.JWT.SigningMethod, "ES") {
+		if len(Cfg.JWT.PublicKeyFile) == 0 {
+			log.Errorf("%s.jwt.public_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+		}
+
+		if len(Cfg.JWT.PrivateKeyFile) == 0 {
+			log.Errorf("%s.jwt.private_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+		}
 	}
 
 	log.Debugf("vouch.session.key is %d characters long", len(Cfg.Session.Key))
@@ -481,7 +517,7 @@ func InitForTestPurposes() {
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
-	Logging.setLogLevel(zapcore.WarnLevel)
+	Logging.setLogLevel(zapcore.InfoLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
 	// basepath := filepath.Dir(b)
@@ -500,7 +536,6 @@ func InitForTestPurposesWithProvider(provider string) {
 		setProviderDefaults()
 	}
 	fixConfigOptions()
-
 	// setDevelopmentLogger()
 
 	// Needed to override the provider, which is otherwise set via yml
