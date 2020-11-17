@@ -166,6 +166,11 @@ func main() {
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
+	if cfg.Cfg.TLS.Cert != "" || cfg.Cfg.TLS.Key != "" {
+		srv.TLSConfig = cfg.TLSConfig(cfg.Cfg.TLS.Profile)
+		logger.Fatal(srv.ListenAndServeTLS(cfg.Cfg.TLS.Cert, cfg.Cfg.TLS.Key))
+	}
+
 	logger.Fatal(srv.ListenAndServe())
 
 }

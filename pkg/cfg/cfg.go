@@ -43,7 +43,13 @@ type Config struct {
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
-	JWT           struct {
+
+	TLS struct {
+		Cert    string `mapstructure:"cert"`
+		Key     string `mapstructure:"key"`
+		Profile string `mapstructure:"profile"`
+	}
+	JWT struct {
 		MaxAge   int    `mapstructure:"maxAge"` // in minutes
 		Issuer   string `mapstructure:"issuer"`
 		Secret   string `mapstructure:"secret"`
