@@ -403,6 +403,15 @@ func basicTest() error {
 	if Cfg.Cookie.MaxAge > Cfg.JWT.MaxAge {
 		return fmt.Errorf("configuration error: Cookie maxAge (%d) cannot be larger than the JWT maxAge (%d)", Cfg.Cookie.MaxAge, Cfg.JWT.MaxAge)
 	}
+
+	// check tls config
+	if Cfg.TLS.Key != "" && Cfg.TLS.Cert == "" {
+		return fmt.Errorf("configuration error: TLS certificate file not provided but TLS key is set (%s)", Cfg.TLS.Key)
+	}
+	if Cfg.TLS.Cert != "" && Cfg.TLS.Key == "" {
+		return fmt.Errorf("configuration error: TLS key file not provided but TLS certificate is set (%s)", Cfg.TLS.Cert)
+	}
+
 	return nil
 }
 
