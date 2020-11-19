@@ -212,7 +212,8 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	if cfg.GenOAuth.Provider != cfg.Providers.IndieAuth {
 		d := domains.Matches(hostname)
 		if d == "" {
-			if cfg.Cfg.Cookie.Domain == "" || !strings.Contains(hostname, cfg.Cfg.Cookie.Domain) {
+			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "." + cfg.Cfg.Cookie.Domain))
+			if cfg.Cfg.Cookie.Domain == "" || !inCookieDomain {
 				return "", fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
 			}
 		}

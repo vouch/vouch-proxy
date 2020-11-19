@@ -105,6 +105,7 @@ func Test_getValidRequestedURL(t *testing.T) {
 		{"redirection chaining escaped https://", "http://example.com/dest?url=https%3a%2f%2fsomeplaceelse.com", "", true},
 		{"data uri", "http://example.com/dest?url=data:text/plain,Example+Text", "", true},
 		{"javascript uri", "http://example.com/dest?url=javascript:alert(1)", "", true},
+		{"not in domain but contains domain", "http://example.com.somewherelse.com/", "", true},
 		{"not in domain", "http://somewherelse.com/", "", true},
 		{"should warn", "https://example.com/", "https://example.com/", false},
 		{"should be fine", "http://example.com/", "http://example.com/", false},
