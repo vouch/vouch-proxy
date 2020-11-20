@@ -6,7 +6,7 @@
 [![Docker pulls](https://img.shields.io/docker/pulls/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/)
 [![GitHub version](https://badge.fury.io/gh/vouch%2Fvouch-proxy.svg)](https://badge.fury.io/gh/vouch%2Fvouch-proxy)
 
-an SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module.
+An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module. Vouch Proxy can protect all of your websites at once.
 
 Vouch Proxy supports many OAuth login providers and can enforce authentication to...
 
@@ -29,6 +29,20 @@ Vouch Proxy supports many OAuth login providers and can enforce authentication t
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
 
 If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
+
+## What Vouch Proxy Does...
+
+Vouch Proxy (VP) forces visitors to login and authenticate with an [IdP](https://en.wikipedia.org/wiki/Identity_provider) (such as one of the services listed above) before allowing them access to a website.
+
+![Vouch Proxy protects websites](https://github.com/vouch/vouch-proxy/blob/master/examples/nginx-vouch-private_simple.png?raw=true)
+
+VP can also be used as a Single Sign On (SSO) solution to protect all web applications in the same domain.
+
+![Vouch Proxy is a Single Sign On solution](https://github.com/vouch/vouch-proxy/blob/master/examples/nginx-vouch-private_appA_appB_appC.png?raw=true)
+
+After a visitor logs in Vouch Proxy allows access to the protected websites for several hours. Every request is checked by VP to ensure that it is valid.
+
+VP can send the visitor's email, name and other information which the IdP provides (including access tokens) to the web application as HTTP headers. VP can be used to replace application user management entirely.
 
 ## Installation and Configuration
 
@@ -168,6 +182,8 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 
 Please do help us to expand this list.
+
+All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
 
 ## Running from Docker
 
