@@ -69,6 +69,12 @@ func TestSetGitHubDefaultsWithTeamWhitelist(t *testing.T) {
 	assert.Contains(t, GenOAuth.Scopes, "read:org")
 }
 
+func TestCheckConfigWithRSA(t *testing.T) {
+	setUp("config/testing/test_config_rsa.yml")
+	assert.Contains(t, Cfg.JWT.PrivateKeyFile, "config/testing/rsa.key")
+	assert.Contains(t, Cfg.JWT.PublicKeyFile, "config/testing/rsa.pub")
+}
+
 func Test_claimToHeader(t *testing.T) {
 	tests := []struct {
 		name    string
