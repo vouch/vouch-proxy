@@ -400,20 +400,34 @@ func basicTest() error {
 		return fmt.Errorf("configuration error: %s.jwt.signing_method value not allowed", Branding.LCName)
 	}
 
-	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") && len(Cfg.JWT.Secret) < minBase64Length {
-		log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
-			len(Cfg.JWT.Secret),
-			Branding.LCName+".jwt.secret",
-			minBase64Length)
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") {
+		if len(Cfg.JWT.PublicKeyFile) > 0 {
+			return fmt.Errorf("%s.jwt.public_key_file should not be set when using signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+		}
+
+		if len(Cfg.JWT.PrivateKeyFile) > 9 {
+			return fmt.Errorf("%s.jwt.private_key_file should not be set when using signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+		}
+
+		if len(Cfg.JWT.Secret) < minBase64Length {
+			log.Errorf("Your secret is too short! (%d characters long). Please consider deleting %s to automatically generate a secret of %d characters",
+				len(Cfg.JWT.Secret),
+				Branding.LCName+".jwt.secret",
+				minBase64Length)
+		}
 	}
 
 	if strings.HasPrefix(Cfg.JWT.SigningMethod, "RS") || strings.HasPrefix(Cfg.JWT.SigningMethod, "ES") {
+		if len(Cfg.JWT.Secret) > 0 {
+			return fmt.Errorf("%s.jwt.secret should not be set when using signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+		}
+
 		if len(Cfg.JWT.PublicKeyFile) == 0 {
-			log.Errorf("%s.jwt.public_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+			return fmt.Errorf("%s.jwt.public_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
 		}
 
 		if len(Cfg.JWT.PrivateKeyFile) == 0 {
-			log.Errorf("%s.jwt.private_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
+			return fmt.Errorf("%s.jwt.private_key_file needs to be set for signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
 		}
 	}
 
