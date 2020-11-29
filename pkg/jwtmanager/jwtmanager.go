@@ -81,7 +81,7 @@ func decryptionKey() (interface{}, error) {
 
 	f, err := os.Open(cfg.Cfg.JWT.PublicKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("error opening Key %s: %s\n", cfg.Cfg.JWT.PrivateKeyFile, err)
+		return nil, fmt.Errorf("error opening Key %s: %s\n", cfg.Cfg.JWT.PublicKeyFile, err)
 	}
 
 	keyBytes, err := ioutil.ReadAll(f)
