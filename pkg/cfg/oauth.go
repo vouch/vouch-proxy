@@ -111,6 +111,8 @@ func oauthBasicTest() error {
 	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
+	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
+		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	}
 
 	if GenOAuth.RedirectURL != "" {
@@ -163,6 +165,7 @@ func setDefaultsGoogle() {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
 	}
+	GenOAuth.CodeChallengeMethod = "S256"
 }
 
 func setDefaultsADFS() {
