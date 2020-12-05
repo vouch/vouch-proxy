@@ -171,7 +171,6 @@ func TestGetUserInfo(t *testing.T) {
 			Username:   "test",
 			CreatedOn:  123,
 			Email:      "email@example.com",
-			ID:         1,
 			LastUpdate: 123,
 			Name:       "name",
 		},

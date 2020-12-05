@@ -10,8 +10,6 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
-import "strconv"
-
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
 	Claims map[string]interface{}
@@ -24,18 +22,11 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
-	// TODO: set Provider here so that we can pass it to db
-	// populated by db (via mapstructure) or from provider (via json)
-	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username" mapstructure:"username"`
-	Name       string `json:"name" mapstructure:"name"`
-	Email      string `json:"email" mapstructure:"email"`
-	CreatedOn  int64  `json:"createdon"`
-	LastUpdate int64  `json:"lastupdate"`
-	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
-	ID int `json:"-" mapstructure:"id"`
-	// jwt.StandardClaims
-
+	Username        string `json:"username"`
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	CreatedOn       int64  `json:"createdon"`
+	LastUpdate      int64  `json:"lastupdate"`
 	TeamMemberships []string
 }
 
@@ -201,8 +192,6 @@ func (u *AlibabaUser) PrepareUserData() {
 	u.Username = u.Data.Username
 	u.Name = u.Data.Nickname
 	u.Email = u.Data.Email
-	id, _ := strconv.Atoi(u.Data.ID)
-	u.ID = id
 }
 
 // AliData `data` subobject of Alibaba User response
@@ -212,7 +201,6 @@ type AliData struct {
 	Username string `json:"username"`
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
-	ID       string `json:"ou_id"`
 	Phone    string `json:"phone_number"`
 	OuName   string `json:"ou_name"`
 }

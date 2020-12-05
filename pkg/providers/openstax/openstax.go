@@ -63,7 +63,6 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	user.Email = oxUser.Email
 	user.Name = oxUser.Name
 	user.Username = oxUser.Username
-	user.ID = oxUser.ID
 	user.PrepareUserData()
 	return nil
 }
