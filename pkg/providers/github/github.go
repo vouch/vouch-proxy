@@ -75,7 +75,6 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 	user.Email = ghUser.Email
 	user.Name = ghUser.Name
 	user.Username = ghUser.Username
-	user.ID = ghUser.ID
 
 	// user = &ghUser.User
 

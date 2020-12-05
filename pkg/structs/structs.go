@@ -22,19 +22,12 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
-	Sub string `json:"sub"`
-	// TODO: set Provider here so that we can pass it to db
-	// populated by db (via mapstructure) or from provider (via json)
-	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username" mapstructure:"username"`
-	Name       string `json:"name" mapstructure:"name"`
-	Email      string `json:"email" mapstructure:"email"`
-	CreatedOn  int64  `json:"createdon"`
-	LastUpdate int64  `json:"lastupdate"`
-	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
-	ID int `json:"-" mapstructure:"id"`
-	// jwt.StandardClaims
-
+	Sub             string `json:"sub"`
+	Username        string `json:"username"`
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	CreatedOn       int64  `json:"createdon"`
+	LastUpdate      int64  `json:"lastupdate"`
 	TeamMemberships []string
 }
 
