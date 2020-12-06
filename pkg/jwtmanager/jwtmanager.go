@@ -91,7 +91,7 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 	// https://github.com/vouch/vouch-proxy/issues/287
 	if cfg.Cfg.Headers.AccessToken == "" {
 		claims.PAccessToken = ""
-	} 
+	}
 
 	if cfg.Cfg.Headers.IDToken == "" {
 		claims.PIdToken = ""
