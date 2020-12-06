@@ -185,7 +185,7 @@ func TestGetUserInfo(t *testing.T) {
 	mockResponse(regexMatcher(".*teams.*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 	mockResponse(regexMatcher(".*members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	provider := Provider{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool) (*http.Client, *oauth2.Token, error) {
+	provider := Provider{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error) {
 		return client, token, nil
 	}}
 	err := provider.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
