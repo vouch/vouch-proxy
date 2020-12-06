@@ -140,8 +140,11 @@ func setProviderDefaults() {
 	} else if GenOAuth.Provider == Providers.ADFS {
 		setDefaultsADFS()
 		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.IndieAuth || GenOAuth.Provider == Providers.Azure {
+		GenOAuth.CodeChallengeMethod = "S256"
+		configureOAuthClient()
 	} else {
-		// IndieAuth, OIDC, OpenStax, Nextcloud, Azure
+		// OIDC, OpenStax, Nextcloud
 		configureOAuthClient()
 	}
 }
@@ -199,6 +202,7 @@ func setDefaultsGitHub() {
 			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
 		}
 	}
+	GenOAuth.CodeChallengeMethod = "S256"
 }
 
 func configureOAuthClient() {
