@@ -62,22 +62,6 @@ type OAuthProviders struct {
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
 type oauthConfig struct {
-<<<<<<< HEAD
-	Provider        string   `mapstructure:"provider"`
-	ClientID        string   `mapstructure:"client_id" envconfig:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret" envconfig:"client_secret"`
-	AuthURL         string   `mapstructure:"auth_url" envconfig:"auth_url"`
-	TokenURL        string   `mapstructure:"token_url" envconfig:"token_url"`
-	LogoutURL       string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
-	RedirectURL     string   `mapstructure:"callback_url"  envconfig:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
-	Scopes          []string `mapstructure:"scopes"`
-	UserInfoURL     string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
-	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
-	UserOrgURL      string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
-	PreferredDomain string   `mapstructure:"preferredDomain"`
-	AzureToken      string   `mapstructure:"azure_token" envconfig:"azure_token"`
-=======
 	Provider            string   `mapstructure:"provider"`
 	ClientID            string   `mapstructure:"client_id" envconfig:"client_id"`
 	ClientSecret        string   `mapstructure:"client_secret" envconfig:"client_secret"`
@@ -91,8 +75,8 @@ type oauthConfig struct {
 	UserTeamURL         string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
 	UserOrgURL          string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
 	PreferredDomain     string   `mapstructure:"preferredDomain"`
+	AzureToken          string   `mapstructure:"azure_token" envconfig:"azure_token"`
 	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
->>>>>>> master
 }
 
 func configureOauth() error {
@@ -157,7 +141,7 @@ func setProviderDefaults() {
 	} else if GenOAuth.Provider == Providers.ADFS {
 		setDefaultsADFS()
 		configureOAuthClient()
-	} else if GenOAuth.Provider == Providers.Azure {		
+	} else if GenOAuth.Provider == Providers.Azure {
 		setDefaultsAzure()
 	} else if GenOAuth.Provider == Providers.IndieAuth {
 		GenOAuth.CodeChallengeMethod = "S256"
@@ -205,7 +189,7 @@ func setDefaultsAzure() {
 	} else if GenOAuth.AzureToken == "id_token" {
 		log.Info("Using Azure Token: id_token")
 	} else {
-		log.Fatal("Azure Token must be either access_token or id_token")
+		log.Fatal("'oauth.azure_token' must be either 'access_token' or 'id_token'")
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }
