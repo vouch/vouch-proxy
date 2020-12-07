@@ -66,10 +66,7 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 		log.Error(err)
 		return err
 	}
-	log.Debug("getUserInfoFromGitHub ghUser")
-	log.Debug(ghUser)
-	log.Debug("getUserInfoFromGitHub user")
-	log.Debug(user)
+	log.Debugf("getUserInfoFromGitHub ghUser %+v", ghUser)
 
 	ghUser.PrepareUserData()
 	*user = ghUser.User
@@ -111,8 +108,7 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 		}
 	}
 
-	log.Debug("getUserInfoFromGitHub")
-	log.Debug(user)
+	log.Debugf("getUserInfoFromGitHub user: %+v", user)
 	return nil
 }
 
