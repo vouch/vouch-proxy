@@ -205,7 +205,7 @@ func setDefaultsAzure() {
 	} else if GenOAuth.AzureToken == "id_token" {
 		log.Info("Using Azure Token: id_token")
 	} else {
-		log.Fatal("Azure Token must be either access_token or id_token")
+		log.Fatal("'oauth.azure_token' must be either 'access_token' or 'id_token'")
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }
