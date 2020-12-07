@@ -13,6 +13,7 @@ package indieauth
 import (
 	"bytes"
 	"encoding/json"
+	"golang.org/x/oauth2"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -34,7 +35,7 @@ func (Provider) Configure() {
 }
 
 // GetUserInfo provider specific call to get userinfomation
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)

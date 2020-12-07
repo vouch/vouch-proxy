@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
 
@@ -34,8 +35,8 @@ func (Provider) Configure() {
 }
 
 // GetUserInfo provider specific call to get userinfomation
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
-	_, _, err := common.PrepareTokensAndClient(r, ptokens, true)
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+	_, _, err := common.PrepareTokensAndClient(r, ptokens, true, opts...)
 	if err != nil {
 		return err
 	}

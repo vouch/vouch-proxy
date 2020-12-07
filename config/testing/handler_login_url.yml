@@ -4,6 +4,7 @@ vouch:
 
   cookie:
     secure: false
+    domain: example.com
 
   jwt:
     secret: testingsecret
