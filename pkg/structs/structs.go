@@ -63,28 +63,6 @@ func (u *AzureUser) PrepareUserData() {
 	}
 }
 
-// GoogleUser is a retrieved and authentiacted user from Google.
-// unused!
-// TODO: see if these should be pointers to the *User object as per
-// https://golang.org/doc/effective_go.html#embedding
-type GoogleUser struct {
-	User
-	Sub           string `json:"sub"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Profile       string `json:"profile"`
-	Picture       string `json:"picture"`
-	EmailVerified bool   `json:"email_verified"`
-	Gender        string `json:"gender"`
-	HostDomain    string `json:"hd"`
-	// jwt.StandardClaims
-}
-
-// PrepareUserData implement PersonalData interface
-func (u *GoogleUser) PrepareUserData() {
-	u.Username = u.Email
-}
-
 // ADFSUser Active Directory user record
 type ADFSUser struct {
 	User
