@@ -13,6 +13,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -61,7 +62,17 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	customClaims := structs.CustomClaims{}
 	ptokens := structs.PTokens{}
 
-	if err := getUserInfo(r, &user, &customClaims, &ptokens); err != nil {
+	// is code challenge enabled?
+	authCodeOptions := []oauth2.AuthCodeOption{}
+
+	if cfg.GenOAuth.CodeChallengeMethod != "" {
+		authCodeOptions = []oauth2.AuthCodeOption{
+			oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)),
+			oauth2.SetAuthURLParam("code_verifier", session.Values["codeVerifier"].(string)),
+		}
+	}
+
+	if err := getUserInfo(r, &user, &customClaims, &ptokens, authCodeOptions...); err != nil {
 		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successful login at the OAuth provider: %w", err))
 		return
 	}
@@ -149,6 +160,6 @@ func verifyUser(u interface{}) (bool, error) {
 	}
 }
 
-func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) error {
-	return provider.GetUserInfo(r, user, customClaims, ptokens)
+func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error {
+	return provider.GetUserInfo(r, user, customClaims, ptokens, opts...)
 }

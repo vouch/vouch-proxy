@@ -62,19 +62,20 @@ type OAuthProviders struct {
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
 type oauthConfig struct {
-	Provider        string   `mapstructure:"provider"`
-	ClientID        string   `mapstructure:"client_id" envconfig:"client_id"`
-	ClientSecret    string   `mapstructure:"client_secret" envconfig:"client_secret"`
-	AuthURL         string   `mapstructure:"auth_url" envconfig:"auth_url"`
-	TokenURL        string   `mapstructure:"token_url" envconfig:"token_url"`
-	LogoutURL       string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
-	RedirectURL     string   `mapstructure:"callback_url"  envconfig:"callback_url"`
-	RedirectURLs    []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
-	Scopes          []string `mapstructure:"scopes"`
-	UserInfoURL     string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
-	UserTeamURL     string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
-	UserOrgURL      string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
-	PreferredDomain string   `mapstructure:"preferredDomain"`
+	Provider            string   `mapstructure:"provider"`
+	ClientID            string   `mapstructure:"client_id" envconfig:"client_id"`
+	ClientSecret        string   `mapstructure:"client_secret" envconfig:"client_secret"`
+	AuthURL             string   `mapstructure:"auth_url" envconfig:"auth_url"`
+	TokenURL            string   `mapstructure:"token_url" envconfig:"token_url"`
+	LogoutURL           string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
+	RedirectURL         string   `mapstructure:"callback_url"  envconfig:"callback_url"`
+	RedirectURLs        []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
+	Scopes              []string `mapstructure:"scopes"`
+	UserInfoURL         string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
+	UserTeamURL         string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
+	UserOrgURL          string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
+	PreferredDomain     string   `mapstructure:"preferredDomain"`
+	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
 }
 
 func configureOauth() error {
@@ -110,6 +111,8 @@ func oauthBasicTest() error {
 	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
+	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
+		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	}
 
 	if GenOAuth.RedirectURL != "" {
@@ -137,8 +140,11 @@ func setProviderDefaults() {
 	} else if GenOAuth.Provider == Providers.ADFS {
 		setDefaultsADFS()
 		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.IndieAuth || GenOAuth.Provider == Providers.Azure {
+		GenOAuth.CodeChallengeMethod = "S256"
+		configureOAuthClient()
 	} else {
-		// IndieAuth, OIDC, OpenStax, Nextcloud, Azure
+		// OIDC, OpenStax, Nextcloud
 		configureOAuthClient()
 	}
 }
@@ -162,6 +168,7 @@ func setDefaultsGoogle() {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
 		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
 	}
+	GenOAuth.CodeChallengeMethod = "S256"
 }
 
 func setDefaultsADFS() {
@@ -195,6 +202,7 @@ func setDefaultsGitHub() {
 			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
 		}
 	}
+	GenOAuth.CodeChallengeMethod = "S256"
 }
 
 func configureOAuthClient() {
