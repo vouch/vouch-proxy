@@ -318,6 +318,17 @@ gosec() {
   # segfault's without exec since it would just call this function infinitely :)
   exec gosec ./...
 }
+
+selfcert() {
+  # https://stackoverflow.com/questions/63588254/how-to-set-up-an-https-server-with-a-self-signed-certificate-in-golang
+  set -e
+  mkdir -p $SDIR/certs
+  # openssl genrsa -out $SDIR/certs/server.key 2048
+  openssl ecparam -genkey -name secp384r1 -out $SDIR/certs/server.key
+  openssl req -new -x509 -sha256 -key $SDIR/certs/server.key -out $SDIR/certs/server.crt -days 3650
+  echo -e "created self signed certs in '$SDIR/certs'\n"  
+}
+
 usage() {
    cat <<EOF
    usage:
@@ -327,6 +338,7 @@ usage() {
      $0 goget                  - get all dependencies
      $0 gofmt                  - gofmt the entire code base
      $0 gosec                  - gosec security audit of the entire code base
+     $0 selfcert               - calls openssl to create a self signed key and cert
      $0 dbuild                 - build docker container
      $0 drun [args]            - run docker container
      $0 dbuildalpine           - build docker container for alpine
@@ -360,6 +372,7 @@ case "$ARG" in
    |'install' \
    |'test' \
    |'goget' \
+   |'selfcert' \
    |'gogo' \
    |'watch' \
    |'gobuildstatic' \
