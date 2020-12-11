@@ -30,6 +30,29 @@ Please do let us know when you have deployed Vouch Proxy with your preffered IdP
 
 If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
 
+---
+## Table of Contents
+
+* [What Vouch Proxy Does...](#what-vouch-proxy-does)
+* [Installation and Configuration](#installation-and-configuration)
+* [Configuring Vouch Proxy using Environmental Variables](#configuring-vouch-proxy-using-environmental-variables)
+* [More advanced configurations](#more-advanced-configurations)
+* [Running from Docker](#running-from-docker)
+* [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
+* [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
+* [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
+* [Troubleshooting, Support and Feature Requests]
+  (#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
+    (Read this before submitting an issue at GitHub)
+  + [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
+  + [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
+  + [submitting a Pull Request for a new feature](#submitting-a-pull-request-for-a-new-feature)
+* [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
+* [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
+
+---
+
+
 ## What Vouch Proxy Does...
 
 Vouch Proxy (VP) forces visitors to login and authenticate with an [IdP](https://en.wikipedia.org/wiki/Identity_provider) (such as one of the services listed above) before allowing them access to a website.
