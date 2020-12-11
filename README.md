@@ -37,6 +37,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 * [Installation and Configuration](#installation-and-configuration)
 * [Configuring Vouch Proxy using Environmental Variables](#configuring-vouch-proxy-using-environmental-variables)
 * [More advanced configurations](#more-advanced-configurations)
+  + [Scopes and Claims](#scopes-and-claims)
 * [Running from Docker](#running-from-docker)
 * [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
 * [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
