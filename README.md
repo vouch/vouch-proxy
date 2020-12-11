@@ -196,6 +196,8 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 
 ## More advanced configurations
 
+All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
+
 - [cacheing of the Vouch Proxy validation response in Nginx](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743)
 - [handleing `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
 - [validation by GitHub Team or GitHub Org](https://github.com/vouch/vouch-proxy/pull/205)
@@ -204,6 +206,8 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
+
+Please do help us to expand this list.
 
 ### Scopes and Claims
 
@@ -235,10 +239,6 @@ Here is a protocol to set up `scopes` and `claims` in vouch proxy with nginx:
 3. Use `auth_request_set` after `auth_request` inside the protected location in the nginx [`server.conf`](examples/nginx/nginx_scopes_and_claims.conf)
 4. Consume the claim ([example nginx config](examples/nginx/nginx_scopes_and_claims.conf))
 
-
-Please do help us to expand this list.
-
-All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
 
 ## Running from Docker
 
