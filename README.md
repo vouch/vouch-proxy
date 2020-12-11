@@ -216,25 +216,23 @@ extracted and stored in the vouch cookie.
 The Vouch cookie may get split up into several cookies, but if you need it, you need it.
 With large cookies and headers it will require additional nginx config to open up the buffers a bit. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
-Here is a protocol to set up `scopes` and `claims` in vouch proxy:
+Here is a protocol to set up `scopes` and `claims` in vouch proxy with nginx:
 
 0. Setup basic authentication (See: [Installation and Configuration](#installation-and-configuration))
 
 1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/scopes_and_claims_config.yml))
-    1. (temporarily) set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml` (this will forward the jwt from the oauth provider as a response header)
+    1. set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml`
     2. log in and call the `/validate` endpoint in a modern browser
     3. check the response header for a `X-Vouch-IdP-IdToken` header
     4. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
     5. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
 2. Set the necessary `claims` in the `header` section of the vouch-proxy `config.yml`
     1. log in and call the `/validate` endpoint in a modern browser
-    2. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimNameHere>`
+    2. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimName>`
     3. If they are not there clear your cookies and cached browser data
-    4. If they are still not there but exist in the jwt (esp. custom claims) there might be a bug
+    4. 🐞 If they are still not there but exist in the jwt (esp. custom claims) there might be a bug
     5. remove the `idtoken: X-Vouch-IdP-IdToken` from the `headers` section of vouch-proxy's `config.yml` if you don't need it
-3. Use `auth_request_set` after `auth_request` inside the protected location in the nginx `server.conf`
-    1. the syntax is `auth_request_set $<variableName> $upstream_http_<ClaimHeader><ClaimName>;` 
-    2. Example: `auth_request_set $sub $upstream_http_x_vouch_idp_claims_sub;` for the `sub` claim
+3. Use `auth_request_set` after `auth_request` inside the protected location in the nginx [`server.conf`](examples/nginx/nginx_scopes_and_claims.conf)
 4. Consume the claim ([example nginx config](examples/nginx/nginx_scopes_and_claims.conf))
 
 
