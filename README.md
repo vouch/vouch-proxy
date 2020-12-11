@@ -218,11 +218,11 @@ Here is a protocol to set up `scopes` and `claims` in vouch proxy:
 
 0. Setup basic authentication (See: [Installation and Configuration](#installation-and-configuration))
 1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/scopes_and_claims_config.yml))
-  a. (temporarily) set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml` (this will forward the jwt from the oauth provider as a response header)
-  b. log in and call the `/validate` endpoint in a modern browser
-  c. check the response header for a `X-Vouch-IdP-IdToken` header
-  d. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
-  e. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
+    a. (temporarily) set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml` (this will forward the jwt from the oauth provider as a response header)
+    b. log in and call the `/validate` endpoint in a modern browser
+    c. check the response header for a `X-Vouch-IdP-IdToken` header
+    d. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
+    e. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
 2. Set the necessary `claims` in the `header` section of the vouch-proxy `config.yml`
     a. log in and call the `/validate` endpoint in a modern browser
     b. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimNameHere>`
@@ -232,77 +232,8 @@ Here is a protocol to set up `scopes` and `claims` in vouch proxy:
 3. Use `auth_request_set` after `auth_request` inside the protected location in the nginx `server.conf`
     a. the syntax is `auth_request_set $<variableName> $upstream_http_<ClaimHeader><ClaimName>;` 
     b. Example: `auth_request_set $sub $upstream_http_x_vouch_idp_claims_sub;` for the `sub` claim
-4. Consume the claim
-    a. Example: `proxy_set_header X-sub-claim $sub;` to pass the claim to a proxied backend server
+4. Consume the claim ([example nginx config](examples/nginx/nginx_scopes_and_claims.conf))
 
-
-<details>
-<summary>Nginx server config</summary>
-
-```
-server {
-  listen       80;
-  server_name  localhost;
-
-  location ^~ /sso/ {
-    location /sso/validate {
-      proxy_pass http://vouch:9090/validate;
-      proxy_set_header Host $http_host;
-      proxy_pass_request_body off;
-    }
-
-    location = /sso/logout {
-      proxy_pass http://vouch:9090/logout?url=---------------------------------;
-      proxy_set_header Host $http_host;
-    }
-
-    proxy_set_header Host $http_host;
-    proxy_pass http://vouch:9090/;
-  }
-
-  location ^~ /api/v1/ {
-    auth_request /sso/validate;
-    # get the claim into an nginx variable
-    auth_request_set $sub $upstream_http_x_vouch_idp_claims_sub;
-    
-    proxy_set_header Host $http_host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-    # forward the claim to the proxied server
-    proxy_set_header X-sub-claim $sub;
-    proxy_redirect off;
-    proxy_buffering off;
-    proxy_pass http://api/;
-  }
-
-  # uncomment this to forward static content of vouch-proxy
-  # used when running vouch-proxy with `testing: true`
-  # location /static/ {
-  #    proxy_set_header Host $http_host;
-  #    proxy_pass http://vouch:9090/static/;
-  #}
-
-  location / {
-    auth_request /sso/validate;
-
-    root   /website;
-    index  index.html;
-
-    expires 0;
-    add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0";
-    add_header Pragma "no-cache";
-  }
-
-  error_page 401 = @error401;
-
-  location @error401 {
-    return 302 http://localhost/sso/login?url=$scheme://$http_host$request_uri;
-  }
-}
-```
-
-</details>
 
 Please do help us to expand this list.
 
