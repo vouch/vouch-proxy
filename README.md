@@ -211,7 +211,7 @@ With vouch-proxy you can request various `scopes` (standard and custom) to obtai
 Internally, vouch-proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are 
 extracted and stored in the vouch cookie.
 
-<p align="center">⚠️ **Userinfo will get added to the Vouch cookie and (possibly) make it large** ⚠️</p>
+<p align="center">⚠️ <b>Userinfo will get added to the Vouch cookie and (possibly) make it large</b> ⚠️</p>
 
 The Vouch cookie may get split up into several cookies, but if you need it, you need it.
 With large cookies and headers it will require additional nginx config to open up the buffers a bit. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
