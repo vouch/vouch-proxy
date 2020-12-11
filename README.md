@@ -211,12 +211,13 @@ With vouch-proxy you can request various `scopes` (standard and custom) to obtai
 Internally, vouch-proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are 
 extracted and stored in the vouch cookie.
 
-Warning: Userinfo will get added to the Vouch cookie and (possibly) make it large.  The Vouch cookie may get split up into several cookies, but if you need it, you need it.
+⚠️ **Userinfo will get added to the Vouch cookie and (possibly) make it large** ⚠️
+
+The Vouch cookie may get split up into several cookies, but if you need it, you need it.
 With large cookies and headers it will require additional nginx config to open up the buffers a bit. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
 Here is a protocol to set up `scopes` and `claims` in vouch proxy:
 
-0. Setup basic authentication (See: [Installation and Configuration](#installation-and-configuration))
 1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/scopes_and_claims_config.yml))
     a. (temporarily) set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml` (this will forward the jwt from the oauth provider as a response header)
     b. log in and call the `/validate` endpoint in a modern browser
