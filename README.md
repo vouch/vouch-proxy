@@ -41,8 +41,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 * [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
 * [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
 * [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
-* [Troubleshooting, Support and Feature Requests]
-  (#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
+* [Troubleshooting, Support and Feature Requests](#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
     (Read this before submitting an issue at GitHub)
   + [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
   + [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
@@ -204,6 +203,8 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
+
+##### Scopes and Claims
 
 Please do help us to expand this list.
 
