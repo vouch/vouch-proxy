@@ -204,7 +204,7 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
 
-##### Scopes and Claims
+#### Scopes and Claims
 
 Please do help us to expand this list.
 
