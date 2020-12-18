@@ -55,6 +55,12 @@ vouch:
   # - myOrg
   # - myOrg/myTeam
 
+  tls:
+    # cert: /path/to/signed_cert_plus_intermediates # VOUCH_TLS_CERT
+    # key: /path/to/private_key                     # VOUCH_TLS_KEY
+    # profile - defines the TLS configuration profile (modern, intermediate, old, default)
+    profile: intermediate                           # VOUCH_TLS_PROFILE
+
   jwt:
     # secret - VOUCH_JWT_SECRET
     # a random string used to cryptographically sign the jwt

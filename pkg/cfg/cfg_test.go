@@ -54,6 +54,31 @@ func TestConfigEnvPrecedence(t *testing.T) {
 
 }
 
+func TestConfigWithTLS(t *testing.T) {
+	tests := []struct {
+		name        string
+		tlsKeyFile  string
+		tlsCertFile string
+		wantErr     bool
+	}{
+		{"TLSConfigOK", "/path/to/key", "/path/to/cert", false},
+		{"TLSConfigKONoCert", "/path/to/key", "", true},
+		{"TLSConfigKONoKey", "", "/path/to/cert", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Cleanup(cleanupEnv)
+			InitForTestPurposes()
+			Cfg.TLS.Cert = tt.tlsCertFile
+			Cfg.TLS.Key = tt.tlsKeyFile
+			err := ValidateConfiguration()
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
 func TestSetGitHubDefaults(t *testing.T) {
 	InitForTestPurposesWithProvider("github")
 	assert.Equal(t, []string{"read:user"}, GenOAuth.Scopes)

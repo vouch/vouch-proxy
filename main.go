@@ -60,6 +60,10 @@ var (
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
 	help      = flag.Bool("help", false, "show usage")
+	scheme    = map[bool]string{
+		false: "http",
+		true:  "https",
+	}
 	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
 
@@ -112,6 +116,7 @@ func main() {
 	configure()
 	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
 	checkTCPPortAvailable(listen)
+	tls := (cfg.Cfg.TLS.Cert != "" && cfg.Cfg.TLS.Key != "")
 
 	logger.Infow("starting "+cfg.Branding.FullName,
 		// "semver":    semver,
@@ -120,7 +125,8 @@ func main() {
 		"buildhost", host,
 		"branch", branch,
 		"semver", semver,
-		"listen", listen,
+		"listen", scheme[tls]+"://"+listen,
+		"tls", tls,
 		"oauth.provider", cfg.GenOAuth.Provider)
 
 	muxR := mux.NewRouter()
@@ -166,7 +172,12 @@ func main() {
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
-	logger.Fatal(srv.ListenAndServe())
+	if tls {
+		srv.TLSConfig = cfg.TLSConfig(cfg.Cfg.TLS.Profile)
+		logger.Fatal(srv.ListenAndServeTLS(cfg.Cfg.TLS.Cert, cfg.Cfg.TLS.Key))
+	} else {
+		logger.Fatal(srv.ListenAndServe())
+	}
 
 }
 
