@@ -213,7 +213,7 @@ Please do help us to expand this list.
 
 With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are extracted and stored in the vouch cookie.
 
-<p align="center">⚠️ <b>Additional claims and tokens are added to the VP cookie and can make it large</b> ⚠️</p>
+⚠️ **Additional claims and tokens will be added to the VP cookie and can make it large**
 
 The VP cookie may get split up into several cookies, but if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
@@ -221,7 +221,7 @@ The VP cookie may get split up into several cookies, but if you need it, you nee
 
 0. Configure Vouch Proxy for Nginx and your IdP as normal (See: [Installation and Configuration](#installation-and-configuration))
 
-1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/scopes_and_claims_config.yml))
+1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/config.yml_example_scopes_and_claims))
    1. set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml`
    2. log in and call the `/validate` endpoint in a modern browser
    3. check the response header for a `X-Vouch-IdP-IdToken` header
