@@ -8,7 +8,7 @@
 
 An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module. Vouch Proxy can protect all of your websites at once.
 
-Vouch Proxy supports many OAuth login providers and can enforce authentication to...
+Vouch Proxy supports many OAuth and OIDC login providers and can enforce authentication to...
 
 - Google
 - [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
@@ -31,27 +31,27 @@ Please do let us know when you have deployed Vouch Proxy with your preffered IdP
 If Vouch is running on the same host as the Nginx reverse proxy the response time from the `/validate` endpoint to Nginx should be less than 1ms
 
 ---
+
 ## Table of Contents
 
-* [What Vouch Proxy Does...](#what-vouch-proxy-does)
-* [Installation and Configuration](#installation-and-configuration)
-* [Configuring Vouch Proxy using Environmental Variables](#configuring-vouch-proxy-using-environmental-variables)
-* [More advanced configurations](#more-advanced-configurations)
-  + [Scopes and Claims](#scopes-and-claims)
-* [Running from Docker](#running-from-docker)
-* [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
-* [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
-* [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
-* [Troubleshooting, Support and Feature Requests](#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
-    (Read this before submitting an issue at GitHub)
-  + [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
-  + [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
-  + [submitting a Pull Request for a new feature](#submitting-a-pull-request-for-a-new-feature)
-* [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
-* [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
+- [What Vouch Proxy Does...](#what-vouch-proxy-does)
+- [Installation and Configuration](#installation-and-configuration)
+- [Configuring Vouch Proxy using Environmental Variables](#configuring-vouch-proxy-using-environmental-variables)
+- [More advanced configurations](#more-advanced-configurations)
+  - [Scopes and Claims](#scopes-and-claims)
+- [Running from Docker](#running-from-docker)
+- [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
+- [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
+- [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
+- [Troubleshooting, Support and Feature Requests](#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
+  (Read this before submitting an issue at GitHub)
+  - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
+  - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
+  - [submitting a Pull Request for a new feature](#submitting-a-pull-request-for-a-new-feature)
+- [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
+- [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
 
 ---
-
 
 ## What Vouch Proxy Does...
 
@@ -211,34 +211,30 @@ Please do help us to expand this list.
 
 ### Scopes and Claims
 
-With vouch-proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs.
-Internally, vouch-proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are 
-extracted and stored in the vouch cookie.
+With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are extracted and stored in the vouch cookie.
 
-<p align="center">⚠️ <b>Userinfo will get added to the Vouch cookie and (possibly) make it large</b> ⚠️</p>
+<p align="center">⚠️ <b>Additional claims and tokens are added to the VP cookie and can make it large</b> ⚠️</p>
 
-The Vouch cookie may get split up into several cookies, but if you need it, you need it.
-With large cookies and headers it will require additional nginx config to open up the buffers a bit. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
+The VP cookie may get split up into several cookies, but if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
-Here is a protocol to set up `scopes` and `claims` in vouch proxy with nginx:
+#### Setup `scopes` and `claims` in Vouch Proxy with Nginx
 
-0. Setup basic authentication (See: [Installation and Configuration](#installation-and-configuration))
+0. Configure Vouch Proxy for Nginx and your IdP as normal (See: [Installation and Configuration](#installation-and-configuration))
 
 1. Set the necessary `scope`s in the `oauth` section of the vouch-proxy `config.yml` ([example config](config/scopes_and_claims_config.yml))
-    1. set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml`
-    2. log in and call the `/validate` endpoint in a modern browser
-    3. check the response header for a `X-Vouch-IdP-IdToken` header
-    4. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
-    5. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
+   1. set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml`
+   2. log in and call the `/validate` endpoint in a modern browser
+   3. check the response header for a `X-Vouch-IdP-IdToken` header
+   4. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
+   5. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
 2. Set the necessary `claims` in the `header` section of the vouch-proxy `config.yml`
-    1. log in and call the `/validate` endpoint in a modern browser
-    2. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimName>`
-    3. If they are not there clear your cookies and cached browser data
-    4. 🐞 If they are still not there but exist in the jwt (esp. custom claims) there might be a bug
-    5. remove the `idtoken: X-Vouch-IdP-IdToken` from the `headers` section of vouch-proxy's `config.yml` if you don't need it
+   1. log in and call the `/validate` endpoint in a modern browser
+   2. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimName>`
+   3. If they are not there clear your cookies and cached browser data
+   4. 🐞 If they are still not there but exist in the jwt (esp. custom claims) there might be a bug
+   5. remove the `idtoken: X-Vouch-IdP-IdToken` from the `headers` section of vouch-proxy's `config.yml` if you don't need it
 3. Use `auth_request_set` after `auth_request` inside the protected location in the nginx [`server.conf`](examples/nginx/nginx_scopes_and_claims.conf)
 4. Consume the claim ([example nginx config](examples/nginx/nginx_scopes_and_claims.conf))
-
 
 ## Running from Docker
 
@@ -274,7 +270,7 @@ Automated container builds for each Vouch Proxy release are available from [Dock
 
 ## Kubernetes Nginx Ingress
 
-If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/ingress-nginx), you can configure your ingress with the following annotations (note quoting the auth-signin annotation):
+If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/ingress-nginx), you can configure your ingress with the following annotations (note quoting the `auth-signin` annotation):
 
 ```bash
     nginx.ingress.kubernetes.io/auth-signin: "https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
@@ -299,7 +295,7 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
 
 ## /login and /logout endpoint redirection
 
-As of `v0.11.0` we have put additional checks in place to reduce [the attack surface of url redirection](https://blog.detectify.com/2019/05/16/the-real-impact-of-an-open-redirect/).
+As of `v0.11.0` additional checks are in place to reduce [the attack surface of url redirection](https://blog.detectify.com/2019/05/16/the-real-impact-of-an-open-redirect/).
 
 ### /login?url=POST_LOGIN_URL
 
@@ -375,11 +371,26 @@ If you continue to have trouble, try the following:
 
 Please [submit a new issue](https://github.com/vouch/vouch-proxy/issues) in the following fashion..
 
+TLDR:
+
+- set `vouch.testing: true`
+- set `vouch.logLevel: debug`
+- conduct a full round trip of `./vouch-proxy` capturing the output..
+  - VP startup
+  - `/validate`
+  - `/login` - even if the error is here
+  - `/auth`
+  - `/validate` - capture everything
+- put all your logs and config in a `gist`.
+- `./do.sh bug_report` is your friend
+
+#### But read this anyways because we'll ask you to read it if you don't follow these instruction. :)
+
 - **turn on `vouch.testing: true`** and set `vouch.logLevel: debug`.
-- use [hasteb.in](https://hasteb.in/), or another **paste service** or a [gist](https://gist.github.com/) to provide your logs and config. **_DO NOT PUT YOUR LOGS AND CONFIG INTO THE GITHUB ISSUE_**. Using a paste service is important as it will maintain spacing and will provide line numbers and formatting. We are hunting for needles in haystacks with setups with several moving parts, these features help considerably. Paste services save your time and our time and help us to help you quickly. You're more likely to get good support from us in a timely manner by following this advice.
-- run `./do.sh bug_report yourdomain.com [yourotherdomain.com]` which will create a redacted version of your config and logs
+- use a [gist](https://gist.github.com/) or another **paste service** such as [hasteb.in](https://hasteb.in/). **_DO NOT PUT YOUR LOGS AND CONFIG INTO THE GITHUB ISSUE_**. Using a paste service is important as it will maintain spacing and will provide line numbers and formatting. We are hunting for needles in haystacks with setups with several moving parts, these features help considerably. Paste services save your time and our time and help us to help you quickly. You're more likely to get good support from us in a timely manner by following this advice.
+- run `./do.sh bug_report secretdomain.com secretpass [anothersecret..]` which will create a redacted version of your config and logs removing each of those strings
   - and follow the instructions at the end to redact your Nginx config
-- all of those go into [hasteb.in](https://hasteb.in/) or a [gist](https://gist.github.com/)
+- all of those go into a [gist](https://gist.github.com/)
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
 - or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
@@ -421,21 +432,21 @@ OpenResty and configs for a variety of scenarios are available in the [examples]
       - 401 NotAuthorized then
         - respond to Bob with a 302 redirect to `https://vouch.oursites.com/login?url=https://private.oursites.com`
 
-- vouch `https://vouch.oursites.com/validate`
+- Vouch Proxy `https://vouch.oursites.com/validate`
 
   - recieves the request for private.oursites.com from Bob via Nginx `proxy_pass`
-  - it looks for a cookie named "oursitesSSO" that contains a JWT
+  - looks for a cookie named "oursitesSSO" that contains a JWT
   - if the cookie is found, and the JWT is valid
-    - returns 200 to Nginx, which will allow access (bob notices nothing)
+    - returns `200 OK` to Nginx, which will allow access (bob notices nothing)
   - if the cookie is NOT found, or the JWT is NOT valid
-    - return 401 NotAuthorized to Nginx (which forwards the request on to login)
+    - return `401 NotAuthorized` to Nginx (which forwards the request on to login)
 
 - Bob is first forwarded briefly to `https://vouch.oursites.com/login?url=https://private.oursites.com`
 
   - clears out the cookie named "oursitesSSO" if it exists
   - generates a nonce and stores it in session variable \$STATE
-  - stores the url `https://private.oursites.com` from the query string in session variable \$requestedURL
-  - respond to Bob with a 302 redirect to Google's OAuth Login form, including the \$STATE nonce
+  - stores the url `https://private.oursites.com` from the query string in session variable `$requestedURL`
+  - respond to Bob with a 302 redirect to Google's OAuth Login form, including the `$STATE` nonce
 
 - Bob logs into his Google account using Oauth
 
@@ -444,13 +455,13 @@ OpenResty and configs for a variety of scenarios are available in the [examples]
 
 - Bob is forwarded to `https://vouch.oursites.com/auth?state=$STATE`
   - if the \$STATE nonce from the url matches the session variable "state"
-  - make a "third leg" request of google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
+  - make a "third leg" request of Google (server to server) to exchange the OAuth code for Bob's user info including email address bob@oursites.com
   - if the email address matches the domain oursites.com (it does)
     - issue bob a JWT in the form of a cookie named "oursitesSSO"
-    - retrieve the session variable $requestedURL and 302 redirect bob back to $requestedURL
+    - retrieve the session variable `$requestedURL` and 302 redirect bob back to `https://private.oursites.com`
 
 Note that outside of some innocuos redirection, Bob only ever sees `https://private.oursites.com` and the Google Login screen in his browser. While Vouch does interact with Bob's browser several times, it is just to set cookies, and if the 302 redirects work properly Bob will log in quickly.
 
 Once the JWT is set, Bob will be authorized for all other sites which are configured to use `https://vouch.oursites.com/validate` from the `auth_request` Nginx module.
 
-The next time Bob is forwarded to google for login, since he has already authorized the Vouch OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way. Bob may not even notice that he logged in via Vouch.
+The next time Bob is forwarded to google for login, since he has already authorized the Vouch Proxy OAuth app, Google immediately forwards him back and sets the cookie and sends him on his merry way. In some browsers such as Chrome, Bob may not even notice that he logged in using Vouch Proxy.
