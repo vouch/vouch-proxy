@@ -38,11 +38,12 @@ type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
-	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
+
+	Domains DomainsOptions `mapstructure:"domains"`
 
 	TLS struct {
 		Cert    string `mapstructure:"cert"`
@@ -85,6 +86,49 @@ type Config struct {
 	TestURLs           []string `mapstructure:"test_urls"`
 	Testing            bool     `mapstructure:"testing"`
 	LogoutRedirectURLs []string `mapstructure:"post_logout_redirect_uris" envconfig:"post_logout_redirect_uris"`
+}
+
+type DomainsOptions []DomainOptions
+
+func (d DomainsOptions) String() string {
+	var domains []string
+	for _, domain := range d {
+		domains = append(domains, domain.String())
+	}
+	return strings.Join(domains, "; ")
+}
+
+type DomainOptions struct {
+	Uri       string `mapstructure:"uri" envconfig:"uri"`
+	ServiceId string `mapstructure:"service" envconfig:"service"`
+}
+
+func (o DomainOptions) String() string {
+	return o.Uri + "->" + o.ServiceId
+}
+
+func (o *DomainOptions) Decode(value string) error {
+	domains := strings.Split(value, ";")
+
+	oacObject := reflect.ValueOf(o)
+	oacType := reflect.TypeOf(o)
+	for _, domainString := range domains {
+		domainOptions := strings.SplitN(domainString, "=", 2)
+
+		tField, found := oacType.Elem().FieldByNameFunc(func(s string) bool {
+			f, _ := oacType.Elem().FieldByName(s)
+			tag := f.Tag.Get("envconfig")
+			return tag == strings.ToLower(domainOptions[0])
+		})
+		if !found {
+			return fmt.Errorf("Invalid key %s", domainOptions[0])
+		}
+
+		oField := oacObject.Elem().FieldByName(tField.Name)
+		oField.SetString(domainOptions[1])
+	}
+
+	return nil
 }
 
 type branding struct {
@@ -327,6 +371,12 @@ func fixConfigOptions() {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
 
+	// keys in oauth->services are lower case
+	for i, domainOptions := range Cfg.Domains {
+		domainOptions.ServiceId = strings.ToLower(domainOptions.ServiceId)
+		Cfg.Domains[i] = domainOptions
+	}
+
 }
 
 // use viper and mapstructure check to see if
@@ -339,7 +389,7 @@ func checkConfigFileWellFormed() error {
 
 	type quick struct {
 		Vouch Config
-		OAuth oauthConfig
+		OAuth Oauth
 	}
 	q := &quick{}
 

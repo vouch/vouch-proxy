@@ -23,7 +23,7 @@ import (
 var (
 	// GenOAuth exported OAuth config variable
 	// TODO: GenOAuth and OAuthClient should be combined
-	GenOAuth = &oauthConfig{}
+	GenOAuth = &Oauth{}
 
 	// OAuthClient is the configured client which will call the provider
 	// this actually carries the oauth2 client ala oauthclient.Client(oauth2.NoContext, providerToken)
@@ -58,10 +58,15 @@ type OAuthProviders struct {
 	Nextcloud     string
 }
 
+type Oauth struct {
+	Services []OauthConfig `mapstructure:"services" envconfig:"services"`
+}
+
 // oauth config items endoint for access
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
-type oauthConfig struct {
+type OauthConfig struct {
+	Id                  string   `mapstructure:"id"`
 	Provider            string   `mapstructure:"provider"`
 	ClientID            string   `mapstructure:"client_id" envconfig:"client_id"`
 	ClientSecret        string   `mapstructure:"client_secret" envconfig:"client_secret"`
@@ -76,6 +81,30 @@ type oauthConfig struct {
 	UserOrgURL          string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
 	PreferredDomain     string   `mapstructure:"preferredDomain"`
 	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+}
+
+func (oac *OauthConfig) Decode(value string) error {
+	options := strings.Split(value, ";")
+
+	oacObject := reflect.ValueOf(oac)
+	oacType := reflect.TypeOf(oac)
+	for _, optionString := range options {
+		oAuthOptions := strings.SplitN(optionString, "=", 2)
+
+		tField, found := oacType.Elem().FieldByNameFunc(func(s string) bool {
+			f, _ := oacType.Elem().FieldByName(s)
+			tag := f.Tag.Get("envconfig")
+			return tag == strings.ToLower(oAuthOptions[0])
+		})
+		if !found {
+			return fmt.Errorf("Invalid key %s", oAuthOptions[0])
+		}
+
+		oField := oacObject.Elem().FieldByName(tField.Name)
+		oField.SetString(oAuthOptions[1])
+	}
+
+	return nil
 }
 
 func ConfigureOauth() {
