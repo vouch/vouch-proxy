@@ -78,10 +78,10 @@ type oauthConfig struct {
 	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
 }
 
-func configureOauth() error {
-	// OAuth defaults and client configuration
-	return UnmarshalKey("oauth", &GenOAuth)
-
+func ConfigureOauth() {
+	if err := UnmarshalKey("oauth", &GenOAuth); err == nil {
+		setProviderDefaults()
+	}
 }
 
 func oauthBasicTest() error {

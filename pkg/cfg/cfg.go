@@ -181,9 +181,8 @@ func Configure() {
 
 	fixConfigOptions()
 	Logging.configure()
-	if err := configureOauth(); err == nil {
-		setProviderDefaults()
-	}
+	ConfigureOauth()
+
 	cleanClaimsHeaders()
 	if *CmdLine.port != -1 {
 		Cfg.Port = *CmdLine.port
@@ -511,9 +510,7 @@ func InitForTestPurposesWithProvider(provider string) {
 	setDefaults()
 	parseConfigFile()
 	configureFromEnv()
-	if err := configureOauth(); err == nil {
-		setProviderDefaults()
-	}
+	ConfigureOauth()
 	fixConfigOptions()
 
 	// setDevelopmentLogger()
