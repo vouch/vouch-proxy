@@ -13,13 +13,15 @@ vouch:
     #  domain: yourdomain.com
 
 oauth:
-  provider: azure
-  client_id: 123456789
-  client_secret: ********
-  auth_url: https://login.microsoftonline.com/.../oauth2/v2.0/authorize
-  token_url: https://login.microsoftonline.com/.../oauth2/v2.0/token
-  scopes:
-    - openid
-    - email
-    - profile
-  callback_url: https://vouch.yourdomain/auth
+  Services:
+    - id: azureService
+      provider: azure
+      client_id: 123456789
+      client_secret: ********
+      auth_url: https://login.microsoftonline.com/.../oauth2/v2.0/authorize
+      token_url: https://login.microsoftonline.com/.../oauth2/v2.0/token
+      scopes:
+        - openid
+        - email
+        - profile
+      callback_url: https://vouch.yourdomain/auth

@@ -9,7 +9,8 @@ vouch:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
   domains:
-  - yourdomain.com
+  - Uri: yourdomain.com
+    Service: homeassistantService
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
   # allowAllUsers: true
@@ -26,12 +27,14 @@ vouch:
   - homeassistant
 
 oauth:
-  # HomeAssistant Auth
-  # HomeAssistant typically uses a port in the url (8123 by default) and this maybe required for the auth_url and token_url 
-  # depending on your setup of HA
-  # https://developers.home-assistant.io/docs/en/auth_api.html
-  provider: homeassistant
-  client_id: https://vouch.yourdomain.com
-  callback_url: https://vouch.yourdomain.com/auth
-  auth_url: https://homeassistant.yourdomain.com:port/auth/authorize
-  token_url: https://homeassistant.yourdomain.com:port/auth/token
+  Services:
+    - id: homeassistantService
+      # HomeAssistant Auth
+      # HomeAssistant typically uses a port in the url (8123 by default) and this maybe required for the auth_url and token_url
+      # depending on your setup of HA
+      # https://developers.home-assistant.io/docs/en/auth_api.html
+      provider: homeassistant
+      client_id: https://vouch.yourdomain.com
+      callback_url: https://vouch.yourdomain.com/auth
+      auth_url: https://homeassistant.yourdomain.com:port/auth/authorize
+      token_url: https://homeassistant.yourdomain.com:port/auth/token

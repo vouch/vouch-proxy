@@ -4,8 +4,10 @@
 
 vouch:
   domains:
-  - yourdomain.com
-  - yourotherdomain.com
+  - Uri: yourdomain.com
+    Service: googleService
+  - Uri: yourotherdomain.com
+    Service: googleService
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
   # allowAllUsers: true
@@ -18,13 +20,15 @@ vouch:
 
 
 oauth:
-  provider: google
-  # get credentials from...
-  # https://console.developers.google.com/apis/credentials
-  client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
-  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
-  callback_urls: 
-    - http://yourdomain.com:9090/auth
-    - http://yourotherdomain.com:9090/auth
-  preferredDomain: yourdomain.com # be careful with this option, it may conflict with chrome on Android 
-  # endpoints are set from https://godoc.org/golang.org/x/oauth2/google
+  Services:
+    - id: googleService
+      provider: google
+      # get credentials from...
+      # https://console.developers.google.com/apis/credentials
+      client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+      client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+      callback_urls:
+        - http://yourdomain.com:9090/auth
+        - http://yourotherdomain.com:9090/auth
+      preferredDomain: yourdomain.com # be careful with this option, it may conflict with chrome on Android
+      # endpoints are set from https://godoc.org/golang.org/x/oauth2/google

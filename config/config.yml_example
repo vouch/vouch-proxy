@@ -29,8 +29,10 @@ vouch:
   # usually you'll just have one.
   # Comment `domains:` out if you set allowAllUser:true
   domains:
-  - yourdomain.com
-  - yourotherdomain.com
+  - Uri: yourdomain.com
+    Service: GenericOpenIdService
+  - Uri: yourotherdomain.com
+    Service: IndieAuthService
 
   # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider - VOUCH_ALLOWALLUSERS
   # allowAllUsers: false
@@ -186,65 +188,61 @@ vouch:
 #   scopes:                  OAUTH_SCOPES
 #   code_challenge_method:   OAUTH_CODE_CHALLENGE_METHOD
 
-#
-# configure ONLY ONE of the following oauth providers
-#
-
 oauth:
+  Services:
+    - id: GoogleService
+      provider: google
+      # create new credentials at:
+      # https://console.developers.google.com/apis/credentials
+      client_id:
+      client_secret:
+      callback_urls:
+        - http://vouch.yourdomain.com:9090/auth
+        - http://vouch.yourotherdomain.com:9090/auth
+      preferredDomain: yourdomain.com
+      # optionally set scopes, defaults to 'email'
+      # https://developers.google.com/identity/protocols/googlescopes#google_sign-in
+      # scopes:
+      #  - email
 
-  # Google
-  provider: google
-  # create new credentials at:
-  # https://console.developers.google.com/apis/credentials
-  client_id: 
-  client_secret: 
-  callback_urls:
-    - http://vouch.yourdomain.com:9090/auth
-    - http://vouch.yourotherdomain.com:9090/auth
-  preferredDomain: yourdomain.com
-  # optionally set scopes, defaults to 'email'
-  # https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-  # scopes:
-  #  - email
+    - id: GitHubService
+      # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
+      provider: github
+      client_id:
+      client_secret:
+      # callback_url is configured at github.com when setting up the app
+      # Set to e.g. https://vouch.yourdomain.com/auth
+      # defaults (uncomment and change these if you are using github enterprise on-prem)
+      # auth_url: https://github.com/login/oauth/authorize
+      # token_url: https://github.com/login/oauth/access_token
+      # user_info_url: https://api.github.com/user?access_token=
+      # scopes:
+        # - user
 
-  # GitHub
-  # https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-  provider: github
-  client_id:
-  client_secret:
-  # callback_url is configured at github.com when setting up the app
-  # Set to e.g. https://vouch.yourdomain.com/auth
-  # defaults (uncomment and change these if you are using github enterprise on-prem)
-  # auth_url: https://github.com/login/oauth/authorize
-  # token_url: https://github.com/login/oauth/access_token
-  # user_info_url: https://api.github.com/user?access_token=
-  # scopes:
-    # - user
+    GenericOpenIdService:
+      provider: oidc
+      client_id:
+      client_secret:
+      auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
+      token_url: https://{yourOktaDomain}/oauth2/default/v1/token
+      user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+      # end_session_endpoint is usually the IdP's logout URL
+      # see https://github.com/vouch/vouch-proxy/pull/258
+      end_session_endpoint: https://{yourOktaDomain}/oauth2/default/v1/logout
+      scopes:
+        - openid
+        - email
+        - profile
+      callback_url: http://vouch.yourdomain.com:9090/auth
+      # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
+      # resolves issue https://github.com/vouch/vouch-proxy/issues/303
+      code_challenge_method: S256
 
-  # Generic OpenID Connect
-  provider: oidc
-  client_id: 
-  client_secret: 
-  auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
-  token_url: https://{yourOktaDomain}/oauth2/default/v1/token
-  user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
-  # end_session_endpoint is usually the IdP's logout URL
-  # see https://github.com/vouch/vouch-proxy/pull/258
-  end_session_endpoint: https://{yourOktaDomain}/oauth2/default/v1/logout
-  scopes:
-    - openid
-    - email
-    - profile
-  callback_url: http://vouch.yourdomain.com:9090/auth
-  # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
-  # resolves issue https://github.com/vouch/vouch-proxy/issues/303
-  code_challenge_method: S256
-
-  # IndieAuth
-  # https://indielogin.com/api
-  provider: indieauth
-  client_id: http://yourdomain.com
-  auth_url: https://indielogin.com/auth
-  callback_url: http://vouch.yourdomain.com:9090/auth
+    IndieAuthService:
+      # https://indielogin.com/api
+      provider: indieauth
+      client_id: http://yourdomain.com
+      auth_url: https://indielogin.com/auth
+      callback_url: http://vouch.yourdomain.com:9090/auth
 
 

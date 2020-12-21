@@ -1,6 +1,7 @@
 vouch:
   domains:
-    - example.com
+    - Uri: example.com
+      Service: test_service
 
   cookie:
     secure: false
@@ -10,7 +11,9 @@ vouch:
     secret: testingsecret
 
 oauth:
-  provider: google
-  client_id: http://vouch.github.io
-  auth_url: https://indielogin.com/auth
-  callback_url: http://vouch.github.io:9090/auth
+  Services:
+    - id: test_service
+      provider: google
+      client_id: http://vouch.github.io
+      auth_url: https://indielogin.com/auth
+      callback_url: http://vouch.github.io:9090/auth

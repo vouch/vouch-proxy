@@ -7,8 +7,10 @@ vouch:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
   domains:
-  - yourdomain.com
-  - yourotherdomain.com
+  - Uri: yourdomain.com
+    Service: oidcService
+  - Uri: yourotherdomain.com
+    Service: oidcService
 
   # - OR -
   # instead of setting specific domains you may prefer to allow all users...
@@ -23,16 +25,18 @@ vouch:
     # domain: yourdomain.com
 
 oauth:
-  # Generic OpenID Connect
-  # including okta
-  provider: oidc
-  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
-  auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
-  token_url: https://{yourOktaDomain}/oauth2/default/v1/token
-  user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
-  scopes:
-    - openid
-    - email
-    - profile
-  callback_url: http://vouch.yourdomain.com:9090/auth
+  Services:
+    - id: oidcService
+      # Generic OpenID Connect
+      # including okta
+      provider: oidc
+      client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+      auth_url: https://{yourOktaDomain}/oauth2/default/v1/authorize
+      token_url: https://{yourOktaDomain}/oauth2/default/v1/token
+      user_info_url: https://{yourOktaDomain}/oauth2/default/v1/userinfo
+      scopes:
+        - openid
+        - email
+        - profile
+      callback_url: http://vouch.yourdomain.com:9090/auth

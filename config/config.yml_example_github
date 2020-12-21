@@ -10,7 +10,8 @@ vouch:
   # https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/#redirect-urls
   # each of these domains must serve the url https://login.$domains[0] https://login.$domains[1] ...
   domains:
-  - yourothersite.io
+  - Uri: yourothersite.io
+    Service: githubService
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
   # allowAllUsers: true
@@ -34,9 +35,11 @@ vouch:
   # In case both vouch.teamWhitelist AND oauth.scopes is configured, make sure read:org scope is included
 
 oauth:
-  # create a new OAuth application at:
-  # https://github.com/settings/applications/new
-  provider: github
-  client_id: xxxxxxxxxxxxxxxxxxxx
-  client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  # endpoints set from https://godoc.org/golang.org/x/oauth2/github
+  Services:
+    - id: githubService
+      # create a new OAuth application at:
+      # https://github.com/settings/applications/new
+      provider: github
+      client_id: xxxxxxxxxxxxxxxxxxxx
+      client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      # endpoints set from https://godoc.org/golang.org/x/oauth2/github

@@ -13,13 +13,15 @@ vouch:
 
 
 oauth:
-  provider: adfs
-  client_id: k8s
-  client_secret: sauceSecret
-  auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
-  token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
-  scopes:
-    - openid
-    - email
-    - profile
-  callback_url: https://vouch.yourdomain.com/auth
+  Services:
+    - id: adfsService
+      provider: adfs
+      client_id: k8s
+      client_secret: sauceSecret
+      auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
+      token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
+      scopes:
+        - openid
+        - email
+        - profile
+      callback_url: https://vouch.yourdomain.com/auth

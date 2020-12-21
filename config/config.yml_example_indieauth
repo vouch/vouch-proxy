@@ -7,7 +7,8 @@ vouch:
   # valid domains that the jwt cookies can be set into
   # the callback_urls will be to these domains
   # domains:
-  # - yourdomain.com
+  # - Uri: yourdomain.com
+    Service: indieAuthService
 
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
   allowAllUsers: true
@@ -22,9 +23,11 @@ vouch:
   publicAccess: true
 
 oauth:
-  # IndieAuth
-  # https://indielogin.com/api
-  provider: indieauth
-  client_id: http://yourdomain.com
-  auth_url: https://indielogin.com/auth
-  callback_url: http://vouch.yourdomain.com:9090/auth
+  Services:
+    - id: indieAuthService
+      # IndieAuth
+      # https://indielogin.com/api
+      provider: indieauth
+      client_id: http://yourdomain.com
+      auth_url: https://indielogin.com/auth
+      callback_url: http://vouch.yourdomain.com:9090/auth

@@ -1,7 +1,8 @@
 vouch:
   logLevel: debug
   domains:
-    - example.com
+    - Uri: example.com
+      Service: test_service
 
   teamWhitelist:
     - "org1/team1"
@@ -11,7 +12,9 @@ vouch:
     secret: testingsecret
 
 oauth:
-  provider: github
-  client_id: fake
-  auth_url: fake
-  callback_url: http://vouch.github.io:9090/auth
+  Services:
+    - id: test_service
+      provider: github
+      client_id: fake
+      auth_url: fake
+      callback_url: http://vouch.github.io:9090/auth
