@@ -57,11 +57,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// it sets the ultimate destination
 	// https://vouch.yoursite.com/login?url=
 	// need to clean the URL to prevent malicious redirection
-	var requestedURL string
-	if requestedURL, err = getValidRequestedURL(r); err != nil {
+	var _requestedURL *url.URL
+	if _requestedURL, err = getValidRequestedURL(r); err != nil {
 		responses.Error400(w, r, err)
 		return
 	}
+	requestedURL := (*_requestedURL).String()
 
 	// set session variable for eventual 302 redirecton to original request
 	session.Values["requestedURL"] = requestedURL
@@ -185,7 +186,7 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 
 }
 
-func getValidRequestedURL(r *http.Request) (string, error) {
+func getValidRequestedURL(r *http.Request) (*url.URL, error) {
 	u, strays, err := normalizeLoginURLParam(r.URL)
 
 	if len(strays) > 0 {
@@ -193,15 +194,15 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
+		return nil, fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
 	}
 
 	if u == nil || u.String() == "" {
-		return "", errNoURL
+		return nil, errNoURL
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", errURLNotHTTP
+		return nil, errURLNotHTTP
 	}
 
 	for _, v := range u.Query() {
@@ -209,7 +210,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		for _, vval := range v {
 			for _, bad := range badStrings {
 				if strings.HasPrefix(strings.ToLower(vval), bad) {
-					return "", fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
+					return nil, fmt.Errorf("%w looks bad: %s includes %s", errDangerQS, vval, bad)
 				}
 			}
 		}
@@ -221,17 +222,17 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 		if d == "" {
 			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "." + cfg.Cfg.Cookie.Domain))
 			if cfg.Cfg.Cookie.Domain == "" || !inCookieDomain {
-				return "", fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
+				return nil, fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
 			}
 		}
 	}
 
 	// if the requested URL is http then the cookie cannot be seen if cfg.Cfg.Cookie.Secure is set
 	if u.Scheme == "http" && cfg.Cfg.Cookie.Secure {
-		return "", fmt.Errorf("%w: mismatch between requested destination URL and '%s.cookie.secure: %v' (the cookie is only visible to 'https' but the requested site is 'http')", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
+		return nil, fmt.Errorf("%w: mismatch between requested destination URL and '%s.cookie.secure: %v' (the cookie is only visible to 'https' but the requested site is 'http')", errInvalidURL, cfg.Branding.LCName, cfg.Cfg.Cookie.Secure)
 	}
 
-	return u.String(), nil
+	return u, nil
 }
 
 func oauthLoginURL(r *http.Request, session sessions.Session) string {
