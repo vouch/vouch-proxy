@@ -126,8 +126,8 @@ func main() {
 		"branch", branch,
 		"semver", semver,
 		"listen", scheme[tls]+"://"+listen,
-		"tls", tls,
-		"oauth.provider", cfg.GenOAuth.Provider)
+		"tls", tls)
+	// "oauth.provider", cfg.GenOAuth.Provider)
 
 	muxR := mux.NewRouter()
 
