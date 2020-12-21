@@ -23,7 +23,6 @@ import (
 	"github.com/theckman/go-securerandom"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
-	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/responses"
 	"golang.org/x/oauth2"
 )
@@ -218,7 +217,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 
 	hostname := u.Hostname()
 	if cfg.GenOAuth.Provider != cfg.Providers.IndieAuth {
-		d := domains.Matches(hostname)
+		d := cfg.Matches(hostname)
 		if d == "" {
 			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "." + cfg.Cfg.Cookie.Domain))
 			if cfg.Cfg.Cookie.Domain == "" || !inCookieDomain {
@@ -248,7 +247,7 @@ func oauthLoginURL(r *http.Request, session sessions.Session) string {
 	// this checks the multiple redirect case for multiple matching domains
 	if len(cfg.GenOAuth.RedirectURLs) > 0 {
 		found := false
-		domain := domains.Matches(r.Host)
+		domain := cfg.Matches(r.Host)
 		log.Debugf("/login looking for callback_url matching %s", domain)
 		for _, v := range cfg.GenOAuth.RedirectURLs {
 			if strings.Contains(v, domain) {

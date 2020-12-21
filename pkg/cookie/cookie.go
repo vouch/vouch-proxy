@@ -20,7 +20,6 @@ import (
 
 	// "github.com/vouch/vouch-proxy/pkg/structs"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
-	"github.com/vouch/vouch-proxy/pkg/domains"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +40,7 @@ func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
 func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	cookieName := cfg.Cfg.Cookie.Name
 	// foreach domain
-	domain := domains.Matches(r.Host)
+	domain := cfg.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
 	if cfg.Cfg.Cookie.Domain != "" {
 		domain = cfg.Cfg.Cookie.Domain
@@ -150,7 +149,7 @@ func Cookie(r *http.Request) (string, error) {
 // ClearCookie get rid of the existing cookie
 func ClearCookie(w http.ResponseWriter, r *http.Request) {
 	cookies := r.Cookies()
-	domain := domains.Matches(r.Host)
+	domain := cfg.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
 	if cfg.Cfg.Cookie.Domain != "" {
 		domain = cfg.Cfg.Cookie.Domain

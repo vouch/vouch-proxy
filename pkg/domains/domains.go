@@ -26,27 +26,6 @@ func Configure() {
 	sort.Sort(ByLengthDesc(cfg.Cfg.Domains))
 }
 
-// Matches returns one of the domains we're configured for
-func Matches(s string) string {
-	if strings.Contains(s, ":") {
-		// then we have a port and we just want to check the host
-		split := strings.Split(s, ":")
-		log.Debugf("removing port from %s to test domain %s", s, split[0])
-		s = split[0]
-	}
-
-	if len(cfg.Cfg.Domains) > 0 {
-		for i, v := range cfg.Cfg.Domains {
-			if s == v || strings.HasSuffix(s, "."+v) {
-				log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
-				return v
-			}
-		}
-		log.Warnf("domain %s not found in any domains %v", s, cfg.Cfg.Domains)
-	}
-	return ""
-}
-
 // IsUnderManagement check if an email is under vouch-managed domain
 func IsUnderManagement(email string) bool {
 	split := strings.Split(email, "@")
@@ -55,7 +34,7 @@ func IsUnderManagement(email string) bool {
 		return false
 	}
 
-	match := Matches(split[1])
+	match := cfg.Matches(split[1])
 	if match != "" {
 		return true
 	}

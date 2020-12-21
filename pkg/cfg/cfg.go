@@ -521,5 +521,25 @@ func InitForTestPurposesWithProvider(provider string) {
 		setProviderDefaults()
 	}
 	cleanClaimsHeaders()
+}
 
+// Matches returns one of the domains we're configured for
+func Matches(s string) string {
+	if strings.Contains(s, ":") {
+		// then we have a port and we just want to check the host
+		split := strings.Split(s, ":")
+		log.Debugf("removing port from %s to test domain %s", s, split[0])
+		s = split[0]
+	}
+
+	if len(Cfg.Domains) > 0 {
+		for i, v := range Cfg.Domains {
+			if s == v.Uri || strings.HasSuffix(s, "."+v.Uri) {
+				log.Debugf("domain %s matched array value at [%d]=%v", s, i, v)
+				return v.Uri
+			}
+		}
+		log.Warnf("domain %s not found in any domains %v", s, Cfg.Domains.String())
+	}
+	return ""
 }
