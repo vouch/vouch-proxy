@@ -73,6 +73,7 @@ func TestProviderLogoutHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			req.Host = "myapp.example.com"
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 			if rr.Code != tt.wantcode {
