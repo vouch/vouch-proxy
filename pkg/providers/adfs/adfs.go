@@ -47,20 +47,20 @@ func (Provider) Configure() {
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+func (Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Debugf("code: %s", code)
 
 	formData := url.Values{}
 	formData.Set("code", code)
 	formData.Set("grant_type", "authorization_code")
-	formData.Set("resource", cfg.GenOAuth.RedirectURL)
-	formData.Set("client_id", cfg.GenOAuth.ClientID)
-	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
-	if cfg.GenOAuth.ClientSecret != "" {
-		formData.Set("client_secret", cfg.GenOAuth.ClientSecret)
+	formData.Set("resource", service.RedirectURL)
+	formData.Set("client_id", service.ClientID)
+	formData.Set("redirect_uri", service.RedirectURL)
+	if service.ClientSecret != "" {
+		formData.Set("client_secret", service.ClientSecret)
 	}
-	req, err := http.NewRequest("POST", cfg.GenOAuth.TokenURL, strings.NewReader(formData.Encode()))
+	req, err := http.NewRequest("POST", service.TokenURL, strings.NewReader(formData.Encode()))
 	if err != nil {
 		return err
 	}

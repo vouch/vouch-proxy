@@ -35,7 +35,7 @@ func (Provider) Configure() {
 }
 
 // GetUserInfo provider specific call to get userinfomation
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+func (Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)
@@ -49,25 +49,25 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	if _, err = fw.Write([]byte(code)); err != nil {
 		return err
 	}
-	// v.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
+	// v.Set("redirect_uri", cfg.service.RedirectURL)
 	if fw, err = w.CreateFormField("redirect_uri"); err != nil {
 		return err
 	}
-	if _, err = fw.Write([]byte(cfg.GenOAuth.RedirectURL)); err != nil {
+	if _, err = fw.Write([]byte(service.RedirectURL)); err != nil {
 		return err
 	}
-	// v.Set("client_id", cfg.GenOAuth.ClientID)
+	// v.Set("client_id", cfg.service.ClientID)
 	if fw, err = w.CreateFormField("client_id"); err != nil {
 		return err
 	}
-	if _, err = fw.Write([]byte(cfg.GenOAuth.ClientID)); err != nil {
+	if _, err = fw.Write([]byte(service.ClientID)); err != nil {
 		return err
 	}
 	if err = w.Close(); err != nil {
 		log.Error("error closing writer.")
 	}
 
-	req, err := http.NewRequest("POST", cfg.GenOAuth.AuthURL, &b)
+	req, err := http.NewRequest("POST", service.AuthURL, &b)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	req.Header.Set("Accept", "application/json")
 
 	// v := url.Values{}
-	// userinfo, err := client.PostForm(cfg.GenOAuth.UserInfoURL, v)
+	// userinfo, err := client.PostForm(cfg.service.UserInfoURL, v)
 
 	client := &http.Client{}
 	userinfo, err := client.Do(req)
