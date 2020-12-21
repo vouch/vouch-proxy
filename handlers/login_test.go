@@ -117,11 +117,13 @@ func Test_getValidRequestedURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r.URL, _ = url.Parse("http://vouch.example.com/login?url=" + tt.url)
 			got, err := getValidRequestedURL(r)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getValidRequestedURL() error = %v, wantErr %v", err, tt.wantErr)
+			if err != nil {
+				if !tt.wantErr {
+					t.Errorf("getValidRequestedURL() error = %v, wantErr %v", err, tt.wantErr)
+				}
 				return
 			}
-			if got != tt.want {
+			if (*got).String() != tt.want {
 				t.Errorf("getValidRequestedURL() = %v, want %v", got, tt.want)
 			}
 		})
