@@ -80,7 +80,11 @@ func TestProviderLogoutHandler(t *testing.T) {
 			}
 			if rr.Code == http.StatusFound {
 				wanted := tt.url
-				req, _ := http.NewRequest("GET", cfg.GenOAuth.LogoutURL, nil)
+				service, _, err := cfg.GetServiceForHostname(req.Host)
+				if err != nil {
+					t.Fatal(err)
+				}
+				req, _ := http.NewRequest("GET", service.LogoutURL, nil)
 
 				q := req.URL.Query()
 				q.Add("post_logout_redirect_uri", wanted)

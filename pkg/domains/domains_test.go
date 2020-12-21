@@ -18,8 +18,12 @@ import (
 )
 
 func init() {
-	cfg.InitForTestPurposes()
-	cfg.Cfg.Domains = []string{"vouch.github.io", "sub.test.mydomain.com", "test.mydomain.com"}
+	domains := []cfg.DomainOptions{
+		{Uri: "vouch.github.io", ServiceId: "test_service"},
+		{Uri: "sub.test.mydomain.com", ServiceId: "test_service"},
+		{Uri: "test.mydomain.com", ServiceId: "test_service"},
+	}
+	cfg.InitForTestPurposes(&domains)
 	Configure()
 }
 

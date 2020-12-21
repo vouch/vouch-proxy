@@ -22,16 +22,16 @@ import (
 
 func setUp(configFile string) {
 	os.Setenv("VOUCH_CONFIG", filepath.Join(os.Getenv("VOUCH_ROOT"), configFile))
-	InitForTestPurposes()
+	InitForTestPurposes(nil)
 }
 
 func TestConfigParsing(t *testing.T) {
-	InitForTestPurposes()
+	InitForTestPurposes(nil)
 	Configure()
 
 	// UnmarshalKey(Branding.LCName, &cfg)
 	log.Debugf("cfgPort %d", Cfg.Port)
-	log.Debugf("cfgDomains %s", Cfg.Domains[0])
+	log.Debugf("cfgDomains %s", Cfg.Domains)
 
 	assert.Equal(t, Cfg.Port, 9090)
 
@@ -41,14 +41,17 @@ func TestConfigParsing(t *testing.T) {
 func TestConfigEnvPrecedence(t *testing.T) {
 	t.Cleanup(cleanupEnv)
 
-	envVar := "OAUTH_CLIENT_SECRET"
-	envVal := "testing123"
+	SECRET := "testing123"
+
+	envVar := "OAUTH_SERVICES"
+	envVal := "CLIENT_SECRET=" + SECRET
 
 	os.Setenv(envVar, envVal)
 	// Configure()
 	setUp("/config/testing/handler_login_url.yml")
 
-	assert.Equal(t, envVal, GenOAuth.ClientSecret)
+	service := GenOAuth.Services[0]
+	assert.Equal(t, SECRET, service.ClientSecret)
 
 	// assert.NotEmpty(t, Cfg.JWT.MaxAge)
 
@@ -68,7 +71,7 @@ func TestConfigWithTLS(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Cleanup(cleanupEnv)
-			InitForTestPurposes()
+			InitForTestPurposes(nil)
 			Cfg.TLS.Cert = tt.tlsCertFile
 			Cfg.TLS.Key = tt.tlsKeyFile
 			err := ValidateConfiguration()
@@ -80,18 +83,20 @@ func TestConfigWithTLS(t *testing.T) {
 	}
 }
 func TestSetGitHubDefaults(t *testing.T) {
-	InitForTestPurposesWithProvider("github")
-	assert.Equal(t, []string{"read:user"}, GenOAuth.Scopes)
+	InitForTestPurposesWithProvider("github", nil)
+	service := GenOAuth.Services[0]
+	assert.Equal(t, []string{"read:user"}, service.Scopes)
 }
 
 func TestSetGitHubDefaultsWithTeamWhitelist(t *testing.T) {
-	InitForTestPurposesWithProvider("github")
+	InitForTestPurposesWithProvider("github", nil)
 	Cfg.TeamWhiteList = append(Cfg.TeamWhiteList, "org/team")
-	GenOAuth.Scopes = []string{}
+	service := GenOAuth.Services[0]
+	service.Scopes = []string{}
 
-	setDefaultsGitHub()
-	assert.Contains(t, GenOAuth.Scopes, "read:user")
-	assert.Contains(t, GenOAuth.Scopes, "read:org")
+	setDefaultsGitHub(&service)
+	assert.Contains(t, service.Scopes, "read:user")
+	assert.Contains(t, service.Scopes, "read:org")
 }
 
 func Test_claimToHeader(t *testing.T) {
@@ -130,7 +135,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
 		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY"}
 	// array of strings
-	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
+	saenv := []string{"VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
 	// int
 	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE"}
 	// bool
@@ -144,6 +149,20 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	}
 	// "VOUCH_LOGLEVEL" is special since logging is occurring during these tests, needs to be an actual level
 	os.Setenv("VOUCH_LOGLEVEL", "debug")
+
+	dvalue := [][]string{
+		{"domainone", "serviceone"},
+		{"domaintwo", "servicetwo"},
+		{"domainthree", "servicethree"},
+	}
+
+	var sdvalue []string
+	for _, d := range dvalue {
+		sdvalue = append(sdvalue, "uri="+d[0]+";service="+d[1])
+	}
+
+	os.Setenv("VOUCH_DOMAINS", strings.Join(sdvalue, ","))
+	t.Logf("sdvalue: %s", sdvalue)
 
 	savalue := []string{"arrayone", "arraytwo", "arraythree"}
 
@@ -168,7 +187,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key,
 	}
 
-	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
+	sacfg := [][]string{Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
 	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge}
 	bcfg := []bool{Cfg.AllowAllUsers, Cfg.PublicAccess, Cfg.JWT.Compress,
 		Cfg.Cookie.Secure,
@@ -186,6 +205,11 @@ func Test_configureFromEnvCfg(t *testing.T) {
 			assert.Equal(t, Cfg.LogLevel, "debug", "Cfg.LogLevel is not debug")
 			for i, v := range scfg {
 				assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
+			}
+
+			for i, domainOption := range Cfg.Domains {
+				assert.Equal(t, dvalue[i][0], domainOption.Uri, "v is %+s not %+s", domainOption.Uri, dvalue[i][0])
+				assert.Equal(t, dvalue[i][1], domainOption.ServiceId, "v is %+s not %+s", domainOption.ServiceId, dvalue[i][1])
 			}
 			for _, v := range sacfg {
 				assert.Equal(t, savalue, v, "v is %+s not %+s", v, savalue)
@@ -229,22 +253,27 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 	// run the thing
 	configureFromEnv()
 
-	scfg := []string{
-		GenOAuth.Provider,
-		GenOAuth.ClientID,
-		GenOAuth.ClientSecret,
-		GenOAuth.AuthURL,
-		GenOAuth.TokenURL,
-		GenOAuth.LogoutURL,
-		GenOAuth.RedirectURL,
-		GenOAuth.UserInfoURL,
-		GenOAuth.UserTeamURL,
-		GenOAuth.UserOrgURL,
-		GenOAuth.PreferredDomain,
-	}
-	sacfg := [][]string{
-		GenOAuth.RedirectURLs,
-		GenOAuth.Scopes,
+	var scfgs [][]string
+	var sacfgs [][][]string
+
+	for _, service := range GenOAuth.Services {
+		scfgs = append(scfgs, []string{
+			service.Provider,
+			service.ClientID,
+			service.ClientSecret,
+			service.AuthURL,
+			service.TokenURL,
+			service.LogoutURL,
+			service.RedirectURL,
+			service.UserInfoURL,
+			service.UserTeamURL,
+			service.UserOrgURL,
+			service.PreferredDomain,
+		})
+		sacfgs = append(sacfgs, [][]string{
+			service.RedirectURLs,
+			service.Scopes,
+		})
 	}
 
 	tests := []struct {
@@ -254,11 +283,13 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for i, v := range scfg {
-				assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
-			}
-			for i, v := range sacfg {
-				assert.Equal(t, savalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, savalue))
+			for service := range scfgs {
+				for i, v := range scfgs[service] {
+					assert.Equal(t, svalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, svalue))
+				}
+				for i, v := range sacfgs[service] {
+					assert.Equal(t, savalue, v, fmt.Sprintf("%d: v is %s not %s", i, v, savalue))
+				}
 			}
 		})
 	}
@@ -268,5 +299,5 @@ func cleanupEnv() {
 	os.Clearenv()
 	os.Setenv(Branding.UCName+"_ROOT", RootDir)
 	Cfg = &Config{}
-	GenOAuth = &oauthConfig{}
+	GenOAuth = &Oauth{}
 }

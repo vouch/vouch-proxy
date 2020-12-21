@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	cfg.InitForTestPurposes()
+	cfg.InitForTestPurposes(nil)
 	Configure()
 }
 

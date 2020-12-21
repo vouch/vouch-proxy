@@ -45,7 +45,7 @@ var (
 func init() {
 	// log.SetLevel(log.DebugLevel)
 
-	cfg.InitForTestPurposes()
+	cfg.InitForTestPurposes(nil)
 	Configure()
 
 	lc = VouchClaims{
@@ -74,5 +74,5 @@ func TestClaims(t *testing.T) {
 	utsParsed, _ := ParseTokenString(uts)
 	log.Infof("utsParsed: %+v", utsParsed)
 	log.Infof("Sites: %+v", Sites)
-	assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
+	assert.True(t, SiteInToken(cfg.Cfg.Domains[0].Uri, utsParsed))
 }

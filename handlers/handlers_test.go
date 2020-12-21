@@ -34,7 +34,7 @@ var (
 // setUp load config file and then call Configure() for dependent packages
 func setUp(configFile string) {
 	os.Setenv("VOUCH_CONFIG", filepath.Join(os.Getenv("VOUCH_ROOT"), configFile))
-	cfg.InitForTestPurposes()
+	cfg.InitForTestPurposes(nil)
 
 	Configure()
 	domains.Configure()
@@ -96,7 +96,7 @@ func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
 	setUp("/config/testing/handler_nodomains.yml")
 
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
-	cfg.Cfg.Domains = make([]string, 0)
+	cfg.Cfg.Domains = make([]cfg.DomainOptions, 0)
 	ok, err := verifyUser(*user)
 
 	assert.True(t, ok)

@@ -84,14 +84,17 @@ var (
 	client          = &http.Client{Transport: &Transport{}}
 )
 
-func setUp() {
+func setUp(t *testing.T) {
 	log = cfg.Logging.Logger
-	cfg.InitForTestPurposesWithProvider("github")
+	domainOptions := cfg.DomainOptions{
+		Uri:       "domain1",
+		ServiceId: "test_service",
+	}
+	cfg.InitForTestPurposesWithProvider("github", &[]cfg.DomainOptions{domainOptions})
 
 	cfg.Cfg.AllowAllUsers = false
 	cfg.Cfg.WhiteList = make([]string, 0)
 	cfg.Cfg.TeamWhiteList = make([]string, 0)
-	cfg.Cfg.Domains = []string{"domain1"}
 
 	domains.Configure()
 
@@ -102,40 +105,44 @@ func setUp() {
 }
 
 func TestGetTeamMembershipStateFromGitHubActive(t *testing.T) {
-	setUp()
+	setUp(t)
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	service := cfg.GenOAuth.Services[0]
+	isMember, err := getTeamMembershipStateFromGitHub(service, client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
 }
 
 func TestGetTeamMembershipStateFromGitHubInactive(t *testing.T) {
-	setUp()
+	setUp(t)
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"inactive\"}"))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	service := cfg.GenOAuth.Services[0]
+	isMember, err := getTeamMembershipStateFromGitHub(service, client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
 }
 
 func TestGetTeamMembershipStateFromGitHubNotAMember(t *testing.T) {
-	setUp()
+	setUp(t)
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	service := cfg.GenOAuth.Services[0]
+	isMember, err := getTeamMembershipStateFromGitHub(service, client, user, "org1", "team1", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
 }
 
 func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
-	setUp()
+	setUp(t)
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	service := cfg.GenOAuth.Services[0]
+	isMember, err := getOrgMembershipStateFromGitHub(service, client, user, "myorg", token)
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -145,13 +152,14 @@ func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
 }
 
 func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
-	setUp()
+	setUp(t)
 	location := "https://api.github.com/orgs/myorg/public_members/" + user.Username
 
 	mockResponse(regexMatcher(".*orgs/myorg/members.*"), http.StatusFound, map[string]string{"Location": location}, []byte(""))
 	mockResponse(regexMatcher(".*orgs/myorg/public_members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	service := cfg.GenOAuth.Services[0]
+	isMember, err := getOrgMembershipStateFromGitHub(service, client, user, "myorg", token)
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
@@ -164,7 +172,7 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	setUp()
+	setUp(t)
 
 	userInfoContent, _ := json.Marshal(structs.GitHubUser{
 		User: structs.User{
@@ -178,7 +186,8 @@ func TestGetUserInfo(t *testing.T) {
 		Login:   "myusername",
 		Picture: "avatar-url",
 	})
-	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
+	service := cfg.GenOAuth.Services[0]
+	mockResponse(urlEquals(service.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
 
 	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myOtherOrg", "myorg/myteam")
 
@@ -188,7 +197,7 @@ func TestGetUserInfo(t *testing.T) {
 	provider := Provider{PrepareTokensAndClient: func(_ *http.Request, _ *structs.PTokens, _ bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error) {
 		return client, token, nil
 	}}
-	err := provider.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
+	err := provider.GetUserInfo(service, nil, user, &structs.CustomClaims{}, &structs.PTokens{})
 
 	assert.Nil(t, err)
 	assert.Equal(t, "myusername", user.Username)
