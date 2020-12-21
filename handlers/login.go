@@ -78,10 +78,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	failcount++
 	session.Values[requestedURL] = failcount
 
+	service, _, err := cfg.GetServiceForHostname((*_requestedURL).Hostname())
+	if err != nil {
+		responses.Error400(w, r, err)
+		return
+	}
+
 	// Add code challenge if enabled
-	if cfg.GenOAuth.CodeChallengeMethod != "" {
+	if service.CodeChallengeMethod != "" {
 		log.Debugf("Adding code challenge")
-		appendCodeChallenge(*session)
+		appendCodeChallenge(service, *session)
 	}
 
 	log.Debugf("saving session with failcount %d", failcount)
@@ -97,7 +103,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var oURL = oauthLoginURL(r, *session)
+	var oURL = oauthLoginURL(service, r, *session)
 	log.Debugf("redirecting to oauthURL %s", oURL)
 	responses.Redirect302(w, r, oURL)
 }
@@ -217,10 +223,15 @@ func getValidRequestedURL(r *http.Request) (*url.URL, error) {
 	}
 
 	hostname := u.Hostname()
-	if cfg.GenOAuth.Provider != cfg.Providers.IndieAuth {
+	service, _, err := cfg.GetServiceForHostname(hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	if service.Provider != cfg.Providers.IndieAuth {
 		d := cfg.Matches(hostname)
 		if d == "" {
-			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "." + cfg.Cfg.Cookie.Domain))
+			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "."+cfg.Cfg.Cookie.Domain))
 			if cfg.Cfg.Cookie.Domain == "" || !inCookieDomain {
 				return nil, fmt.Errorf("%w: not within a %s managed domain", errInvalidURL, cfg.Branding.FullName)
 			}
@@ -235,22 +246,22 @@ func getValidRequestedURL(r *http.Request) (*url.URL, error) {
 	return u, nil
 }
 
-func oauthLoginURL(r *http.Request, session sessions.Session) string {
+func oauthLoginURL(service cfg.OauthConfig, r *http.Request, session sessions.Session) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
 	var state string = session.Values["state"].(string)
 	opts := []oauth2.AuthCodeOption{}
-	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
+	if service.Provider == cfg.Providers.IndieAuth {
 		return cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	}
 
 	// cfg.OAuthClient.RedirectURL is set in cfg
 	// this checks the multiple redirect case for multiple matching domains
-	if len(cfg.GenOAuth.RedirectURLs) > 0 {
+	if len(service.RedirectURLs) > 0 {
 		found := false
 		domain := cfg.Matches(r.Host)
 		log.Debugf("/login looking for callback_url matching %s", domain)
-		for _, v := range cfg.GenOAuth.RedirectURLs {
+		for _, v := range service.RedirectURLs {
 			if strings.Contains(v, domain) {
 				found = true
 				log.Debugf("/login callback_url set to %s", v)
@@ -264,8 +275,8 @@ func oauthLoginURL(r *http.Request, session sessions.Session) string {
 	}
 	// append code challenge and code challenge method query parameters if enabled
 
-	if cfg.GenOAuth.CodeChallengeMethod != "" {
-		opts = append(opts, oauth2.SetAuthURLParam("code_challenge_method", cfg.GenOAuth.CodeChallengeMethod))
+	if service.CodeChallengeMethod != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("code_challenge_method", service.CodeChallengeMethod))
 		opts = append(opts, oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)))
 	}
 	if cfg.OAuthopts != nil {
@@ -285,10 +296,10 @@ func generateStateNonce() (string, error) {
 	return state, nil
 }
 
-func appendCodeChallenge(session sessions.Session) {
+func appendCodeChallenge(service cfg.OauthConfig, session sessions.Session) {
 	var codeChallenge string
 	var CodeVerifier, _ = cv.CreateCodeVerifier()
-	switch strings.ToUpper(cfg.GenOAuth.CodeChallengeMethod) {
+	switch strings.ToUpper(service.CodeChallengeMethod) {
 	case "S256":
 		codeChallenge = CodeVerifier.CodeChallengeS256()
 		break
@@ -298,7 +309,7 @@ func appendCodeChallenge(session sessions.Session) {
 		log.Fatal("plain code challenge method is not supported")
 		return
 	default:
-		log.Fatal("Code challenge method %s is invalid", cfg.GenOAuth.CodeChallengeMethod)
+		log.Fatal("Code challenge method %s is invalid", service.CodeChallengeMethod)
 		return
 	}
 	session.Values["codeChallenge"] = codeChallenge

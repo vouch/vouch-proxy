@@ -13,6 +13,7 @@ package cfg
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -109,48 +110,50 @@ func (oac *OauthConfig) Decode(value string) error {
 
 func ConfigureOauth() {
 	if err := UnmarshalKey("oauth", &GenOAuth); err == nil {
-		setProviderDefaults()
+		for i := 0; i < len((*GenOAuth).Services); i++ {
+			setProviderDefaults(&(*GenOAuth).Services[i])
+		}
 	}
 }
 
-func oauthBasicTest() error {
-	if GenOAuth.Provider != Providers.Google &&
-		GenOAuth.Provider != Providers.GitHub &&
-		GenOAuth.Provider != Providers.IndieAuth &&
-		GenOAuth.Provider != Providers.HomeAssistant &&
-		GenOAuth.Provider != Providers.ADFS &&
-		GenOAuth.Provider != Providers.Azure &&
-		GenOAuth.Provider != Providers.OIDC &&
-		GenOAuth.Provider != Providers.OpenStax &&
-		GenOAuth.Provider != Providers.Nextcloud {
-		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
+func oauthBasicTest(service OauthConfig) error {
+	if service.Provider != Providers.Google &&
+		service.Provider != Providers.GitHub &&
+		service.Provider != Providers.IndieAuth &&
+		service.Provider != Providers.HomeAssistant &&
+		service.Provider != Providers.ADFS &&
+		service.Provider != Providers.Azure &&
+		service.Provider != Providers.OIDC &&
+		service.Provider != Providers.OpenStax &&
+		service.Provider != Providers.Nextcloud {
+		return errors.New("configuration error: Unknown oauth provider: " + service.Provider)
 	}
 	// OAuthconfig Checks
 	switch {
-	case GenOAuth.ClientID == "":
+	case service.ClientID == "":
 		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
-	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
+	case service.Provider != Providers.IndieAuth && service.Provider != Providers.HomeAssistant && service.Provider != Providers.ADFS && service.Provider != Providers.OIDC && service.ClientSecret == "":
 		// everyone except IndieAuth has a clientSecret
 		// ADFS and OIDC providers also do not require this, but can have it optionally set.
 		return errors.New("configuration error: oauth.client_secret not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
+	case service.Provider != Providers.Google && service.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
-	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.UserInfoURL == "":
+	case service.Provider != Providers.Google && service.Provider != Providers.IndieAuth && service.Provider != Providers.HomeAssistant && service.Provider != Providers.ADFS && service.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
-	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
+	case service.CodeChallengeMethod != "" && (service.CodeChallengeMethod != "plain" && service.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	}
 
-	if GenOAuth.RedirectURL != "" {
-		if err := checkCallbackConfig(GenOAuth.RedirectURL); err != nil {
+	if service.RedirectURL != "" {
+		if err := checkCallbackConfig(service.RedirectURL); err != nil {
 			return err
 		}
 	}
-	if len(GenOAuth.RedirectURLs) > 0 {
-		for _, cb := range GenOAuth.RedirectURLs {
+	if len(service.RedirectURLs) > 0 {
+		for _, cb := range service.RedirectURLs {
 			if err := checkCallbackConfig(cb); err != nil {
 				return err
 			}
@@ -159,92 +162,92 @@ func oauthBasicTest() error {
 	return nil
 }
 
-func setProviderDefaults() {
-	if GenOAuth.Provider == Providers.Google {
-		setDefaultsGoogle()
+func setProviderDefaults(service *OauthConfig) {
+	if service.Provider == Providers.Google {
+		setDefaultsGoogle(service)
 		// setDefaultsGoogle also configures the OAuthClient
-	} else if GenOAuth.Provider == Providers.GitHub {
-		setDefaultsGitHub()
-		configureOAuthClient()
-	} else if GenOAuth.Provider == Providers.ADFS {
-		setDefaultsADFS()
-		configureOAuthClient()
-	} else if GenOAuth.Provider == Providers.IndieAuth || GenOAuth.Provider == Providers.Azure {
-		GenOAuth.CodeChallengeMethod = "S256"
-		configureOAuthClient()
+	} else if service.Provider == Providers.GitHub {
+		setDefaultsGitHub(service)
+		configureOAuthClient(service)
+	} else if service.Provider == Providers.ADFS {
+		setDefaultsADFS(service)
+		configureOAuthClient(service)
+	} else if service.Provider == Providers.IndieAuth || service.Provider == Providers.Azure {
+		service.CodeChallengeMethod = "S256"
+		configureOAuthClient(service)
 	} else {
 		// OIDC, OpenStax, Nextcloud
-		configureOAuthClient()
+		configureOAuthClient(service)
 	}
 }
 
-func setDefaultsGoogle() {
+func setDefaultsGoogle(service *OauthConfig) {
 	log.Info("configuring Google OAuth")
-	GenOAuth.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
-	if len(GenOAuth.Scopes) == 0 {
+	service.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
+	if len(service.Scopes) == 0 {
 		// You have to select a scope from
 		// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-		GenOAuth.Scopes = []string{"email"}
+		service.Scopes = []string{"email"}
 	}
 	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
-		Scopes:       GenOAuth.Scopes,
+		ClientID:     service.ClientID,
+		ClientSecret: service.ClientSecret,
+		Scopes:       service.Scopes,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  GenOAuth.RedirectURL,
+		RedirectURL:  service.RedirectURL,
 	}
-	if GenOAuth.PreferredDomain != "" {
-		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
-		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
+	if service.PreferredDomain != "" {
+		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", service.PreferredDomain)
+		OAuthopts = oauth2.SetAuthURLParam("hd", service.PreferredDomain)
 	}
-	GenOAuth.CodeChallengeMethod = "S256"
+	service.CodeChallengeMethod = "S256"
 }
 
-func setDefaultsADFS() {
+func setDefaultsADFS(service *OauthConfig) {
 	log.Info("configuring ADFS OAuth")
-	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
+	OAuthopts = oauth2.SetAuthURLParam("resource", service.RedirectURL) // Needed or all claims won't be included
 }
 
-func setDefaultsGitHub() {
+func setDefaultsGitHub(service *OauthConfig) {
 	// log.Info("configuring GitHub OAuth")
-	if GenOAuth.AuthURL == "" {
-		GenOAuth.AuthURL = github.Endpoint.AuthURL
+	if service.AuthURL == "" {
+		service.AuthURL = github.Endpoint.AuthURL
 	}
-	if GenOAuth.TokenURL == "" {
-		GenOAuth.TokenURL = github.Endpoint.TokenURL
+	if service.TokenURL == "" {
+		service.TokenURL = github.Endpoint.TokenURL
 	}
-	if GenOAuth.UserInfoURL == "" {
-		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
+	if service.UserInfoURL == "" {
+		service.UserInfoURL = "https://api.github.com/user?access_token="
 	}
-	if GenOAuth.UserTeamURL == "" {
-		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+	if service.UserTeamURL == "" {
+		service.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
 	}
-	if GenOAuth.UserOrgURL == "" {
-		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+	if service.UserOrgURL == "" {
+		service.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
 	}
-	if len(GenOAuth.Scopes) == 0 {
+	if len(service.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63
 		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
-		GenOAuth.Scopes = []string{"read:user"}
+		service.Scopes = []string{"read:user"}
 
 		if len(Cfg.TeamWhiteList) > 0 {
-			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
+			service.Scopes = append(service.Scopes, "read:org")
 		}
 	}
-	GenOAuth.CodeChallengeMethod = "S256"
+	service.CodeChallengeMethod = "S256"
 }
 
-func configureOAuthClient() {
-	log.Infof("configuring %s OAuth with Endpoint %s", GenOAuth.Provider, GenOAuth.AuthURL)
+func configureOAuthClient(service *OauthConfig) {
+	log.Infof("configuring %s OAuth with Endpoint %s", service.Provider, service.AuthURL)
 	OAuthClient = &oauth2.Config{
-		ClientID:     GenOAuth.ClientID,
-		ClientSecret: GenOAuth.ClientSecret,
+		ClientID:     service.ClientID,
+		ClientSecret: service.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  GenOAuth.AuthURL,
-			TokenURL: GenOAuth.TokenURL,
+			AuthURL:  service.AuthURL,
+			TokenURL: service.TokenURL,
 		},
-		RedirectURL: GenOAuth.RedirectURL,
-		Scopes:      GenOAuth.Scopes,
+		RedirectURL: service.RedirectURL,
+		Scopes:      service.Scopes,
 	}
 }
 
@@ -254,7 +257,12 @@ func checkCallbackConfig(url string) error {
 	}
 
 	found := false
-	for _, d := range append(Cfg.Domains, Cfg.Cookie.Domain) {
+
+	var uris []string
+	for _, domain := range Cfg.Domains {
+		uris = append(uris, domain.Uri)
+	}
+	for _, d := range append(uris, Cfg.Cookie.Domain) {
 		if d != "" && strings.Contains(url, d) {
 			found = true
 			break

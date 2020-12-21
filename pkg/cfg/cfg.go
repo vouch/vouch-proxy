@@ -279,7 +279,14 @@ func ValidateConfiguration() error {
 		Logging.setDevelopmentLogger()
 	}
 
-	return basicTest()
+	for _, service := range (*GenOAuth).Services {
+		result := basicTest(service)
+		if result != nil {
+			return result
+		}
+	}
+
+	return nil
 }
 
 func setRootDir() {
@@ -407,17 +414,16 @@ func Get(key string) string {
 }
 
 // basicTest just a quick sanity check to see if the config is sound
-func basicTest() error {
+func basicTest(service OauthConfig) error {
 
-	// check oauth config
-	if err := oauthBasicTest(); err != nil {
+	if err := oauthBasicTest(service); err != nil {
 		return err
 	}
 
-	if GenOAuth.Provider == "" {
+	if service.Provider == "" {
 		return errors.New("configuration error: required configuration option 'oauth.provider' is not set")
 	}
-	if GenOAuth.ClientID == "" {
+	if service.ClientID == "" {
 		return errors.New("configuration error: required configuration option 'oauth.client_id' is not set")
 	}
 
@@ -425,6 +431,15 @@ func basicTest() error {
 	if (!Cfg.AllowAllUsers && len(Cfg.Domains) == 0) ||
 		(Cfg.AllowAllUsers && len(Cfg.Domains) > 0) {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	}
+
+	// Verify all configs are given
+	if len(Cfg.Domains) > 0 {
+		for _, domain := range Cfg.Domains {
+			if _, err := GetServiceById(domain.ServiceId); err != nil {
+				return fmt.Errorf("configuration error: service %s for domain %s not found", domain.ServiceId, domain.Uri)
+			}
+		}
 	}
 
 	// issue a warning if the secret is too small
@@ -538,13 +553,17 @@ func cleanClaimsHeaders() error {
 }
 
 // InitForTestPurposes is called by most *_testing.go files in Vouch Proxy
-func InitForTestPurposes() {
-	InitForTestPurposesWithProvider("")
+func InitForTestPurposes(domainOptions *[]DomainOptions) {
+	InitForTestPurposesWithProvider("", domainOptions)
 }
 
 // InitForTestPurposesWithProvider just for testing
-func InitForTestPurposesWithProvider(provider string) {
+func InitForTestPurposesWithProvider(provider string, domains *[]DomainOptions) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+	if domains != nil {
+		Cfg.Domains = *domains
+	}
+
 	Logging.setLogLevel(zapcore.WarnLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
@@ -567,8 +586,11 @@ func InitForTestPurposesWithProvider(provider string) {
 
 	// Needed to override the provider, which is otherwise set via yml
 	if provider != "" {
-		GenOAuth.Provider = provider
-		setProviderDefaults()
+		for i := 0; i < len((*GenOAuth).Services); i++ {
+			service := &((*GenOAuth).Services[i])
+			service.Provider = provider
+			setProviderDefaults(service)
+		}
 	}
 	cleanClaimsHeaders()
 }
@@ -592,4 +614,53 @@ func Matches(s string) string {
 		log.Warnf("domain %s not found in any domains %v", s, Cfg.Domains.String())
 	}
 	return ""
+}
+
+func getDomainOptionsForHostname(hostname string) (DomainOptions, error) {
+
+	domainsUri := Matches(hostname)
+	if domainsUri == "" {
+		return DomainOptions{}, fmt.Errorf("No domain matches for hostname %s", hostname)
+	}
+
+	var domainOptions *DomainOptions
+	for _, domain := range Cfg.Domains {
+		if domain.Uri == domainsUri {
+			domainOptions = &domain
+		}
+	}
+	if domainOptions == nil {
+		return DomainOptions{}, fmt.Errorf("No domain options for hostname %s", hostname)
+	}
+	return *domainOptions, nil
+}
+
+func GetServiceById(id string) (OauthConfig, error) {
+
+	for _, service := range (*GenOAuth).Services {
+		if service.Id == id {
+			return service, nil
+		}
+	}
+
+	return OauthConfig{}, fmt.Errorf("No oauth provider named %s", id)
+}
+
+func GetServiceForHostname(hostname string) (OauthConfig, DomainOptions, error) {
+	if len(Cfg.Domains) == 0 {
+		domainOptions := DomainOptions{Uri: "*", ServiceId: "vouch_dummy_service"}
+		return GenOAuth.Services[0], domainOptions, nil
+	}
+
+	domainOptions, err := getDomainOptionsForHostname(hostname)
+	if err != nil {
+		return OauthConfig{}, DomainOptions{}, err
+	}
+
+	service, err := GetServiceById(domainOptions.ServiceId)
+	if err != nil {
+		return OauthConfig{}, domainOptions, err
+	}
+
+	return service, domainOptions, nil
 }

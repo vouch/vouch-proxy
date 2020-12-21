@@ -65,7 +65,13 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// is code challenge enabled?
 	authCodeOptions := []oauth2.AuthCodeOption{}
 
-	if cfg.GenOAuth.CodeChallengeMethod != "" {
+	service, _, err := cfg.GetServiceForHostname(r.Host)
+	if err != nil {
+		responses.Error400(w, r, err)
+		return
+	}
+
+	if service.CodeChallengeMethod != "" {
 		authCodeOptions = []oauth2.AuthCodeOption{
 			oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)),
 			oauth2.SetAuthURLParam("code_verifier", session.Values["codeVerifier"].(string)),
@@ -161,5 +167,14 @@ func verifyUser(u interface{}) (bool, error) {
 }
 
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error {
-	return provider.GetUserInfo(r, user, customClaims, ptokens, opts...)
+	service, domainOptions, err := cfg.GetServiceForHostname(r.Host)
+	if err != nil {
+		return err
+	}
+
+	provider, found := providers[domainOptions.ServiceId]
+	if !found {
+		return fmt.Errorf("No provider for service %s", domainOptions.ServiceId)
+	}
+	return provider.GetUserInfo(service, r, user, customClaims, ptokens, opts...)
 }

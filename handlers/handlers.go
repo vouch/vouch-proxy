@@ -46,7 +46,7 @@ var (
 	sessstore *sessions.CookieStore
 	log       *zap.SugaredLogger
 	fastlog   *zap.Logger
-	provider  Provider
+	providers = make(map[string]Provider)
 )
 
 // Configure see main.go configure()
@@ -60,13 +60,16 @@ func Configure() {
 	sessstore.Options.SameSite = cookie.SameSite()
 	sessstore.Options.MaxAge = 300 // give the user five minutes to log in at the IdP
 
-	provider = getProvider()
-	provider.Configure()
+	for _, service := range (*cfg.GenOAuth).Services {
+		provider := getProvider(service.Provider)
+		provider.Configure()
+		providers[service.Id] = provider
+	}
 	common.Configure()
 }
 
-func getProvider() Provider {
-	switch cfg.GenOAuth.Provider {
+func getProvider(Provider string) Provider {
+	switch Provider {
 	case cfg.Providers.IndieAuth:
 		return indieauth.Provider{}
 	case cfg.Providers.ADFS:

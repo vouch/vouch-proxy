@@ -69,7 +69,7 @@ func populateSites() {
 	// if we add fine grain ability (ACL?) to the equation
 	// then we're going to have to add something fancier here
 	for i := 0; i < len(cfg.Cfg.Domains); i++ {
-		Sites = append(Sites, cfg.Cfg.Domains[i])
+		Sites = append(Sites, cfg.Cfg.Domains[i].Uri)
 	}
 }
 

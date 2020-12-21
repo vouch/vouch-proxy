@@ -52,7 +52,13 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
-	providerLogoutURL := cfg.GenOAuth.LogoutURL
+	service, _, err := cfg.GetServiceForHostname(r.Host)
+	if err != nil {
+		responses.Error403(w, r, err)
+		return
+	}
+
+	providerLogoutURL := service.LogoutURL
 	redirectURL := r.URL.Query().Get("url")
 
 	// Make sure that redirectURL, if given, is allowed by config
