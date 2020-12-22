@@ -15,9 +15,10 @@ vouch:
       - email_verified
 
 oauth:
-  # .... your provider config goes here
-  scopes:
-    # make sure to set the required scopes
-    - openid
-    - email
-    - profile
+  Services:
+    - # .... your provider config goes here
+      scopes:
+        # make sure to set the required scopes
+        - openid
+        - email
+        - profile
