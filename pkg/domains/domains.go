@@ -23,7 +23,7 @@ var log *zap.SugaredLogger
 // Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
-	sort.Sort(ByLengthDesc(cfg.Cfg.Domains))
+	sort.Sort(ByUri(cfg.Cfg.Domains))
 }
 
 // IsUnderManagement check if an email is under vouch-managed domain
@@ -43,16 +43,16 @@ func IsUnderManagement(email string) bool {
 
 // ByLengthDesc sort from
 // https://play.golang.org/p/N6GbEgBffd
-type ByLengthDesc []string
+type ByUri cfg.DomainsOptions
 
-func (s ByLengthDesc) Len() int {
+func (s ByUri) Len() int {
 	return len(s)
 }
-func (s ByLengthDesc) Swap(i, j int) {
+func (s ByUri) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// this differs by offing the longest first
-func (s ByLengthDesc) Less(i, j int) bool {
-	return len(s[j]) < len(s[i])
+// this differs by sorting by Uri
+func (s ByUri) Less(i, j int) bool {
+	return s[j].Uri < s[i].Uri
 }
