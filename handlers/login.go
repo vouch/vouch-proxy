@@ -223,12 +223,12 @@ func getValidRequestedURL(r *http.Request) (*url.URL, error) {
 	}
 
 	hostname := u.Hostname()
-	service, _, err := cfg.GetServiceForHostname(hostname)
+	config, err := cfg.GetConfigForHostname(hostname)
 	if err != nil {
 		return nil, err
 	}
 
-	if service.Provider != cfg.Providers.IndieAuth {
+	if config.Provider != cfg.Providers.IndieAuth {
 		d := cfg.Matches(hostname)
 		if d == "" {
 			inCookieDomain := (hostname == cfg.Cfg.Cookie.Domain || strings.HasSuffix(hostname, "."+cfg.Cfg.Cookie.Domain))
@@ -246,22 +246,22 @@ func getValidRequestedURL(r *http.Request) (*url.URL, error) {
 	return u, nil
 }
 
-func oauthLoginURL(service cfg.OauthConfig, r *http.Request, session sessions.Session) string {
+func OauthLoginURL(config *cfg.OauthConfig, r *http.Request, session sessions.Session) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var state string = session.Values["state"].(string)
-	opts := []oauth2.AuthCodeOption{}
-	if service.Provider == cfg.Providers.IndieAuth {
+	var state = session.Values["state"].(string)
+	var opts []oauth2.AuthCodeOption
+	if config.Provider == cfg.Providers.IndieAuth {
 		return cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
 	}
 
 	// cfg.OAuthClient.RedirectURL is set in cfg
 	// this checks the multiple redirect case for multiple matching domains
-	if len(service.RedirectURLs) > 0 {
+	if len(config.RedirectURLs) > 0 {
 		found := false
 		domain := cfg.Matches(r.Host)
 		log.Debugf("/login looking for callback_url matching %s", domain)
-		for _, v := range service.RedirectURLs {
+		for _, v := range config.RedirectURLs {
 			if strings.Contains(v, domain) {
 				found = true
 				log.Debugf("/login callback_url set to %s", v)
@@ -275,8 +275,8 @@ func oauthLoginURL(service cfg.OauthConfig, r *http.Request, session sessions.Se
 	}
 	// append code challenge and code challenge method query parameters if enabled
 
-	if service.CodeChallengeMethod != "" {
-		opts = append(opts, oauth2.SetAuthURLParam("code_challenge_method", service.CodeChallengeMethod))
+	if config.CodeChallengeMethod != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("code_challenge_method", config.CodeChallengeMethod))
 		opts = append(opts, oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)))
 	}
 	if cfg.OAuthopts != nil {
@@ -296,10 +296,10 @@ func generateStateNonce() (string, error) {
 	return state, nil
 }
 
-func appendCodeChallenge(service cfg.OauthConfig, session sessions.Session) {
+func appendCodeChallenge(config *cfg.OauthConfig, session sessions.Session) {
 	var codeChallenge string
 	var CodeVerifier, _ = cv.CreateCodeVerifier()
-	switch strings.ToUpper(service.CodeChallengeMethod) {
+	switch strings.ToUpper(config.CodeChallengeMethod) {
 	case "S256":
 		codeChallenge = CodeVerifier.CodeChallengeS256()
 		break
@@ -309,7 +309,7 @@ func appendCodeChallenge(service cfg.OauthConfig, session sessions.Session) {
 		log.Fatal("plain code challenge method is not supported")
 		return
 	default:
-		log.Fatal("Code challenge method %s is invalid", service.CodeChallengeMethod)
+		log.Fatal("Code challenge method %s is invalid", config.CodeChallengeMethod)
 		return
 	}
 	session.Values["codeChallenge"] = codeChallenge

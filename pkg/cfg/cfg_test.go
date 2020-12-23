@@ -50,8 +50,8 @@ func TestConfigEnvPrecedence(t *testing.T) {
 	// Configure()
 	setUp("/config/testing/handler_login_url.yml")
 
-	service := GenOAuth.Services[0]
-	assert.Equal(t, SECRET, service.ClientSecret)
+	config := GenOAuth.GetConfig(0)
+	assert.Equal(t, SECRET, config.ClientSecret)
 
 	// assert.NotEmpty(t, Cfg.JWT.MaxAge)
 
@@ -84,19 +84,19 @@ func TestConfigWithTLS(t *testing.T) {
 }
 func TestSetGitHubDefaults(t *testing.T) {
 	InitForTestPurposesWithProvider("github", nil)
-	service := GenOAuth.Services[0]
-	assert.Equal(t, []string{"read:user"}, service.Scopes)
+	config := GenOAuth.GetConfig(0)
+	assert.Equal(t, []string{"read:user"}, config.Scopes)
 }
 
 func TestSetGitHubDefaultsWithTeamWhitelist(t *testing.T) {
 	InitForTestPurposesWithProvider("github", nil)
 	Cfg.TeamWhiteList = append(Cfg.TeamWhiteList, "org/team")
-	service := GenOAuth.Services[0]
-	service.Scopes = []string{}
+	config := GenOAuth.GetConfig(0)
+	config.Scopes = []string{}
 
-	setDefaultsGitHub(&service)
-	assert.Contains(t, service.Scopes, "read:user")
-	assert.Contains(t, service.Scopes, "read:org")
+	config.setDefaultsGitHub()
+	assert.Contains(t, config.Scopes, "read:user")
+	assert.Contains(t, config.Scopes, "read:org")
 }
 
 func Test_claimToHeader(t *testing.T) {
@@ -256,25 +256,25 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 	var scfgs [][]string
 	var sacfgs [][][]string
 
-	for _, service := range GenOAuth.Services {
+	GenOAuth.IterConfigs(func(config *OauthConfig) {
 		scfgs = append(scfgs, []string{
-			service.Provider,
-			service.ClientID,
-			service.ClientSecret,
-			service.AuthURL,
-			service.TokenURL,
-			service.LogoutURL,
-			service.RedirectURL,
-			service.UserInfoURL,
-			service.UserTeamURL,
-			service.UserOrgURL,
-			service.PreferredDomain,
+			config.Provider,
+			config.ClientID,
+			config.ClientSecret,
+			config.AuthURL,
+			config.TokenURL,
+			config.LogoutURL,
+			config.RedirectURL,
+			config.UserInfoURL,
+			config.UserTeamURL,
+			config.UserOrgURL,
+			config.PreferredDomain,
 		})
 		sacfgs = append(sacfgs, [][]string{
-			service.RedirectURLs,
-			service.Scopes,
+			config.RedirectURLs,
+			config.Scopes,
 		})
-	}
+	})
 
 	tests := []struct {
 		name string

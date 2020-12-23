@@ -279,8 +279,9 @@ func ValidateConfiguration() error {
 		Logging.setDevelopmentLogger()
 	}
 
-	for _, service := range (*GenOAuth).Services {
-		result := basicTest(service)
+	for i := 0; i < GenOAuth.NrOfConfigs(); i++ {
+		config := GenOAuth.GetConfig(i)
+		result := config.basicTest()
 		if result != nil {
 			return result
 		}
@@ -378,7 +379,7 @@ func fixConfigOptions() {
 		Cfg.TestURLs = append(Cfg.TestURLs, Cfg.TestURL)
 	}
 
-	// keys in oauth->services are lower case
+	// keys in oauth->Services are lower case
 	for i, domainOptions := range Cfg.Domains {
 		domainOptions.ServiceId = strings.ToLower(domainOptions.ServiceId)
 		Cfg.Domains[i] = domainOptions
@@ -414,16 +415,16 @@ func Get(key string) string {
 }
 
 // basicTest just a quick sanity check to see if the config is sound
-func basicTest(service OauthConfig) error {
+func (config *OauthConfig) basicTest() error {
 
-	if err := oauthBasicTest(service); err != nil {
+	if err := config.oauthBasicTest(); err != nil {
 		return err
 	}
 
-	if service.Provider == "" {
+	if config.Provider == "" {
 		return errors.New("configuration error: required configuration option 'oauth.provider' is not set")
 	}
-	if service.ClientID == "" {
+	if config.ClientID == "" {
 		return errors.New("configuration error: required configuration option 'oauth.client_id' is not set")
 	}
 
@@ -436,7 +437,7 @@ func basicTest(service OauthConfig) error {
 	// Verify all configs are given
 	if len(Cfg.Domains) > 0 {
 		for _, domain := range Cfg.Domains {
-			if _, err := GetServiceById(domain.ServiceId); err != nil {
+			if _, err := GetConfigById(domain.ServiceId); err != nil {
 				return fmt.Errorf("configuration error: service %s for domain %s not found", domain.ServiceId, domain.Uri)
 			}
 		}
@@ -586,11 +587,10 @@ func InitForTestPurposesWithProvider(provider string, domains *[]DomainOptions) 
 
 	// Needed to override the provider, which is otherwise set via yml
 	if provider != "" {
-		for i := 0; i < len((*GenOAuth).Services); i++ {
-			service := &((*GenOAuth).Services[i])
-			service.Provider = provider
-			setProviderDefaults(service)
-		}
+		GenOAuth.IterConfigs(func(config *OauthConfig) {
+			config.Provider = provider
+			config.setProviderDefaults()
+		})
 	}
 	cleanClaimsHeaders()
 }
@@ -635,32 +635,27 @@ func getDomainOptionsForHostname(hostname string) (DomainOptions, error) {
 	return *domainOptions, nil
 }
 
-func GetServiceById(id string) (OauthConfig, error) {
+func GetConfigById(id string) (*OauthConfig, error) {
 
-	for _, service := range (*GenOAuth).Services {
-		if service.Id == id {
-			return service, nil
+	for i := 0; i < GenOAuth.NrOfConfigs(); i++ {
+		config := GenOAuth.GetConfig(i)
+		if config.Id == id {
+			return config, nil
 		}
 	}
 
-	return OauthConfig{}, fmt.Errorf("No oauth provider named %s", id)
+	return nil, fmt.Errorf("No oauth provider named %s", id)
 }
 
-func GetServiceForHostname(hostname string) (OauthConfig, DomainOptions, error) {
+func GetConfigForHostname(hostname string) (*OauthConfig, error) {
 	if len(Cfg.Domains) == 0 {
-		domainOptions := DomainOptions{Uri: "*", ServiceId: "vouch_dummy_service"}
-		return GenOAuth.Services[0], domainOptions, nil
+		return GenOAuth.GetConfig(0), nil
 	}
 
 	domainOptions, err := getDomainOptionsForHostname(hostname)
 	if err != nil {
-		return OauthConfig{}, DomainOptions{}, err
+		return nil, err
 	}
 
-	service, err := GetServiceById(domainOptions.ServiceId)
-	if err != nil {
-		return OauthConfig{}, domainOptions, err
-	}
-
-	return service, domainOptions, nil
+	return GetConfigById(domainOptions.ServiceId)
 }

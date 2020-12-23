@@ -63,6 +63,21 @@ type Oauth struct {
 	Services []OauthConfig `mapstructure:"services" envconfig:"services"`
 }
 
+func (oa *Oauth) IterConfigs(fn func(config *OauthConfig)) {
+	for i := 0; i < oa.NrOfConfigs(); i++ {
+		config := oa.GetConfig(i)
+		fn(config)
+	}
+}
+
+func (oa *Oauth) NrOfConfigs() int {
+	return len(oa.Services)
+}
+
+func (oa *Oauth) GetConfig(i int) *OauthConfig {
+	return &oa.Services[i]
+}
+
 // oauth config items endoint for access
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
@@ -84,76 +99,88 @@ type OauthConfig struct {
 	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
 }
 
-func (oac *OauthConfig) Decode(value string) error {
+func (config *OauthConfig) Decode(value string) error {
 	options := strings.Split(value, ";")
 
-	oacObject := reflect.ValueOf(oac)
-	oacType := reflect.TypeOf(oac)
+	configType := reflect.TypeOf(config).Elem()
+	configValue := reflect.ValueOf(config).Elem()
 	for _, optionString := range options {
 		oAuthOptions := strings.SplitN(optionString, "=", 2)
+		optionsKey := oAuthOptions[0]
+		optionsValue := oAuthOptions[1]
 
-		tField, found := oacType.Elem().FieldByNameFunc(func(s string) bool {
-			f, _ := oacType.Elem().FieldByName(s)
-			tag := f.Tag.Get("envconfig")
-			return tag == strings.ToLower(oAuthOptions[0])
-		})
+		field, found := findField(configType, optionsKey)
 		if !found {
-			return fmt.Errorf("Invalid key %s", oAuthOptions[0])
+			return fmt.Errorf("Invalid key %s", optionsKey)
 		}
 
-		oField := oacObject.Elem().FieldByName(tField.Name)
-		oField.SetString(oAuthOptions[1])
+		setField(configValue, field.Name, optionsValue)
 	}
 
 	return nil
 }
 
+// findField gets field of typ with name and tag envconfig set
+func findField(typ reflect.Type, name string) (reflect.StructField, bool) {
+	return typ.FieldByNameFunc(func(s string) bool {
+		f, _ := typ.FieldByName(s)
+		tag := f.Tag.Get("envconfig")
+		return tag == strings.ToLower(name)
+	})
+}
+
+// setField sets config field with name to value
+func setField(cValue reflect.Value, name string, value string) {
+	cField := cValue.FieldByName(name)
+	cField.SetString(value)
+}
+
 func ConfigureOauth() {
 	if err := UnmarshalKey("oauth", &GenOAuth); err == nil {
-		for i := 0; i < len((*GenOAuth).Services); i++ {
-			setProviderDefaults(&(*GenOAuth).Services[i])
-		}
+		GenOAuth.IterConfigs(func(config *OauthConfig) {
+			config.setProviderDefaults()
+		})
 	}
 }
 
-func oauthBasicTest(service OauthConfig) error {
-	if service.Provider != Providers.Google &&
-		service.Provider != Providers.GitHub &&
-		service.Provider != Providers.IndieAuth &&
-		service.Provider != Providers.HomeAssistant &&
-		service.Provider != Providers.ADFS &&
-		service.Provider != Providers.Azure &&
-		service.Provider != Providers.OIDC &&
-		service.Provider != Providers.OpenStax &&
-		service.Provider != Providers.Nextcloud {
-		return errors.New("configuration error: Unknown oauth provider: " + service.Provider)
+func (config *OauthConfig) oauthBasicTest() error {
+	if config.Provider != Providers.Google &&
+		config.Provider != Providers.GitHub &&
+		config.Provider != Providers.IndieAuth &&
+		config.Provider != Providers.HomeAssistant &&
+		config.Provider != Providers.ADFS &&
+		config.Provider != Providers.Azure &&
+		config.Provider != Providers.OIDC &&
+		config.Provider != Providers.OpenStax &&
+		config.Provider != Providers.Nextcloud {
+		return errors.New("configuration error: Unknown oauth provider: " + config.Provider)
 	}
 	// OAuthconfig Checks
 	switch {
-	case service.ClientID == "":
+	case config.ClientID == "":
 		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
-	case service.Provider != Providers.IndieAuth && service.Provider != Providers.HomeAssistant && service.Provider != Providers.ADFS && service.Provider != Providers.OIDC && service.ClientSecret == "":
+	case config.Provider != Providers.IndieAuth && config.Provider != Providers.HomeAssistant && config.Provider != Providers.ADFS && config.Provider != Providers.OIDC && config.ClientSecret == "":
 		// everyone except IndieAuth has a clientSecret
 		// ADFS and OIDC providers also do not require this, but can have it optionally set.
 		return errors.New("configuration error: oauth.client_secret not found")
-	case service.Provider != Providers.Google && service.AuthURL == "":
+	case config.Provider != Providers.Google && config.AuthURL == "":
 		// everyone except IndieAuth and Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
-	case service.Provider != Providers.Google && service.Provider != Providers.IndieAuth && service.Provider != Providers.HomeAssistant && service.Provider != Providers.ADFS && service.UserInfoURL == "":
+	case config.Provider != Providers.Google && config.Provider != Providers.IndieAuth && config.Provider != Providers.HomeAssistant && config.Provider != Providers.ADFS && config.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL
 		return errors.New("configuration error: oauth.user_info_url not found")
-	case service.CodeChallengeMethod != "" && (service.CodeChallengeMethod != "plain" && service.CodeChallengeMethod != "S256"):
+	case config.CodeChallengeMethod != "" && (config.CodeChallengeMethod != "plain" && config.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	}
 
-	if service.RedirectURL != "" {
-		if err := checkCallbackConfig(service.RedirectURL); err != nil {
+	if config.RedirectURL != "" {
+		if err := checkCallbackConfig(config.RedirectURL); err != nil {
 			return err
 		}
 	}
-	if len(service.RedirectURLs) > 0 {
-		for _, cb := range service.RedirectURLs {
+	if len(config.RedirectURLs) > 0 {
+		for _, cb := range config.RedirectURLs {
 			if err := checkCallbackConfig(cb); err != nil {
 				return err
 			}
@@ -162,92 +189,92 @@ func oauthBasicTest(service OauthConfig) error {
 	return nil
 }
 
-func setProviderDefaults(service *OauthConfig) {
-	if service.Provider == Providers.Google {
-		setDefaultsGoogle(service)
+func (config *OauthConfig) setProviderDefaults() {
+	if config.Provider == Providers.Google {
+		config.setDefaultsGoogle()
 		// setDefaultsGoogle also configures the OAuthClient
-	} else if service.Provider == Providers.GitHub {
-		setDefaultsGitHub(service)
-		configureOAuthClient(service)
-	} else if service.Provider == Providers.ADFS {
-		setDefaultsADFS(service)
-		configureOAuthClient(service)
-	} else if service.Provider == Providers.IndieAuth || service.Provider == Providers.Azure {
-		service.CodeChallengeMethod = "S256"
-		configureOAuthClient(service)
+	} else if config.Provider == Providers.GitHub {
+		config.setDefaultsGitHub()
+		config.configureOAuthClient()
+	} else if config.Provider == Providers.ADFS {
+		config.setDefaultsADFS()
+		config.configureOAuthClient()
+	} else if config.Provider == Providers.IndieAuth || config.Provider == Providers.Azure {
+		config.CodeChallengeMethod = "S256"
+		config.configureOAuthClient()
 	} else {
 		// OIDC, OpenStax, Nextcloud
-		configureOAuthClient(service)
+		config.configureOAuthClient()
 	}
 }
 
-func setDefaultsGoogle(service *OauthConfig) {
+func (config *OauthConfig) setDefaultsGoogle() {
 	log.Info("configuring Google OAuth")
-	service.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
-	if len(service.Scopes) == 0 {
+	config.UserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
+	if len(config.Scopes) == 0 {
 		// You have to select a scope from
 		// https://developers.google.com/identity/protocols/googlescopes#google_sign-in
-		service.Scopes = []string{"email"}
+		config.Scopes = []string{"email"}
 	}
 	OAuthClient = &oauth2.Config{
-		ClientID:     service.ClientID,
-		ClientSecret: service.ClientSecret,
-		Scopes:       service.Scopes,
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
+		Scopes:       config.Scopes,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  service.RedirectURL,
+		RedirectURL:  config.RedirectURL,
 	}
-	if service.PreferredDomain != "" {
-		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", service.PreferredDomain)
-		OAuthopts = oauth2.SetAuthURLParam("hd", service.PreferredDomain)
+	if config.PreferredDomain != "" {
+		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", config.PreferredDomain)
+		OAuthopts = oauth2.SetAuthURLParam("hd", config.PreferredDomain)
 	}
-	service.CodeChallengeMethod = "S256"
+	config.CodeChallengeMethod = "S256"
 }
 
-func setDefaultsADFS(service *OauthConfig) {
+func (config *OauthConfig) setDefaultsADFS() {
 	log.Info("configuring ADFS OAuth")
-	OAuthopts = oauth2.SetAuthURLParam("resource", service.RedirectURL) // Needed or all claims won't be included
+	OAuthopts = oauth2.SetAuthURLParam("resource", config.RedirectURL) // Needed or all claims won't be included
 }
 
-func setDefaultsGitHub(service *OauthConfig) {
+func (config *OauthConfig) setDefaultsGitHub() {
 	// log.Info("configuring GitHub OAuth")
-	if service.AuthURL == "" {
-		service.AuthURL = github.Endpoint.AuthURL
+	if config.AuthURL == "" {
+		config.AuthURL = github.Endpoint.AuthURL
 	}
-	if service.TokenURL == "" {
-		service.TokenURL = github.Endpoint.TokenURL
+	if config.TokenURL == "" {
+		config.TokenURL = github.Endpoint.TokenURL
 	}
-	if service.UserInfoURL == "" {
-		service.UserInfoURL = "https://api.github.com/user?access_token="
+	if config.UserInfoURL == "" {
+		config.UserInfoURL = "https://api.github.com/user?access_token="
 	}
-	if service.UserTeamURL == "" {
-		service.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+	if config.UserTeamURL == "" {
+		config.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
 	}
-	if service.UserOrgURL == "" {
-		service.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+	if config.UserOrgURL == "" {
+		config.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
 	}
-	if len(service.Scopes) == 0 {
+	if len(config.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63
 		// https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
-		service.Scopes = []string{"read:user"}
+		config.Scopes = []string{"read:user"}
 
 		if len(Cfg.TeamWhiteList) > 0 {
-			service.Scopes = append(service.Scopes, "read:org")
+			config.Scopes = append(config.Scopes, "read:org")
 		}
 	}
-	service.CodeChallengeMethod = "S256"
+	config.CodeChallengeMethod = "S256"
 }
 
-func configureOAuthClient(service *OauthConfig) {
-	log.Infof("configuring %s OAuth with Endpoint %s", service.Provider, service.AuthURL)
+func (config *OauthConfig) configureOAuthClient() {
+	log.Infof("configuring %s OAuth with Endpoint %s", config.Provider, config.AuthURL)
 	OAuthClient = &oauth2.Config{
-		ClientID:     service.ClientID,
-		ClientSecret: service.ClientSecret,
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  service.AuthURL,
-			TokenURL: service.TokenURL,
+			AuthURL:  config.AuthURL,
+			TokenURL: config.TokenURL,
 		},
-		RedirectURL: service.RedirectURL,
-		Scopes:      service.Scopes,
+		RedirectURL: config.RedirectURL,
+		Scopes:      config.Scopes,
 	}
 }
 
