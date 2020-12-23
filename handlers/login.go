@@ -39,7 +39,24 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// no matter how you ended up here, make sure the cookie gets cleared out
 	cookie.ClearCookie(w, r)
 
-	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
+	// requestedURL comes from nginx in the query string via a 302 redirect
+	// it sets the ultimate destination
+	// https://vouch.yoursite.com/login?url=
+	// need to clean the URL to prevent malicious redirection
+
+	reqURL, err := getValidRequestedURL(r)
+	if err != nil {
+		responses.Error400(w, r, err)
+		return
+	}
+
+	handler, err := GetHandlerForHostname((reqURL).Hostname())
+	if err != nil {
+		responses.Error400(w, r, err)
+		return
+	}
+
+	session, err := handler.sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
 		log.Infof("couldn't find existing encrypted secure cookie with name %s: %s (probably fine)", cfg.Cfg.Session.Name, err)
 	}
@@ -53,18 +70,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["state"] = state
 	log.Debugf("session state set to %s", session.Values["state"])
 
-	// requestedURL comes from nginx in the query string via a 302 redirect
-	// it sets the ultimate destination
-	// https://vouch.yoursite.com/login?url=
-	// need to clean the URL to prevent malicious redirection
-	var _requestedURL *url.URL
-	if _requestedURL, err = getValidRequestedURL(r); err != nil {
-		responses.Error400(w, r, err)
-		return
-	}
-	requestedURL := (*_requestedURL).String()
-
 	// set session variable for eventual 302 redirecton to original request
+	requestedURL := (*reqURL).String()
 	session.Values["requestedURL"] = requestedURL
 	log.Debugf("session requestedURL set to %s", session.Values["requestedURL"])
 
@@ -78,16 +85,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	failcount++
 	session.Values[requestedURL] = failcount
 
-	service, _, err := cfg.GetServiceForHostname((*_requestedURL).Hostname())
-	if err != nil {
-		responses.Error400(w, r, err)
-		return
-	}
-
 	// Add code challenge if enabled
-	if service.CodeChallengeMethod != "" {
+	if handler.config.CodeChallengeMethod != "" {
 		log.Debugf("Adding code challenge")
-		appendCodeChallenge(service, *session)
+		appendCodeChallenge(handler.config, *session)
 	}
 
 	log.Debugf("saving session with failcount %d", failcount)
@@ -103,7 +104,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var oURL = oauthLoginURL(service, r, *session)
+	var oURL = OauthLoginURL(handler.config, r, *session)
 	log.Debugf("redirecting to oauthURL %s", oURL)
 	responses.Redirect302(w, r, oURL)
 }

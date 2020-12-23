@@ -37,7 +37,13 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
 	// Handle the exchange code to initiate a transport.
 
-	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
+	handler, err := GetHandlerForHostname(r.Host)
+	if err != nil {
+		responses.Error400(w, r, err)
+		return
+	}
+
+	session, err := handler.sessstore.Get(r, cfg.Cfg.Session.Name)
 	if err != nil {
 		responses.Error400(w, r, fmt.Errorf("/auth %w: could not find session store %s", err, cfg.Cfg.Session.Name))
 		return
@@ -65,13 +71,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// is code challenge enabled?
 	authCodeOptions := []oauth2.AuthCodeOption{}
 
-	service, _, err := cfg.GetServiceForHostname(r.Host)
-	if err != nil {
-		responses.Error400(w, r, err)
-		return
-	}
-
-	if service.CodeChallengeMethod != "" {
+	if handler.config.CodeChallengeMethod != "" {
 		authCodeOptions = []oauth2.AuthCodeOption{
 			oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)),
 			oauth2.SetAuthURLParam("code_verifier", session.Values["codeVerifier"].(string)),
@@ -167,14 +167,9 @@ func verifyUser(u interface{}) (bool, error) {
 }
 
 func getUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error {
-	service, domainOptions, err := cfg.GetServiceForHostname(r.Host)
+	handler, err := GetHandlerForHostname(r.Host)
 	if err != nil {
 		return err
 	}
-
-	provider, found := providers[domainOptions.ServiceId]
-	if !found {
-		return fmt.Errorf("No provider for service %s", domainOptions.ServiceId)
-	}
-	return provider.GetUserInfo(service, r, user, customClaims, ptokens, opts...)
+	return handler.provider.GetUserInfo(r, user, customClaims, ptokens, opts...)
 }

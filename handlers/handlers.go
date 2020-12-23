@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
+	"fmt"
 	"golang.org/x/oauth2"
 	"net/http"
 
@@ -43,33 +44,67 @@ const (
 )
 
 var (
-	sessstore *sessions.CookieStore
-	log       *zap.SugaredLogger
-	fastlog   *zap.Logger
-	providers = make(map[string]Provider)
+	log      *zap.SugaredLogger
+	fastlog  *zap.Logger
+	Handlers []*Handler
 )
+
+type Handler struct {
+	sessstore sessions.CookieStore
+	provider  Provider
+	config    *cfg.OauthConfig
+}
 
 // Configure see main.go configure()
 func Configure() {
+	Handlers = []*Handler{}
+	cfg.GenOAuth.IterConfigs(func(config *cfg.OauthConfig) {
+		Handlers = append(Handlers, Create(config))
+	})
+
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
+	common.Configure()
+}
+
+func Create(config *cfg.OauthConfig) *Handler {
+
 	// http://www.gorillatoolkit.org/pkg/sessions
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
+	sessstore := sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 	sessstore.Options.SameSite = cookie.SameSite()
 	sessstore.Options.MaxAge = 300 // give the user five minutes to log in at the IdP
 
-	for _, service := range (*cfg.GenOAuth).Services {
-		provider := getProvider(service.Provider)
-		provider.Configure()
-		providers[service.Id] = provider
+	provider := GetProvider(config)
+	provider.Configure(config)
+
+	return &Handler{
+		sessstore: *sessstore,
+		provider:  provider,
+		config:    config,
 	}
-	common.Configure()
 }
 
-func getProvider(Provider string) Provider {
-	switch Provider {
+func GetHandlerForHostname(hostname string) (*Handler, error) {
+
+	config, err := cfg.GetConfigForHostname(hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(Handlers); i++ {
+		handler := Handlers[i]
+		if handler.config.Id == config.Id {
+			return handler, nil
+		}
+	}
+
+	return nil, fmt.Errorf("No provider for service %s", config.Id)
+}
+
+func GetProvider(config *cfg.OauthConfig) Provider {
+	switch config.Provider {
 	case cfg.Providers.IndieAuth:
 		return indieauth.Provider{}
 	case cfg.Providers.ADFS:
@@ -90,7 +125,7 @@ func getProvider(Provider string) Provider {
 		return openid.Provider{}
 	default:
 		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
-		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
+		cfg.Logging.Logger.Fatal("oauth.provider appears to be misconfigured, please check your config")
 		return nil
 	}
 }

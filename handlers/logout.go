@@ -43,7 +43,14 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	cookie.ClearCookie(w, r)
 	log.Debug("/logout deleting session")
-	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
+
+	handler, err := GetHandlerForHostname(r.Host)
+	if err != nil {
+		responses.Error403(w, r, err)
+		return
+	}
+
+	session, err := handler.sessstore.Get(r, cfg.Cfg.Session.Name)
 	session.Options.MaxAge = -1
 	if err != nil {
 		log.Error(err)
@@ -52,13 +59,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
-	service, _, err := cfg.GetServiceForHostname(r.Host)
-	if err != nil {
-		responses.Error403(w, r, err)
-		return
-	}
-
-	providerLogoutURL := service.LogoutURL
+	providerLogoutURL := handler.config.LogoutURL
 	redirectURL := r.URL.Query().Get("url")
 
 	// Make sure that redirectURL, if given, is allowed by config
