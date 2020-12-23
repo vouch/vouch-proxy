@@ -28,14 +28,16 @@ import (
 type Provider struct{}
 
 var log *zap.SugaredLogger
+var config *cfg.OauthConfig
 
 // Configure see main.go configure()
-func (Provider) Configure() {
+func (Provider) Configure(configp *cfg.OauthConfig) {
 	log = cfg.Logging.Logger
+	config = configp
 }
 
 // GetUserInfo provider specific call to get userinfomation
-func (Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	// indieauth sends the "me" setting in json back to the callback, so just pluck it from the callback
 	code := r.URL.Query().Get("code")
 	log.Errorf("ptoken.AccessToken: %s", code)
@@ -53,21 +55,21 @@ func (Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *stru
 	if fw, err = w.CreateFormField("redirect_uri"); err != nil {
 		return err
 	}
-	if _, err = fw.Write([]byte(service.RedirectURL)); err != nil {
+	if _, err = fw.Write([]byte(config.RedirectURL)); err != nil {
 		return err
 	}
 	// v.Set("client_id", cfg.service.ClientID)
 	if fw, err = w.CreateFormField("client_id"); err != nil {
 		return err
 	}
-	if _, err = fw.Write([]byte(service.ClientID)); err != nil {
+	if _, err = fw.Write([]byte(config.ClientID)); err != nil {
 		return err
 	}
 	if err = w.Close(); err != nil {
 		log.Error("error closing writer.")
 	}
 
-	req, err := http.NewRequest("POST", service.AuthURL, &b)
+	req, err := http.NewRequest("POST", config.AuthURL, &b)
 	if err != nil {
 		return err
 	}

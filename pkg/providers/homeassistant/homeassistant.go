@@ -24,15 +24,17 @@ import (
 type Provider struct{}
 
 var log *zap.SugaredLogger
+var config *cfg.OauthConfig
 
 // Configure see main.go configure()
-func (Provider) Configure() {
+func (Provider) Configure(configp *cfg.OauthConfig) {
 	log = cfg.Logging.Logger
+	config = configp
 }
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html
-func (Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	_, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false, opts...)
 	if err != nil {
 		return err

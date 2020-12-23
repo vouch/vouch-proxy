@@ -30,22 +30,24 @@ type Provider struct {
 }
 
 var log *zap.SugaredLogger
+var config *cfg.OauthConfig
 
 // Configure see main.go configure()
-func (Provider) Configure() {
+func (Provider) Configure(configp *cfg.OauthConfig) {
 	log = cfg.Logging.Logger
+	config = configp
 }
 
 // GetUserInfo github user info, calls github api for org and teams
 // https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/
-func (me Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
+func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	client, ptoken, err := me.PrepareTokensAndClient(r, ptokens, true)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
-	userinfo, err := client.Get(service.UserInfoURL + ptoken.AccessToken)
+	userinfo, err := client.Get(config.UserInfoURL + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
@@ -99,9 +101,9 @@ func (me Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *s
 				var err error
 				isMember := false
 				if team != "" {
-					isMember, err = getTeamMembershipStateFromGitHub(service, client, user, org, team, ptoken)
+					isMember, err = getTeamMembershipStateFromGitHub(client, user, org, team, ptoken)
 				} else {
-					isMember, err = getOrgMembershipStateFromGitHub(service, client, user, org, ptoken)
+					isMember, err = getOrgMembershipStateFromGitHub(client, user, org, ptoken)
 				}
 				if err != nil {
 					return err
@@ -121,9 +123,9 @@ func (me Provider) GetUserInfo(service cfg.OauthConfig, r *http.Request, user *s
 	return nil
 }
 
-func getOrgMembershipStateFromGitHub(service cfg.OauthConfig, client *http.Client, user *structs.User, orgID string, ptoken *oauth2.Token) (isMember bool, rerr error) {
+func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, orgID string, ptoken *oauth2.Token) (isMember bool, rerr error) {
 	replacements := strings.NewReplacer(":org_id", orgID, ":username", user.Username)
-	orgMembershipResp, err := client.Get(replacements.Replace(service.UserOrgURL) + ptoken.AccessToken)
+	orgMembershipResp, err := client.Get(replacements.Replace(config.UserOrgURL) + ptoken.AccessToken)
 	if err != nil {
 		log.Error(err)
 		return false, err
@@ -149,9 +151,9 @@ func getOrgMembershipStateFromGitHub(service cfg.OauthConfig, client *http.Clien
 	}
 }
 
-func getTeamMembershipStateFromGitHub(service cfg.OauthConfig, client *http.Client, user *structs.User, orgID string, team string, ptoken *oauth2.Token) (isMember bool, rerr error) {
+func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, orgID string, team string, ptoken *oauth2.Token) (isMember bool, rerr error) {
 	replacements := strings.NewReplacer(":org_id", orgID, ":team_slug", team, ":username", user.Username)
-	membershipStateResp, err := client.Get(replacements.Replace(service.UserTeamURL) + ptoken.AccessToken)
+	membershipStateResp, err := client.Get(replacements.Replace(config.UserTeamURL) + ptoken.AccessToken)
 	if err != nil {
 		log.Error(err)
 		return false, err

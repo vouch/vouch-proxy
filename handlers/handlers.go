@@ -34,8 +34,8 @@ import (
 
 // Provider each Provider must support GetuserInfo
 type Provider interface {
-	Configure()
-	GetUserInfo(config cfg.OauthConfig, r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error
+	Configure(config *cfg.OauthConfig)
+	GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) error
 }
 
 const (
