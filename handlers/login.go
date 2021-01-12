@@ -52,6 +52,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// set the state variable in the session
 	session.Values["state"] = state
+
+	// set the path for the session cookie to only send the correct cookie to /auth/{state}/
+	// must have a trailing slash. Otherwise, it is send to all endpoints that _start_ with the cookie path.
+	session.Options.Path = fmt.Sprintf("/auth/%s/", state)
+
 	log.Debugf("session state set to %s", session.Values["state"])
 
 	// requestedURL comes from nginx in the query string via a 302 redirect

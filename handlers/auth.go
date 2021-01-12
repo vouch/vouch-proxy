@@ -11,29 +11,38 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
-	"errors"
 	"fmt"
-	"golang.org/x/oauth2"
-	"net/http"
-
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-)
+	"golang.org/x/oauth2"
+	"net/http"
 
-var (
-	errSessionNotFound = errors.New("/auth could not retrieve session")
-	errInvalidState    = errors.New("/auth the state nonce returned by the IdP does not match the value stored in the session")
-	errURLNotFound     = errors.New("/auth could not retrieve URL from session")
+	"github.com/vouch/vouch-proxy/pkg/responses"
 )
 
 // CallbackHandler /auth
+// - redirects to /auth/{state}/ with the state coming from the query parameter
+func CallbackHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("/auth")
+
+	queryState := r.URL.Query().Get("state")
+	if queryState == "" {
+		responses.Error400(w, r, fmt.Errorf("/auth: could not find state in query %s", r.URL.RawQuery))
+		return
+	}
+	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
+	authStateURL := fmt.Sprintf("/auth/%s/?%s", queryState, r.URL.RawQuery)
+	responses.Redirect302(w, r, authStateURL)
+
+}
+
+// AuthStateHandler /auth/{state}
 // - validate info from oauth provider (Google, GitHub, OIDC, etc)
 // - issue jwt in the form of a cookie
-func CallbackHandler(w http.ResponseWriter, r *http.Request) {
+func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
 	// Handle the exchange code to initiate a transport.
 
@@ -50,7 +59,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// did the IdP return an error when they redirected back to /auth
+	// did the IdP return an error?
 	errorIDP := r.URL.Query().Get("error")
 	if errorIDP != "" {
 		errorDescription := r.URL.Query().Get("error_description")
@@ -77,9 +86,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Debugf("/auth Claims from userinfo: %+v", customClaims)
-	//getProviderJWT(r, &user)
-	// log.Debug("/auth CallbackHandler")
-	// log.Debugf("/auth %+v", user)
 
 	// verify / authz the user
 	if ok, err := verifyUser(user); !ok {
