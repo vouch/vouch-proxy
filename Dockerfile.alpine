@@ -9,22 +9,23 @@ WORKDIR ${GOPATH}/src/github.com/vouch/vouch-proxy
 
 COPY . .
 
-# RUN go-wrapper download  # "go get -d -v ./..."
-# RUN ./do.sh build    # see `do.sh` for vouch build details
-# RUN go-wrapper install # "go install -v ./..."
-
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
 RUN ./do.sh install
 
 FROM alpine:latest
 LABEL maintainer="vouch@bnf.net"
+ENV VOUCH_ROOT=/
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY templates/ templates/
 COPY .defaults.yml .defaults.yml 
 # see note for /static in main.go
 COPY static /static
+
+#  do.sh requires bash
+RUN apk add --no-cache bash
 COPY do.sh /do.sh
+
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]

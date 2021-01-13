@@ -13,3 +13,4 @@ certs/*
 coverage.out
 coverage.html.env_google
 .env*
+.cover

@@ -7,7 +7,9 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
+if [ -z "$VOUCH_ROOT" ]; then
+  export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
+fi
 
 IMAGE=voucher/vouch-proxy:latest
 ALPINE=voucher/vouch-proxy:alpine
@@ -118,7 +120,6 @@ EOF
 
   trap _redact_exit SIGINT
   ./vouch-proxy 2>&1 | _redact
-
 
 }
 

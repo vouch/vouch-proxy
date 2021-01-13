@@ -394,6 +394,12 @@ TLDR:
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
 - or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
 
+A bug report can be generated from a docker environment using the `voucher/vouch-proxy:alpine` image...
+
+```!bash
+docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh voucher/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
+```
+
 ### submitting a Pull Request for a new feature
 
 I really love Vouch Proxy! I wish it did XXXX...
