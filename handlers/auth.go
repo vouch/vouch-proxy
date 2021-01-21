@@ -12,21 +12,30 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/domains"
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
-	"github.com/vouch/vouch-proxy/pkg/structs"
-	"golang.org/x/oauth2"
-	"net/http"
-
 	"github.com/vouch/vouch-proxy/pkg/responses"
+	"github.com/vouch/vouch-proxy/pkg/structs"
+
+	"golang.org/x/oauth2"
 )
 
 // CallbackHandler /auth
 // - redirects to /auth/{state}/ with the state coming from the query parameter
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
+
+	// did the IdP return an error?
+	errorIDP := r.URL.Query().Get("error")
+	if errorIDP != "" {
+		errorDescription := r.URL.Query().Get("error_description")
+		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
+		return
+	}
 
 	queryState := r.URL.Query().Get("state")
 	if queryState == "" {
@@ -39,11 +48,11 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// AuthStateHandler /auth/{state}
+// AuthStateHandler /auth/{state}/
 // - validate info from oauth provider (Google, GitHub, OIDC, etc)
 // - issue jwt in the form of a cookie
 func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
-	log.Debug("/auth")
+	log.Debug("/auth/{state}/")
 	// Handle the exchange code to initiate a transport.
 
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
@@ -56,14 +65,6 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	queryState := r.URL.Query().Get("state")
 	if session.Values["state"] != queryState {
 		responses.Error400(w, r, fmt.Errorf("/auth Invalid session state: stored %s, returned %s", session.Values["state"], queryState))
-		return
-	}
-
-	// did the IdP return an error?
-	errorIDP := r.URL.Query().Get("error")
-	if errorIDP != "" {
-		errorDescription := r.URL.Query().Get("error_description")
-		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
 		return
 	}
 
@@ -85,7 +86,7 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successful login at the OAuth provider: %w", err))
 		return
 	}
-	log.Debugf("/auth Claims from userinfo: %+v", customClaims)
+	log.Debugf("/auth/{state}/ Claims from userinfo: %+v", customClaims)
 
 	// verify / authz the user
 	if ok, err := verifyUser(user); !ok {
@@ -113,7 +114,8 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Redirect302(w, r, requestedURL)
 		return
 	}
-	// otherwise serve an error (why isn't there a )
+
+	// otherwise serve an error
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
