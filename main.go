@@ -141,6 +141,9 @@ func main() {
 	logoutH := http.HandlerFunc(handlers.LogoutHandler)
 	muxR.HandleFunc("/logout", timelog.TimeLog(logoutH))
 
+	authStateH := http.HandlerFunc(handlers.AuthStateHandler)
+	muxR.HandleFunc("/auth/{state}/", timelog.TimeLog(authStateH))
+
 	callH := http.HandlerFunc(handlers.CallbackHandler)
 	muxR.HandleFunc("/auth", timelog.TimeLog(callH))
 
