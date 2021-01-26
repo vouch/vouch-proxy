@@ -81,12 +81,12 @@ func decryptionKey() (interface{}, error) {
 
 	f, err := os.Open(cfg.Cfg.JWT.PublicKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("error opening Key %s: %s\n", cfg.Cfg.JWT.PublicKeyFile, err)
+		return nil, fmt.Errorf("error opening Key %s: %s", cfg.Cfg.JWT.PublicKeyFile, err)
 	}
 
 	keyBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Key: %s\n", err)
+		return nil, fmt.Errorf("error reading Key: %s", err)
 	}
 
 	var key interface{}
@@ -101,7 +101,7 @@ func decryptionKey() (interface{}, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error parsing Key: %s\n", err)
+		return nil, fmt.Errorf("error parsing Key: %s", err)
 	}
 
 	return key, nil
@@ -114,12 +114,12 @@ func signingKey() (interface{}, error) {
 
 	f, err := os.Open(cfg.Cfg.JWT.PrivateKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("error opening RSA Key %s: %s\n", cfg.Cfg.JWT.PrivateKeyFile, err)
+		return nil, fmt.Errorf("error opening RSA Key %s: %s", cfg.Cfg.JWT.PrivateKeyFile, err)
 	}
 
 	keyBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Key: %s\n", err)
+		return nil, fmt.Errorf("error reading Key: %s", err)
 	}
 
 	var key interface{}
@@ -134,7 +134,7 @@ func signingKey() (interface{}, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error parsing Key: %s\n", err)
+		return nil, fmt.Errorf("error parsing Key: %s", err)
 	}
 
 	return key, nil
