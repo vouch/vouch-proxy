@@ -1,6 +1,6 @@
 [Unit]
 Description=Vouch Proxy
-After=vouch-proxy.service
+After=network.target
 
 [Service]
 Type=simple

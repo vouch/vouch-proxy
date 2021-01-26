@@ -57,6 +57,12 @@ vouch:
   # - myOrg
   # - myOrg/myTeam
 
+  tls:
+    # cert: /path/to/signed_cert_plus_intermediates # VOUCH_TLS_CERT
+    # key: /path/to/private_key                     # VOUCH_TLS_KEY
+    # profile - defines the TLS configuration profile (modern, intermediate, old, default)
+    profile: intermediate                           # VOUCH_TLS_PROFILE
+
   jwt:
     # secret - VOUCH_JWT_SECRET
     # a random string used to cryptographically sign the jwt
@@ -88,8 +94,10 @@ vouch:
 
     # httpOnly: true # VOUCH_COOKIE_HTTPONLY
 
-    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed. - VOUCH_COOKIE_MAXAGE
-    maxAge: 14400
+    # Number of minutes until session cookie expires - VOUCH_COOKIE_MAXAGE
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
+    # Must not be longer than jwt.maxAge
+    maxAge: 240
 
     # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests. - VOUCH_COOKIE_SAMESITE
     # Possible attribute values lax, strict, none.
