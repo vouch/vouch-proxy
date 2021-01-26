@@ -9,6 +9,8 @@ config/secret
 !config/testing/*
 pkg/model/storage-test.db
 .vscode/*
+certs/*
 coverage.out
 coverage.html.env_google
 .env*
+.cover

@@ -18,6 +18,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gorilla/sessions"
+	cv "github.com/nirasan/go-oauth-pkce-code-verifier"
 	"github.com/theckman/go-securerandom"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -50,6 +52,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// set the state variable in the session
 	session.Values["state"] = state
+
+	// set the path for the session cookie to only send the correct cookie to /auth/{state}/
+	// must have a trailing slash. Otherwise, it is send to all endpoints that _start_ with the cookie path.
+	session.Options.Path = fmt.Sprintf("/auth/%s/", state)
+
 	log.Debugf("session state set to %s", session.Values["state"])
 
 	// requestedURL comes from nginx in the query string via a 302 redirect
@@ -76,6 +83,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	failcount++
 	session.Values[requestedURL] = failcount
 
+	// Add code challenge if enabled
+	if cfg.GenOAuth.CodeChallengeMethod != "" {
+		log.Debugf("Adding code challenge")
+		appendCodeChallenge(*session)
+	}
+
 	log.Debugf("saving session with failcount %d", failcount)
 	if err = session.Save(r, w); err != nil {
 		log.Error(err)
@@ -89,7 +102,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SUCCESS
 	// bounce to oauth provider for login
-	var oURL = oauthLoginURL(r, state)
+	var oURL = oauthLoginURL(r, *session)
 	log.Debugf("redirecting to oauthURL %s", oURL)
 	responses.Redirect302(w, r, oURL)
 }
@@ -227,43 +240,43 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	return u.String(), nil
 }
 
-func oauthLoginURL(r *http.Request, state string) string {
+func oauthLoginURL(r *http.Request, session sessions.Session) string {
 	// State can be some kind of random generated hash string.
 	// See relevant RFC: http://tools.ietf.org/html/rfc6749#section-10.12
-	var lurl string
-
+	var state string = session.Values["state"].(string)
+	opts := []oauth2.AuthCodeOption{}
 	if cfg.GenOAuth.Provider == cfg.Providers.IndieAuth {
-		lurl = cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
-	} else if cfg.GenOAuth.Provider == cfg.Providers.ADFS {
-		lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
-	} else {
-		// cfg.OAuthClient.RedirectURL is set in cfg
-		// this checks the multiple redirect case for multiple matching domains
-		if len(cfg.GenOAuth.RedirectURLs) > 0 {
-			found := false
-			domain := domains.Matches(r.Host)
-			log.Debugf("/login looking for callback_url matching %s", domain)
-			for _, v := range cfg.GenOAuth.RedirectURLs {
-				if strings.Contains(v, domain) {
-					found = true
-					log.Debugf("/login callback_url set to %s", v)
-					cfg.OAuthClient.RedirectURL = v
-					break
-				}
-			}
-			if !found {
-				log.Infof("/login no callback_url matched %s (is the `Host` header being passed to Vouch Proxy?)", domain)
+		return cfg.OAuthClient.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "id"))
+	}
+
+	// cfg.OAuthClient.RedirectURL is set in cfg
+	// this checks the multiple redirect case for multiple matching domains
+	if len(cfg.GenOAuth.RedirectURLs) > 0 {
+		found := false
+		domain := domains.Matches(r.Host)
+		log.Debugf("/login looking for callback_url matching %s", domain)
+		for _, v := range cfg.GenOAuth.RedirectURLs {
+			if strings.Contains(v, domain) {
+				found = true
+				log.Debugf("/login callback_url set to %s", v)
+				cfg.OAuthClient.RedirectURL = v
+				break
 			}
 		}
-		// Google and a few other IdPs allow other options to be set
-		if cfg.OAuthopts != nil {
-			lurl = cfg.OAuthClient.AuthCodeURL(state, cfg.OAuthopts)
-		} else {
-			lurl = cfg.OAuthClient.AuthCodeURL(state)
+		if !found {
+			log.Infof("/login no callback_url matched %s (is the `Host` header being passed to Vouch Proxy?)", domain)
 		}
 	}
-	// log.Debugf("loginURL %s", url)
-	return lurl
+	// append code challenge and code challenge method query parameters if enabled
+
+	if cfg.GenOAuth.CodeChallengeMethod != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("code_challenge_method", cfg.GenOAuth.CodeChallengeMethod))
+		opts = append(opts, oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)))
+	}
+	if cfg.OAuthopts != nil {
+		opts = append(opts, cfg.OAuthopts)
+	}
+	return cfg.OAuthClient.AuthCodeURL(state, opts...)
 }
 
 var regExJustAlphaNum, _ = regexp.Compile("[^a-zA-Z0-9]+")
@@ -275,4 +288,24 @@ func generateStateNonce() (string, error) {
 	}
 	state = regExJustAlphaNum.ReplaceAllString(state, "")
 	return state, nil
+}
+
+func appendCodeChallenge(session sessions.Session) {
+	var codeChallenge string
+	var CodeVerifier, _ = cv.CreateCodeVerifier()
+	switch strings.ToUpper(cfg.GenOAuth.CodeChallengeMethod) {
+	case "S256":
+		codeChallenge = CodeVerifier.CodeChallengeS256()
+		break
+	case "PLAIN":
+		codeChallenge = CodeVerifier.CodeChallengePlain()
+		// TODO support plain text code challenge
+		log.Fatal("plain code challenge method is not supported")
+		return
+	default:
+		log.Fatal("Code challenge method %s is invalid", cfg.GenOAuth.CodeChallengeMethod)
+		return
+	}
+	session.Values["codeChallenge"] = codeChallenge
+	session.Values["codeVerifier"] = CodeVerifier.Value
 }

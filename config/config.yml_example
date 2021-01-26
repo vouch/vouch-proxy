@@ -55,6 +55,12 @@ vouch:
   # - myOrg
   # - myOrg/myTeam
 
+  tls:
+    # cert: /path/to/signed_cert_plus_intermediates # VOUCH_TLS_CERT
+    # key: /path/to/private_key                     # VOUCH_TLS_KEY
+    # profile - defines the TLS configuration profile (modern, intermediate, old, default)
+    profile: intermediate                           # VOUCH_TLS_PROFILE
+
   jwt:
     # signing_method: the algorithm used to sign the JWT.
     # Can be one of HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512
@@ -97,8 +103,10 @@ vouch:
 
     # httpOnly: true # VOUCH_COOKIE_HTTPONLY
 
-    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed. - VOUCH_COOKIE_MAXAGE
-    maxAge: 14400
+    # Number of minutes until session cookie expires - VOUCH_COOKIE_MAXAGE
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
+    # Must not be longer than jwt.maxAge
+    maxAge: 240
 
     # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests. - VOUCH_COOKIE_SAMESITE
     # Possible attribute values lax, strict, none.
@@ -176,19 +184,20 @@ vouch:
 #
 
 # environmental variables for OAuth config:
-#   provider:              OAUTH_PROVIDER
-#   client_id:             OAUTH_CLIENT_ID
-#   client_secret:         OAUTH_CLIENT_SECRET
-#   auth_url:              OAUTH_AUTH_URL
-#   token_url:             OAUTH_TOKEN_URL
-#   end_session_endpoint:  OAUTH_END_SESSION_ENDPOINT
-#   callback_url:          OAUTH_CALLBACK_URL
-#   user_info_url:         OAUTH_USER_INFO_URL
-#   user_team_url:         OAUTH_USER_TEAM_URL
-#   user_org_url:          OAUTH_USER_ORG_URL
-#   preferreddomain:       OAUTH_PREFERREDDOMAIN
-#   callback_urls:         OAUTH_CALLBACK_URLS
-#   scopes:                OAUTH_SCOPES
+#   provider:                OAUTH_PROVIDER
+#   client_id:               OAUTH_CLIENT_ID
+#   client_secret:           OAUTH_CLIENT_SECRET
+#   auth_url:                OAUTH_AUTH_URL
+#   token_url:               OAUTH_TOKEN_URL
+#   end_session_endpoint:    OAUTH_END_SESSION_ENDPOINT
+#   callback_url:            OAUTH_CALLBACK_URL
+#   user_info_url:           OAUTH_USER_INFO_URL
+#   user_team_url:           OAUTH_USER_TEAM_URL
+#   user_org_url:            OAUTH_USER_ORG_URL
+#   preferreddomain:         OAUTH_PREFERREDDOMAIN
+#   callback_urls:           OAUTH_CALLBACK_URLS
+#   scopes:                  OAUTH_SCOPES
+#   code_challenge_method:   OAUTH_CODE_CHALLENGE_METHOD
 
 #
 # configure ONLY ONE of the following oauth providers
@@ -240,6 +249,9 @@ oauth:
     - email
     - profile
   callback_url: http://vouch.yourdomain.com:9090/auth
+  # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
+  # resolves issue https://github.com/vouch/vouch-proxy/issues/303
+  code_challenge_method: S256
 
   # IndieAuth
   # https://indielogin.com/api
