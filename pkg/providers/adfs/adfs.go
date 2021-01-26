@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -46,7 +47,7 @@ func (Provider) Configure() {
 
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers#supported-scenarios
-func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens) (rerr error) {
+func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	code := r.URL.Query().Get("code")
 	log.Debugf("code: %s", code)
 

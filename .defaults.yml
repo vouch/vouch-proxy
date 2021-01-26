@@ -17,6 +17,11 @@ vouch:
   # whiteList:
   # teamWhitelist:
 
+  tls:
+    # cert:
+    # key:
+    profile: intermediate
+
   jwt:
     #   secret:
     issuer: Vouch

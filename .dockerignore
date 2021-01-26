@@ -11,3 +11,5 @@ config/config.yml_orig
 .dockerignore
 Dockerfile
 handlers/rice-box.go
+certs
+.cover/*

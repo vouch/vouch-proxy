@@ -20,8 +20,8 @@ RUN ./do.sh install
 FROM scratch
 LABEL maintainer="vouch@bnf.net"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY templates/ templates/
-COPY .defaults.yml .defaults.yml 
+COPY templates /templates
+COPY .defaults.yml /.defaults.yml 
 # see note for /static in main.go
 COPY static /static
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
