@@ -7,7 +7,9 @@ SCRIPT=$(readlink -f "$0")
 SDIR=$(dirname "$SCRIPT")
 cd $SDIR
 
-export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
+if [ -z "$VOUCH_ROOT" ]; then
+  export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
+fi
 
 IMAGE=voucher/vouch-proxy:latest
 ALPINE=voucher/vouch-proxy:alpine
@@ -122,13 +124,13 @@ EOF
   trap _redact_exit SIGINT
   ./vouch-proxy 2>&1 | _redact
 
-
 }
+
 _redact_exit () {
   echo -e "\n\n-------------------------\n"
   echo -e "redact your nginx config with:\n"
   echo -e "\tcat nginx.conf | sed 's/yourdomain.com/DOMAIN.COM/g'\n"
-  echo -e "Please upload both configs and some logs to https://hastebin.com/ and open an issue on GitHub at https://github.com/vouch/vouch-proxy/issues\n"
+  echo -e "Please upload configs and logs to a gist and open an issue on GitHub at https://github.com/vouch/vouch-proxy/issues\n"
 }
 
 _redact() {

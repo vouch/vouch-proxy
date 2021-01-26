@@ -11,9 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
-	"errors"
 	"fmt"
-	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -22,19 +20,39 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/jwtmanager"
 	"github.com/vouch/vouch-proxy/pkg/responses"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-)
 
-var (
-	errSessionNotFound = errors.New("/auth could not retrieve session")
-	errInvalidState    = errors.New("/auth the state nonce returned by the IdP does not match the value stored in the session")
-	errURLNotFound     = errors.New("/auth could not retrieve URL from session")
+	"golang.org/x/oauth2"
 )
 
 // CallbackHandler /auth
-// - validate info from oauth provider (Google, GitHub, OIDC, etc)
-// - issue jwt in the form of a cookie
+// - redirects to /auth/{state}/ with the state coming from the query parameter
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
+
+	// did the IdP return an error?
+	errorIDP := r.URL.Query().Get("error")
+	if errorIDP != "" {
+		errorDescription := r.URL.Query().Get("error_description")
+		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
+		return
+	}
+
+	queryState := r.URL.Query().Get("state")
+	if queryState == "" {
+		responses.Error400(w, r, fmt.Errorf("/auth: could not find state in query %s", r.URL.RawQuery))
+		return
+	}
+	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
+	authStateURL := fmt.Sprintf("/auth/%s/?%s", queryState, r.URL.RawQuery)
+	responses.Redirect302(w, r, authStateURL)
+
+}
+
+// AuthStateHandler /auth/{state}/
+// - validate info from oauth provider (Google, GitHub, OIDC, etc)
+// - issue jwt in the form of a cookie
+func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
+	log.Debug("/auth/{state}/")
 	// Handle the exchange code to initiate a transport.
 
 	session, err := sessstore.Get(r, cfg.Cfg.Session.Name)
@@ -47,14 +65,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	queryState := r.URL.Query().Get("state")
 	if session.Values["state"] != queryState {
 		responses.Error400(w, r, fmt.Errorf("/auth Invalid session state: stored %s, returned %s", session.Values["state"], queryState))
-		return
-	}
-
-	// did the IdP return an error when they redirected back to /auth
-	errorIDP := r.URL.Query().Get("error")
-	if errorIDP != "" {
-		errorDescription := r.URL.Query().Get("error_description")
-		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
 		return
 	}
 
@@ -76,10 +86,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successful login at the OAuth provider: %w", err))
 		return
 	}
-	log.Debugf("/auth Claims from userinfo: %+v", customClaims)
-	//getProviderJWT(r, &user)
-	// log.Debug("/auth CallbackHandler")
-	// log.Debugf("/auth %+v", user)
+	log.Debugf("/auth/{state}/ Claims from userinfo: %+v", customClaims)
 
 	// verify / authz the user
 	if ok, err := verifyUser(user); !ok {
@@ -107,7 +114,8 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Redirect302(w, r, requestedURL)
 		return
 	}
-	// otherwise serve an error (why isn't there a )
+
+	// otherwise serve an error
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 

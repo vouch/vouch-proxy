@@ -1,0 +1,23 @@
+vouch:
+  # .... domain configuration goes here
+
+  headers:   
+    # The idtoken is used for debugging during configuration
+    # use the idtoken to make sure the oauth provider returns the necessary claims
+    idtoken: X-Vouch-IdP-IdToken
+
+    # make sure to list all the claims you need
+    # Note: they will be stored in the cookie AND header and get sent with each request
+    claims:
+      - sub
+      - name
+      - email
+      - email_verified
+
+oauth:
+  # .... your provider config goes here
+  scopes:
+    # make sure to set the required scopes
+    - openid
+    - email
+    - profile
