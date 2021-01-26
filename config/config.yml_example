@@ -94,7 +94,7 @@ vouch:
 
     # Number of minutes until session cookie expires - VOUCH_COOKIE_MAXAGE
     # Set cookie maxAge to 0 to delete the cookie every time the browser is closed.
-    # Must not longer than jwt.maxAge
+    # Must not be longer than jwt.maxAge
     maxAge: 240
 
     # Set SameSite attribute to restrict browser behaviour wrt sending the cookie along with cross-site requests. - VOUCH_COOKIE_SAMESITE
