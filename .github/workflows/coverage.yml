@@ -9,6 +9,7 @@ jobs:
   test:
     env:
       GOPATH: ${{ github.workspace }}
+      VOUCH_ROOT: ${{ github.workspace }}/src/github.com/${{ github.repository }}
     defaults:
       run:
         working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
@@ -16,7 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.12', '1.13', '1.14', '1.15']
+        # go: ['1.12', '1.13', '1.14', '1.15']
+        go: ['1.15']
 
     steps:
       - uses: actions/setup-go@v2
