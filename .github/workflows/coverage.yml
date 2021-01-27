@@ -37,7 +37,7 @@ jobs:
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: .cover/cover.out
+          path-to-profile: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}/.cover/cover.out
           flag-name: Go-${{ matrix.go }}
           parallel: true
 
