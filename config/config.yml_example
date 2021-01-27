@@ -62,7 +62,7 @@ vouch:
     profile: intermediate                           # VOUCH_TLS_PROFILE
 
   jwt:
-    # signing_method: the algorithm used to sign the JWT.
+    # signing_method: the algorithm used to sign the JWT.  # VOUCH_JWT_SIGNING_METHOD
     # Can be one of HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512
     # Default is HS256 (HMAC) - and requires jwt.secret to be set
     # Both RS* (RSA) and ES* (ECDSA) methods require jwt.private_key_file and
@@ -80,8 +80,8 @@ vouch:
     secret: your_random_string
 
     # Path to the public/private key files when using an RSA or ECDSA signing method.
-    # public_key_file:
-    # private_key_file:
+    # public_key_file:  # VOUCH_JWT_PUBLIC_KEY_FILE
+    # private_key_file: # VOUCH_JWT_PRIVATE_KEY_FILE
 
     # issuer: Vouch # VOUCH_JWT_ISSUER
 
