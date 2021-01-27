@@ -17,7 +17,7 @@ vouch:
     name: VouchTestingSession
 
   jwt:
-    secret: testingSecret
+    secret: testingsecret
 
 oauth:
   provider: indieauth
