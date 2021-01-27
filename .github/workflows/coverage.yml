@@ -7,19 +7,29 @@ on:
 
 jobs:
   test:
+    env:
+      GOPATH: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.11', '1.12', '1.13', '1.14', '1.15']
+        go: ['1.12', '1.13', '1.14', '1.15']
 
     steps:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - uses: actions/checkout@v2
-      - run: ./do.sh goget
-      - run: go test -v -coverprofile=.cover/cover.out ./...
+      - name: checkout 
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+      - name: goget
+        run: ./do.sh goget
+      - name: coverage test
+        run: go test -v -coverprofile=.cover/cover.out ./...
 
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
