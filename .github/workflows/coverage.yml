@@ -6,19 +6,19 @@ on:
   pull_request:
 
 jobs:
-  test:
+  coverage:
     env:
       GOPATH: ${{ github.workspace }}
       VOUCH_ROOT: ${{ github.workspace }}/src/github.com/${{ github.repository }}
-    defaults:
-      run:
-        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+    # defaults:
+    #   run:
+    #     working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # go: ['1.12', '1.13', '1.14', '1.15']
-        go: ['1.15']
+        go: ['1.12', '1.13', '1.14', '1.15']
+        # go: ['1.15']
 
     steps:
       - uses: actions/setup-go@v2
@@ -31,8 +31,7 @@ jobs:
       - name: goget
         run: ./do.sh goget
       - name: coverage test
-        run: mkdir .cover && go test -v -coverprofile=.cover/cover.out ./...
-        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+        run: ./do.sh coverage
 
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
@@ -43,7 +42,7 @@ jobs:
 
   # notifies that all test jobs are finished.
   finish:
-    needs: test
+    needs: coverage
     runs-on: ubuntu-latest
     steps:
       - uses: shogo82148/actions-goveralls@v1
