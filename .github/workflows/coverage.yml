@@ -29,7 +29,7 @@ jobs:
       - name: goget
         run: ./do.sh goget
       - name: coverage test
-        run: go test -v -coverprofile=.cover/cover.out ./...
+        run: mkdir .cover && go test -v -coverprofile=.cover/cover.out ./...
 
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
