@@ -312,12 +312,6 @@ func fixConfigOptions() {
 		Cfg.Headers.Redirect = "X-" + Branding.CcName + "-Requested-URI"
 	}
 
-	if len(Cfg.JWT.SigningMethod) == 0 {
-		Cfg.JWT.SigningMethod = "HS256"
-	} else {
-		Cfg.JWT.SigningMethod = strings.ToUpper(Cfg.JWT.SigningMethod)
-	}
-
 	// jwt defaults
 	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") && len(Cfg.JWT.Secret) == 0 {
 		Cfg.JWT.Secret = getOrGenerateJWTSecret()

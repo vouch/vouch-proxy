@@ -141,12 +141,12 @@ func init() {
 	// log.SetLevel(log.DebugLevel)
 
 	lc = jwtmanager.VouchClaims{
-		u1.Username,
-		jwtmanager.Sites,
-		customClaims.Claims,
-		t1.PAccessToken,
-		t1.PIdToken,
-		jwtmanager.StandardClaims,
+		Username:       u1.Username,
+		Sites:          jwtmanager.Sites,
+		CustomClaims:   customClaims.Claims,
+		PAccessToken:   t1.PAccessToken,
+		PIdToken:       t1.PIdToken,
+		StandardClaims: jwtmanager.StandardClaims,
 	}
 	json.Unmarshal([]byte(claimjson), &customClaims.Claims)
 }

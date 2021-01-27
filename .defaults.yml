@@ -25,6 +25,7 @@ vouch:
     issuer: Vouch
     maxAge: 240
     compress: true
+    signing_method: HS256
 
   cookie:
     name: VouchCookie
