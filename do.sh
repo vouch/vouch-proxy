@@ -151,9 +151,11 @@ _redact() {
 }
 
 coverage() {
-  export EXTRA_TEST_ARGS='-cover'
-  test
-  go tool cover -html=coverage.out -o coverage.html
+  mkdir -p .cover && go test -v -coverprofile=.cover/cover.out ./...
+}
+
+coveragereport() {
+  go tool cover -html=.cover/cover.out -o .cover/coverage.html
 }
 
 test() {
@@ -350,12 +352,13 @@ usage() {
      $0 drunalpine [args]                  - run docker container for alpine
      $0 test [./pkg_test.go]               - run go tests (defaults to all tests)
      $0 test_logging                       - test the logging output
-     $0 coverage                           - coverage report
+     $0 coverage                           - coverage test
+     $0 coveragereport                     - coverage report published to .cover/coverage.html
      $0 profile                            - go pprof tools
      $0 bug_report domain.com [badstr2..]  - print config file and log removing secrets and each provided string
      $0 gogo [gocmd]                       - run, build, any go cmd
      $0 stats                              - simple metrics (lines of code in project, number of go files)
-     $0 watch [cmd]                        - watch the \$CWD for any change and re-reun the [cmd]
+     $0 watch [cmd]                        - watch the $CWD for any change and re-reun the [cmd]
      $0 license [file]                     - apply the license to the file
 
   do is like make
@@ -382,6 +385,7 @@ case "$ARG" in
    |'watch' \
    |'gobuildstatic' \
    |'coverage' \
+   |'coveragereport' \
    |'stats' \
    |'usage' \
    |'bug_report' \
