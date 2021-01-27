@@ -10,9 +10,9 @@ jobs:
     env:
       GOPATH: ${{ github.workspace }}
       VOUCH_ROOT: ${{ github.workspace }}/src/github.com/${{ github.repository }}
-    # defaults:
-    #   run:
-    #     working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
