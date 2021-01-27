@@ -32,6 +32,7 @@ jobs:
         run: ./do.sh goget
       - name: coverage test
         run: mkdir .cover && go test -v -coverprofile=.cover/cover.out ./...
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
 
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
