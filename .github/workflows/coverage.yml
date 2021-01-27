@@ -1,0 +1,50 @@
+name: coverage
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  coverage:
+    env:
+      GOPATH: ${{ github.workspace }}
+      VOUCH_ROOT: ${{ github.workspace }}/src/github.com/${{ github.repository }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.14', '1.15']
+        # go: ['1.15']
+
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: checkout 
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+      - name: goget
+        run: ./do.sh goget
+      - name: coverage test
+        run: ./do.sh coverage
+
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}/.cover/cover.out
+          flag-name: Go-${{ matrix.go }}
+          parallel: true
+
+  # notifies that all test jobs are finished.
+  finish:
+    needs: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          parallel-finished: true
