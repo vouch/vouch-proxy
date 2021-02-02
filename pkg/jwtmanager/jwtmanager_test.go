@@ -44,6 +44,20 @@ var (
 	customClaims = structs.CustomClaims{}
 )
 
+func init() {
+	cfg.InitForTestPurposes()
+	Configure()
+
+	lc = VouchClaims{
+		u1.Username,
+		customClaims.Claims,
+		t1.PAccessToken,
+		t1.PIdToken,
+		StandardClaims,
+	}
+
+}
+
 func TestClaimsHMAC(t *testing.T) {
 	rootDir := os.Getenv(cfg.Branding.UCName + "_ROOT")
 	for _, cfgFile := range []string{"test_config.yml", "test_config_rsa.yml"} {
@@ -51,31 +65,40 @@ func TestClaimsHMAC(t *testing.T) {
 			t.Errorf("failed setting environment variable %s_CONFIG", cfg.Branding.UCName)
 		}
 
-		cfg.InitForTestPurposes()
-		Configure()
-
-		lc = VouchClaims{
-			u1.Username,
-			Sites,
-			customClaims.Claims,
-			t1.PAccessToken,
-			t1.PIdToken,
-			StandardClaims,
-		}
 		json.Unmarshal([]byte(claimjson), &customClaims.Claims)
 
-		populateSites()
 		log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
 		assert.NotEmpty(t, cfg.Cfg.JWT.SigningMethod)
 		assert.NotEmpty(t, cfg.Cfg.JWT.MaxAge)
 
-		uts := CreateUserTokenString(u1, customClaims, t1)
+		uts, err := NewVPJWT(u1, customClaims, t1)
+		assert.NoError(t, err)
+
 		utsParsed, err := ParseTokenString(uts)
-		if err != nil {
-			t.Errorf("failed parsing token string: %s\n", err)
-		}
+		assert.NoError(t, err)
+
 		log.Infof("utsParsed: %+v", utsParsed)
-		log.Infof("Sites: %+v", Sites)
+		// log.Infof("Sites: %+v", Sites)
 		assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
 	}
+	json.Unmarshal([]byte(claimjson), &customClaims.Claims)
+}
+
+func TestClaims(t *testing.T) {
+	aud = audience()
+	log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
+	assert.NotEmpty(t, cfg.Cfg.JWT.Secret)
+	assert.NotEmpty(t, cfg.Cfg.JWT.MaxAge)
+
+	// now := time.Now()
+	// d := time.Duration(ExpiresAtMinutes) * time.Minute
+	// log.Infof("lc d %s", d.String())
+	// lc.StandardClaims.ExpiresAt = now.Add(time.Duration(ExpiresAtMinutes) * time.Minute).Unix()
+	// log.Infof("lc expiresAt %d", now.Unix()-lc.StandardClaims.ExpiresAt)
+	uts, err := NewVPJWT(u1, customClaims, t1)
+	assert.NoError(t, err)
+	utsParsed, _ := ParseTokenString(uts)
+	log.Infof("utsParsed: %+v", utsParsed)
+	log.Infof("Audience: %+v", aud)
+	assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
 }
