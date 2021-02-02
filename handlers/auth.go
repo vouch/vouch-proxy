@@ -110,7 +110,13 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	// SUCCESS!! they are authorized
 
 	// issue the jwt
-	tokenstring := jwtmanager.CreateUserTokenString(user, customClaims, ptokens)
+
+	tokenstring, err := jwtmanager.NewVPJWT(user, customClaims, ptokens)
+	if err != nil {
+		responses.Error500(w, r, fmt.Errorf("/auth Token creation failure: %w . Please seek support from your administrator", err))
+		return
+
+	}
 	cookie.SetCookie(w, r, tokenstring)
 
 	// get the originally requested URL so we can send them on their way
@@ -191,10 +197,10 @@ func verifyUser(u interface{}) (bool, error) {
 	// Domains
 	case len(cfg.Cfg.Domains) != 0:
 		if domains.IsUnderManagement(user.Email) {
-			log.Debugf("verifyUser: Success! Email %s found within a "+cfg.Branding.FullName+" managed domain", user.Email)
+			log.Debugf("verifyUser: Success! Email %s found within a %s managed domain", user.Email, cfg.Branding.FullName)
 			return true, nil
 		}
-		return false, fmt.Errorf("verifyUser: Email %s is not within a "+cfg.Branding.FullName+" managed domain", user.Email)
+		return false, fmt.Errorf("verifyUser: Email %s is not within a %s managed domain", user.Email, cfg.Branding.FullName)
 
 	// nothing configured, allow everyone through
 	default:
