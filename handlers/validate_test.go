@@ -37,7 +37,8 @@ func BenchmarkValidateRequestHandler(b *testing.B) {
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
-	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	userTokenString, err := jwtmanager.NewVPJWT(*user, customClaims, tokens)
+	assert.NoError(b, err)
 
 	c := &http.Cookie{
 		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
@@ -80,12 +81,13 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
-	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	vpjwt, err := jwtmanager.NewVPJWT(*user, customClaims, tokens)
+	assert.NoError(t, err)
 
 	c := &http.Cookie{
 		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
 		Name:    cfg.Cfg.Cookie.Name,
-		Value:   userTokenString,
+		Value:   vpjwt,
 		Expires: time.Now().Add(1 * time.Hour),
 	}
 
@@ -169,7 +171,8 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 		Email:    "test@example.com",
 		Name:     "Test Name",
 	}
-	userTokenString := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	vpjwt, err := jwtmanager.NewVPJWT(*user, customClaims, tokens)
+	assert.NoError(t, err)
 
 	req, err := http.NewRequest("GET", "/validate", nil)
 	if err != nil {
@@ -179,7 +182,7 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 	req.AddCookie(&http.Cookie{
 		// Name:    cfg.Cfg.Cookie.Name + "_1of1",
 		Name:    cfg.Cfg.Cookie.Name,
-		Value:   userTokenString,
+		Value:   vpjwt,
 		Expires: time.Now().Add(1 * time.Hour),
 	})
 
@@ -229,7 +232,8 @@ func TestJWTCacheHandler(t *testing.T) {
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
-	jwt := jwtmanager.CreateUserTokenString(*user, customClaims, tokens)
+	jwt, err := jwtmanager.NewVPJWT(*user, customClaims, tokens)
+	assert.NoError(t, err)
 	badjwt := strings.ReplaceAll(jwt, "a", "z")
 	badjwt = strings.ReplaceAll(badjwt, "b", "x")
 

@@ -29,13 +29,12 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
-// const numSites = 2
+const comma = ","
 
 // VouchClaims jwt Claims specific to vouch
 type VouchClaims struct {
-	Sub          string   `json:"sub"`
-	Username     string   `json:"username"`
-	Sites        []string `json:"sites"` // tempting to make this a map but the array is fewer characters in the jwt
+	Sub          string `json:"sub"`
+	Username     string `json:"username"`
 	CustomClaims map[string]interface{}
 	PAccessToken string
 	PIdToken     string
@@ -45,48 +44,52 @@ type VouchClaims struct {
 // StandardClaims jwt.StandardClaims implementation
 var StandardClaims jwt.StandardClaims
 
-// CustomClaims implementation
-// var CustomClaims map[string]interface{}
-
-// Sites added to VouchClaims
-var Sites []string
 var logger *zap.Logger
 var log *zap.SugaredLogger
+var aud string
 
 // Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
 	logger = cfg.Logging.FastLogger
 	cacheConfigure()
+	aud = audience()
 	StandardClaims = jwt.StandardClaims{
-		Issuer: cfg.Cfg.JWT.Issuer,
+		Issuer:   cfg.Cfg.JWT.Issuer,
+		Audience: aud,
 	}
-	populateSites()
 }
 
-func populateSites() {
-	Sites = make([]string, 0)
+// `aud` of the issued JWT https://tools.ietf.org/html/rfc7519#section-4.1.3
+func audience() string {
+	aud := make([]string, 0)
 	// TODO: the Sites that end up in the JWT come from here
 	// if we add fine grain ability (ACL?) to the equation
 	// then we're going to have to add something fancier here
 	for i := 0; i < len(cfg.Cfg.Domains); i++ {
-		Sites = append(Sites, cfg.Cfg.Domains[i])
+		aud = append(aud, cfg.Cfg.Domains[i])
 	}
+	if cfg.Cfg.Cookie.Domain != "" {
+		aud = append(aud, cfg.Cfg.Cookie.Domain)
+	}
+	return strings.Join(aud, comma)
 }
 
-// CreateUserTokenString converts user to signed jwt
-func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) string {
+// NewVPJWT issue a signed Vouch Proxy JWT for a user
+func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) (string, error) {
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
 		u.Sub,
 		u.Username,
-		Sites,
 		customClaims.Claims,
 		ptokens.PAccessToken,
 		ptokens.PIdToken,
 		StandardClaims,
 	}
+
+	claims.Audience = aud
+	claims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
 
 	// https://github.com/vouch/vouch-proxy/issues/287
 	if cfg.Cfg.Headers.AccessToken == "" {
@@ -96,8 +99,6 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 	if cfg.Cfg.Headers.IDToken == "" {
 		claims.PIdToken = ""
 	}
-
-	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Minute * time.Duration(cfg.Cfg.JWT.MaxAge)).Unix()
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
@@ -109,15 +110,15 @@ func CreateUserTokenString(u structs.User, customClaims structs.CustomClaims, pt
 	ss, err := token.SignedString([]byte(cfg.Cfg.JWT.Secret))
 	// ss, err := token.SignedString([]byte("testing"))
 	if ss == "" || err != nil {
-		log.Errorf("signed token error: %s", err)
+		return "", fmt.Errorf("New JWT: signed token error: %s", err)
 	}
 	if cfg.Cfg.JWT.Compress {
 		ss, err = compressAndEncodeTokenString(ss)
 		if ss == "" || err != nil {
-			log.Errorf("compressed token error: %s", err)
+			return "", fmt.Errorf("New JWT: compressed token error: %w", err)
 		}
 	}
-	return ss
+	return ss, nil
 }
 
 // TokenIsValid gett better error reporting
@@ -143,11 +144,11 @@ func TokenIsValid(token *jwt.Token, err error) bool {
 func SiteInToken(site string, token *jwt.Token) bool {
 	if claims, ok := token.Claims.(*VouchClaims); ok {
 		log.Debugf("site %s claim %v", site, claims)
-		if claims.SiteInClaims(site) {
+		if claims.SiteInAudience(site) {
 			return true
 		}
 	}
-	log.Errorf("site %s not found in token", site)
+	log.Errorf("site %s not found in token audience", site)
 	return false
 }
 
@@ -170,11 +171,11 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 
 }
 
-// SiteInClaims does the claim contain the value?
-func (claims *VouchClaims) SiteInClaims(site string) bool {
-	for _, s := range claims.Sites {
+// SiteInAudience does the claim contain the value?
+func (claims *VouchClaims) SiteInAudience(site string) bool {
+	for _, s := range strings.Split(aud, comma) {
 		if strings.Contains(site, s) {
-			log.Debugf("site %s is found for claims.Site %s", site, s)
+			log.Debugf("site %s is found for claims.Audience %s", site, s)
 			return true
 		}
 	}

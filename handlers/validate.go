@@ -51,7 +51,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cfg.Cfg.AllowAllUsers {
-		if !claims.SiteInClaims(r.Host) {
+		if !claims.SiteInAudience(r.Host) {
 			send401or200PublicAccess(w, r,
 				fmt.Errorf("http header 'Host: %s' not authorized for configured `vouch.domains` (is Host being sent properly?)", r.Host))
 			return

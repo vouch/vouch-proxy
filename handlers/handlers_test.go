@@ -179,7 +179,6 @@ func init() {
 	lc = jwtmanager.VouchClaims{
 		u1.Sub,
 		u1.Username,
-		jwtmanager.Sites,
 		customClaims.Claims,
 		t1.PAccessToken,
 		t1.PIdToken,
@@ -201,7 +200,8 @@ func TestParsedIdPTokens(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setUp(tt.configFile)
-			uts := jwtmanager.CreateUserTokenString(u1, customClaims, t1)
+			uts, err := jwtmanager.NewVPJWT(u1, customClaims, t1)
+			assert.NoError(t, err)
 			utsParsed, _ := jwtmanager.ParseTokenString(uts)
 			utsPtokens, _ := jwtmanager.PTokenClaims(utsParsed)
 

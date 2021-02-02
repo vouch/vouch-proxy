@@ -114,6 +114,18 @@ func Error403(w http.ResponseWriter, r *http.Request, e error) {
 	renderError(w, "403 Forbidden")
 }
 
+// Error500 Internal Error
+// something is not right, hopefully this never happens
+func Error500(w http.ResponseWriter, r *http.Request, e error) {
+	log.Error(e)
+	log.Infof("If this error persists it may be worthy of a bug report but please check your setup first.  See the README at %s", cfg.Branding.URL)
+	addErrandCancelRequest(r)
+	cookie.ClearCookie(w, r)
+	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
+	w.WriteHeader(http.StatusInternalServerError)
+	renderError(w, "500 - Internal Server Error")
+}
+
 // cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`
 func addErrandCancelRequest(r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
