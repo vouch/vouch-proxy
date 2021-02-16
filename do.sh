@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export GO111MODULES=on
+
 # change dir to where this script is running
 CURDIR=${PWD}
 SCRIPT=$(readlink -f "$0")
