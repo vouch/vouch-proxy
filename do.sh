@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-export GO111MODULES=on
-
 # change dir to where this script is running
 CURDIR=${PWD}
 SCRIPT=$(readlink -f "$0")
@@ -92,6 +90,8 @@ watch () {
 
 goget () {
   # install all the things
+  export GO111MODULE=on
+  go mod init
   go get -t -v ./...
 }
 
