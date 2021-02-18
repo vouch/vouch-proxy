@@ -117,7 +117,7 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 		t.Logf("99th percentile latencies: %s", metrics.Latencies.P99)
 		t.Logf("95th percentile latencies: %s", metrics.Latencies.P95)
 		t.Logf("50th percentile latencies: %s", metrics.Latencies.P50)
-		t.Logf("min latencies: %s", metrics.Latencies.Min)
+		t.Logf("mean latencies: %s", metrics.Latencies.Mean)
 		t.Logf("max latencies: %s", metrics.Latencies.Max)
 		t.Logf("/validate 95th percentile latency is higher than %s", limit)
 		if mustFail {
