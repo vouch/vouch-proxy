@@ -58,11 +58,17 @@ drun () {
     docker stop $NAME
     docker rm $NAME
   fi
+  WITHCERTS=""
+  if [ -d "${SDIR}/certs" ] && [ -z $(find ${SDIR}/certs -type d -empty) ]; then
+    WITHCERTS="-v ${SDIR}/certs:/certs"
+  fi
+
 
   CMD="docker run --rm -i -t 
     -p ${HTTPPORT}:${HTTPPORT} 
     --name $NAME 
     -v ${SDIR}/config:/config 
+    $WITHCERTS
     $IMAGE $* "
 
     echo $CMD
@@ -90,7 +96,8 @@ watch () {
 
 goget () {
   # install all the things
-  go get -t -v ./...
+  go get -u -v ./...
+  go mod tidy
 }
 
 REDACT=""
@@ -159,6 +166,8 @@ test() {
   if [ -z "$VOUCH_CONFIG" ]; then
     export VOUCH_CONFIG="$SDIR/config/testing/test_config.yml"
   fi
+
+  go get -t ./...
   # test all the things
   if [ -n "$*" ]; then
     # go test -v -race $EXTRA_TEST_ARGS $*
