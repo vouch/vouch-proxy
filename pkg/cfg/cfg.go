@@ -141,7 +141,7 @@ const (
 	ErrCtxKey ctxKey = 0
 )
 
-// use a typed ctxKey to avoid context key collission
+// use a typed ctxKey to avoid context key collision
 // https://blog.golang.org/context#TOC_3.2.
 type ctxKey int
 
