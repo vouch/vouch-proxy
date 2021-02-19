@@ -1,6 +1,6 @@
 # voucher/vouch-proxy
 # https://github.com/vouch/vouch-proxy
-FROM golang:1.14 AS builder
+FROM golang:1.15 AS builder
 
 LABEL maintainer="vouch@bnf.net"
 

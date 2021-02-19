@@ -13,7 +13,7 @@ fi
 
 IMAGE=voucher/vouch-proxy:latest
 ALPINE=voucher/vouch-proxy:alpine
-GOIMAGE=golang:1.14
+GOIMAGE=golang:1.15
 NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
