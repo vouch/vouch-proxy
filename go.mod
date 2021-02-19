@@ -2,10 +2,6 @@ module github.com/vouch/vouch-proxy
 
 go 1.15
 
-module github.com/vouch/vouch-proxy
-
-go 1.15
-
 require (
 	cloud.google.com/go v0.77.0 // indirect
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
