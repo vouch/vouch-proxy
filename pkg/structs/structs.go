@@ -184,10 +184,10 @@ func (u *NextcloudUser) PrepareUserData() {
 	}
 }
 
-//Alibaba Aliyun
+// AlibabaUser Aliyun
 type AlibabaUser struct {
 	User
-	Data     AliData `json:"data"`
+	Data AliData `json:"data"`
 	// jwt.StandardClaims
 }
 
@@ -200,14 +200,16 @@ func (u *AlibabaUser) PrepareUserData() {
 	u.ID = id
 }
 
+// AliData `data` subobject of Alibaba User response
+// https://github.com/vouch/vouch-proxy/issues/344
 type AliData struct {
-	Sub string `json:"sub"`
+	Sub      string `json:"sub"`
 	Username string `json:"username"`
 	Nickname string `json:"nickname"`
-	Email string `json:"email"`
-	ID string `json:"ou_id"`
-	Phone string `json:"phone_number"`
-	OuName string `json:"ou_name"`
+	Email    string `json:"email"`
+	ID       string `json:"ou_id"`
+	Phone    string `json:"phone_number"`
+	OuName   string `json:"ou_name"`
 }
 
 // Team has members and provides acess to sites

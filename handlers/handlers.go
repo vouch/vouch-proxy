@@ -11,16 +11,16 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
-	"github.com/vouch/vouch-proxy/pkg/providers/alibaba"
-	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/gorilla/sessions"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/providers/adfs"
+	"github.com/vouch/vouch-proxy/pkg/providers/alibaba"
 	"github.com/vouch/vouch-proxy/pkg/providers/azure"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/providers/github"

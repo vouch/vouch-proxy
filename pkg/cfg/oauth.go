@@ -42,7 +42,7 @@ var (
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
-		Alibaba: 	   "alibaba",
+		Alibaba:       "alibaba",
 	}
 )
 
