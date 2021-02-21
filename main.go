@@ -56,6 +56,7 @@ var (
 	host      = "undefined"
 	semver    = "undefined"
 	branch    = "undefined"
+	uname     = "undefined"
 	staticDir = "/static/"
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
@@ -122,6 +123,7 @@ func main() {
 		// "semver":    semver,
 		"version", version,
 		"buildtime", builddt,
+		"uname", uname,
 		"buildhost", host,
 		"branch", branch,
 		"semver", semver,

@@ -207,6 +207,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
+- [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
 
 Please do help us to expand this list.
 

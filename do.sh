@@ -18,13 +18,21 @@ NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
 
-#--YetAnotherBugHunter 02/20/21
-#-- Added function Hostname() to hide
-#-- the detail of querying for a host's
-#-- fully-qualified domain name since how
-#-- this is done can vary based on the OS.
+run () {
+  go run main.go
+}
 
- Hostname() {
+build () {
+  local VERSION=$(git describe --always --long)
+  local DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # ISO-8601
+  local FQDN=$(_hostname)
+  local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
+  local BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  local UNAME=$(uname)
+  go build -i -v -ldflags=" -X main.version=${VERSION} -X main.uname=${UNAME} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
+}
+
+_hostname() {
   local FQDN
   local HOSTNAME_CMD
 
@@ -34,26 +42,12 @@ GODOC_PORT=5050
   esac
 
   FQDN=$($HOSTNAME_CMD)
-  #-- Can't test against $? since the assignment to FQDN always succeeds even if $HOSTNAME_CMD fails.
-  if [ "$FQDN" = "" ]; then
+  if [ -z "$FQDN" ]; then
     >&2 echo "error: Could determine the fully qualified domain name using command $HOSTNAME_CMD"
     return 1
   fi
   echo $FQDN 
   return 0;
-}
-
-run () {
-  go run main.go
-}
-
-build () {
-  local VERSION=$(git describe --always --long)
-  local DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # ISO-8601
-  local FQDN=$(Hostname)
-  local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
-  local BRANCH=$(git rev-parse --abbrev-ref HEAD)
-  go build -i -v -ldflags=" -X main.version=${VERSION} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
 }
 
 install () {
@@ -345,7 +339,6 @@ profile() {
   ./vouch-proxy -profile
   go tool pprof -http=0.0.0.0:19091 http://0.0.0.0:9090/debug/pprof/profile?seconds=10
 }
-
 
 gofmt() {
   # segfault's without exec since it would just call this function infinitely :)
