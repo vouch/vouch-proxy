@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 # change dir to where this script is running
@@ -18,6 +18,31 @@ NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
 
+#--YetAnotherBugHunter 02/20/21
+#-- Added function Hostname() to hide
+#-- the detail of querying for a host's
+#-- fully-qualified domain name since how
+#-- this is done can vary based on the OS.
+
+ Hostname() {
+  local FQDN
+  local HOSTNAME_CMD
+
+  case $(uname) in
+    FreeBSD) HOSTNAME_CMD="hostname";;
+          *) HOSTNAME_CMD="hostname --fqdn"
+  esac
+
+  FQDN=$($HOSTNAME_CMD)
+  #-- Can't test against $? since the assignment to FQDN always succeeds even if $HOSTNAME_CMD fails.
+  if [ "$FQDN" = "" ]; then
+    >&2 echo "error: Could determine the fully qualified domain name using command $HOSTNAME_CMD"
+    return 1
+  fi
+  echo $FQDN 
+  return 0;
+}
+
 run () {
   go run main.go
 }
@@ -25,7 +50,7 @@ run () {
 build () {
   local VERSION=$(git describe --always --long)
   local DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # ISO-8601
-  local FQDN=$(hostname --fqdn)
+  local FQDN=$(Hostname)
   local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
   local BRANCH=$(git rev-parse --abbrev-ref HEAD)
   go build -i -v -ldflags=" -X main.version=${VERSION} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
