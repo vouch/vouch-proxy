@@ -143,6 +143,7 @@ func setProviderDefaults() {
 		configureOAuthClient()
 	} else if GenOAuth.Provider == Providers.Azure {
 		setDefaultsAzure()
+		configureOAuthClient()
 	} else if GenOAuth.Provider == Providers.IndieAuth {
 		GenOAuth.CodeChallengeMethod = "S256"
 		configureOAuthClient()
