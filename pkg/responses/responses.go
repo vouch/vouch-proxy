@@ -57,8 +57,9 @@ func RenderIndex(w http.ResponseWriter, msg string) {
 
 // renderError html error page
 // something terse for the end user
-func renderError(w http.ResponseWriter, msg string) {
+func renderError(w http.ResponseWriter, msg string, status int) {
 	log.Debugf("rendering error for user: %s", msg)
+	w.WriteHeader(status)
 	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
 		log.Error(err)
 	}
@@ -89,7 +90,7 @@ func Error400(w http.ResponseWriter, r *http.Request, e error) {
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusBadRequest)
 	addErrandCancelRequest(r)
-	renderError(w, "400 Bad Request")
+	renderError(w, "400 Bad Request", http.StatusOK)
 }
 
 // Error401 Unauthorized the standard error
@@ -103,6 +104,14 @@ func Error401(w http.ResponseWriter, r *http.Request, e error) {
 	// renderError(w, "401 Unauthorized")
 }
 
+func Error401HTTP(w http.ResponseWriter, r *http.Request, e error) {
+	log.Error(e)
+	addErrandCancelRequest(r)
+	cookie.ClearCookie(w, r)
+	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
+	renderError(w, e.Error(), http.StatusUnauthorized)
+}
+
 // Error403 Forbidden
 // if there's an error during /auth or if they don't pass validation in /auth
 func Error403(w http.ResponseWriter, r *http.Request, e error) {
@@ -111,7 +120,7 @@ func Error403(w http.ResponseWriter, r *http.Request, e error) {
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusForbidden)
-	renderError(w, "403 Forbidden")
+	renderError(w, "403 Forbidden", http.StatusOK)
 }
 
 // Error500 Internal Error
@@ -123,7 +132,7 @@ func Error500(w http.ResponseWriter, r *http.Request, e error) {
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	w.WriteHeader(http.StatusInternalServerError)
-	renderError(w, "500 - Internal Server Error")
+	renderError(w, "500 - Internal Server Error", http.StatusOK)
 }
 
 // cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`

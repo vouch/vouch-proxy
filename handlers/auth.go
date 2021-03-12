@@ -33,7 +33,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	errorIDP := r.URL.Query().Get("error")
 	if errorIDP != "" {
 		errorDescription := r.URL.Query().Get("error_description")
-		responses.Error401(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
+		responses.Error401HTTP(w, r, fmt.Errorf("/auth Error from IdP: %s - %s", errorIDP, errorDescription))
 		return
 	}
 
