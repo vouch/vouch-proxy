@@ -13,7 +13,7 @@ env:
   - ISTRAVIS=true
 
 before_install:
-  - apt-get install openssl
+  - sudo apt-get install openssl
   - ./do.sh goget
   # - go get github.com/golang/lint/golint # Linter
   # - go get github.com/fzipp/gocyclo
