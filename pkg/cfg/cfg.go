@@ -14,6 +14,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -21,6 +22,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -123,7 +125,6 @@ var (
 	IsHealthCheck = false
 
 	errConfigNotFound = errors.New("configuration file not found")
-	errConfigIsBad    = errors.New("configuration file not found")
 )
 
 type cmdLineFlags struct {
@@ -152,7 +153,7 @@ type ctxKey int
 // the order of config follows the Viper conventions...
 //
 // The priority of the sources is the following:
-// 1. comand line flags
+// 1. command line flags
 // 2. env. variables
 // 3. config file
 // 4. defaults
@@ -567,4 +568,70 @@ func InitForTestPurposesWithProvider(provider string) {
 	}
 	cleanClaimsHeaders()
 
+}
+
+func DecryptionKey() (interface{}, error) {
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") {
+		return []byte(Cfg.JWT.Secret), nil
+	}
+
+	f, err := os.Open(Cfg.JWT.PublicKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error opening Key %s: %s", Cfg.JWT.PublicKeyFile, err)
+	}
+
+	keyBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Key: %s", err)
+	}
+
+	var key interface{}
+	switch {
+	case strings.HasPrefix(Cfg.JWT.SigningMethod, "RS"):
+		key, err = jwt.ParseRSAPublicKeyFromPEM(keyBytes)
+	case strings.HasPrefix(Cfg.JWT.SigningMethod, "ES"):
+		key, err = jwt.ParseECPublicKeyFromPEM(keyBytes)
+	default:
+		// signingMethod should already have been validated, this should not happen
+		return nil, fmt.Errorf("unexpected signing method %s", Cfg.JWT.SigningMethod)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Key: %s", err)
+	}
+
+	return key, nil
+}
+
+func SigningKey() (interface{}, error) {
+	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") {
+		return []byte(Cfg.JWT.Secret), nil
+	}
+
+	f, err := os.Open(Cfg.JWT.PrivateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error opening RSA Key %s: %s", Cfg.JWT.PrivateKeyFile, err)
+	}
+
+	keyBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Key: %s", err)
+	}
+
+	var key interface{}
+	switch {
+	case strings.HasPrefix(Cfg.JWT.SigningMethod, "RS"):
+		key, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
+	case strings.HasPrefix(Cfg.JWT.SigningMethod, "ES"):
+		key, err = jwt.ParseECPrivateKeyFromPEM(keyBytes)
+	default:
+		// We should have validated this before
+		return nil, fmt.Errorf("unexpected signing method %s", Cfg.JWT.SigningMethod)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Key: %s", err)
+	}
+
+	return key, nil
 }

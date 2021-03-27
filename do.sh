@@ -186,6 +186,15 @@ test() {
     export VOUCH_CONFIG="$SDIR/config/testing/test_config.yml"
   fi
 
+  TEST_PRIVATE_KEY_FILE="$SDIR/config/testing/rsa.key"
+  TEST_PUBLIC_KEY_FILE="$SDIR/config/testing/rsa.pub"
+  if [[ ! -f "$TEST_PRIVATE_KEY_FILE" ]]; then
+    openssl genrsa -out "$TEST_PRIVATE_KEY_FILE" 4096
+  fi
+  if [[ ! -f "$TEST_PUBLIC_KEY_FILE" ]]; then
+    openssl rsa -in "$TEST_PRIVATE_KEY_FILE" -pubout > "$TEST_PUBLIC_KEY_FILE"
+  fi
+
   go get -t ./...
   # test all the things
   if [ -n "$*" ]; then

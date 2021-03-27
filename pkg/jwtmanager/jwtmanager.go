@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -75,71 +74,6 @@ func audience() string {
 	return strings.Join(aud, comma)
 }
 
-func decryptionKey() (interface{}, error) {
-	if strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "HS") {
-		return []byte(cfg.Cfg.JWT.Secret), nil
-	}
-
-	f, err := os.Open(cfg.Cfg.JWT.PublicKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error opening Key %s: %s", cfg.Cfg.JWT.PublicKeyFile, err)
-	}
-
-	keyBytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Key: %s", err)
-	}
-
-	var key interface{}
-	switch {
-	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "RS"):
-		key, err = jwt.ParseRSAPublicKeyFromPEM(keyBytes)
-	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "ES"):
-		key, err = jwt.ParseECPublicKeyFromPEM(keyBytes)
-	default:
-		// signingMethod should already have been validated, this should not happen
-		return nil, fmt.Errorf("unexpected signing method %s", cfg.Cfg.JWT.SigningMethod)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing Key: %s", err)
-	}
-
-	return key, nil
-}
-
-func signingKey() (interface{}, error) {
-	if strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "HS") {
-		return []byte(cfg.Cfg.JWT.Secret), nil
-	}
-
-	f, err := os.Open(cfg.Cfg.JWT.PrivateKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error opening RSA Key %s: %s", cfg.Cfg.JWT.PrivateKeyFile, err)
-	}
-
-	keyBytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Key: %s", err)
-	}
-
-	var key interface{}
-	switch {
-	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "RS"):
-		key, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
-	case strings.HasPrefix(cfg.Cfg.JWT.SigningMethod, "ES"):
-		key, err = jwt.ParseECPrivateKeyFromPEM(keyBytes)
-	default:
-		// We should have validated this before
-		return nil, fmt.Errorf("unexpected signing method %s", cfg.Cfg.JWT.SigningMethod)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing Key: %s", err)
-	}
-
-	return key, nil
-}
 
 // NewVPJWT issue a signed Vouch Proxy JWT for a user
 func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) (string, error) {
@@ -170,7 +104,7 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 	// log.Debugf("token: %v", token)
 	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
-	key, err := signingKey()
+	key, err := cfg.SigningKey()
 	if err != nil {
 		log.Errorf("%s", err)
 	}
@@ -208,7 +142,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		log.Debugf("decompressed tokenString length %d", len(tokenString))
 	}
 
-	key, err := decryptionKey()
+	key, err := cfg.DecryptionKey()
 	if err != nil {
 		log.Errorf("%s", err)
 	}
