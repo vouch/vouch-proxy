@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/vouch/vouch-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/vouch/vouch-proxy/blob/master/LICENSE)
 [![Docker pulls](https://img.shields.io/docker/pulls/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/)
-[![GitHub version](https://badge.fury.io/gh/vouch%2Fvouch-proxy.svg)](https://badge.fury.io/gh/vouch%2Fvouch-proxy)
+[![GitHub version](https://img.shields.io/github/v/tag/vouch/vouch-proxy.svg?sort=semver&color=green)](https://github.com/vouch/vouch-proxy)
 
 An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module. Vouch Proxy can protect all of your websites at once.
 
@@ -17,6 +17,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [Okta](https://developer.okta.com/blog/2018/08/28/nginx-auth-request)
 - [ADFS](https://github.com/vouch/vouch-proxy/pull/68)
 - [Azure AD](https://github.com/vouch/vouch-proxy/issues/290)
+- [Alibaba / Aliyun iDaas](https://github.com/vouch/vouch-proxy/issues/344)
 - [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
 - [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
 - Keycloak
@@ -206,6 +207,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
+- [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
 
 Please do help us to expand this list.
 

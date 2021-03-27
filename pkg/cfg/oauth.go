@@ -42,6 +42,7 @@ var (
 		HomeAssistant: "homeassistant",
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
+		Alibaba:       "alibaba",
 	}
 )
 
@@ -56,6 +57,7 @@ type OAuthProviders struct {
 	HomeAssistant string
 	OpenStax      string
 	Nextcloud     string
+	Alibaba       string
 }
 
 // oauth config items endoint for access
@@ -93,7 +95,8 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.Azure &&
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
-		GenOAuth.Provider != Providers.Nextcloud {
+		GenOAuth.Provider != Providers.Nextcloud &&
+		GenOAuth.Provider != Providers.Alibaba {
 		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks

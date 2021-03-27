@@ -10,6 +10,8 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
+import "strconv"
+
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
 	Claims map[string]interface{}
@@ -180,6 +182,34 @@ func (u *NextcloudUser) PrepareUserData() {
 		u.Username = u.Ocs.Data.UserID
 		u.Email = u.Ocs.Data.Email
 	}
+}
+
+// AlibabaUser Aliyun
+type AlibabaUser struct {
+	User
+	Data AliData `json:"data"`
+	// jwt.StandardClaims
+}
+
+// PrepareUserData implement PersonalData interface
+func (u *AlibabaUser) PrepareUserData() {
+	u.Username = u.Data.Username
+	u.Name = u.Data.Nickname
+	u.Email = u.Data.Email
+	id, _ := strconv.Atoi(u.Data.ID)
+	u.ID = id
+}
+
+// AliData `data` subobject of Alibaba User response
+// https://github.com/vouch/vouch-proxy/issues/344
+type AliData struct {
+	Sub      string `json:"sub"`
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
+	ID       string `json:"ou_id"`
+	Phone    string `json:"phone_number"`
+	OuName   string `json:"ou_name"`
 }
 
 // Team has members and provides acess to sites
