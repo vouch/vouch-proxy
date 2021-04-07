@@ -120,7 +120,8 @@ var (
 	IsHealthCheck = false
 
 	errConfigNotFound = errors.New("configuration file not found")
-	errConfigIsBad    = errors.New("configuration file not found")
+	// TODO: audit errors and use errConfigIsBad
+	// errConfigIsBad    = errors.New("configuration file is malformed")
 )
 
 type cmdLineFlags struct {
