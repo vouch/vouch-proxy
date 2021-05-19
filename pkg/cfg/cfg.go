@@ -120,7 +120,8 @@ var (
 	IsHealthCheck = false
 
 	errConfigNotFound = errors.New("configuration file not found")
-	errConfigIsBad    = errors.New("configuration file not found")
+	// TODO: audit errors and use errConfigIsBad
+	// errConfigIsBad    = errors.New("configuration file is malformed")
 )
 
 type cmdLineFlags struct {
@@ -141,7 +142,7 @@ const (
 	ErrCtxKey ctxKey = 0
 )
 
-// use a typed ctxKey to avoid context key collission
+// use a typed ctxKey to avoid context key collision
 // https://blog.golang.org/context#TOC_3.2.
 type ctxKey int
 
@@ -203,6 +204,7 @@ func configureFromEnv() bool {
 		log.Fatal(err.Error())
 	}
 	preEnvGenOAuth := *GenOAuth
+
 	err = envconfig.Process("OAUTH", GenOAuth)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -215,16 +217,7 @@ func configureFromEnv() bool {
 		if preEnvConfig.LogLevel != Cfg.LogLevel {
 			Logging.setLogLevelString(Cfg.LogLevel)
 		}
-		log.Debugf("preEnvConfig %+v", preEnvConfig)
-		// Mask sensitive configuration items before logging
-		maskedCfg := *Cfg
-		if len(Cfg.Session.Key) != 0 {
-			maskedCfg.Session.Key = "XXXXXXXX"
-		}
-		if len(Cfg.JWT.Secret) != 0 {
-			maskedCfg.JWT.Secret = "XXXXXXXX"
-		}
-		log.Debugf("Cfg %+v", maskedCfg)
+		// log.Debugf("preEnvConfig %+v", preEnvConfig)
 		log.Infof("%s configuration set from Environmental Variables", Branding.FullName)
 		return true
 	}
@@ -296,8 +289,22 @@ func parseConfigFile() error {
 // consolidate config related Log.Debugf() calls so that they can be placed *after* we set the logLevel
 func logConfigIfDebug() {
 	log.Debugf("cfg.RootDir: %s", RootDir)
-	log.Debugf("viper settings %+v", viper.AllSettings())
-	log.Debugf("cfg.GenOauth %+v", GenOAuth)
+	// log.Debugf("viper settings %+v", viper.AllSettings())
+
+	// Mask sensitive configuration items before logging
+	maskedCfg := *Cfg
+	if len(Cfg.Session.Key) != 0 {
+		maskedCfg.Session.Key = "XXXXXXXX"
+	}
+	if len(Cfg.JWT.Secret) != 0 {
+		maskedCfg.JWT.Secret = "XXXXXXXX"
+	}
+	log.Debugf("Cfg %+v", maskedCfg)
+
+	maskedGenOAuth := *GenOAuth
+	maskedGenOAuth.ClientID = "12345678"
+	maskedGenOAuth.ClientSecret = "XXXXXXXX"
+	log.Debugf("cfg.GenOauth %+v", maskedGenOAuth)
 }
 
 func fixConfigOptions() {

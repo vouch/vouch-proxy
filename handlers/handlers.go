@@ -11,15 +11,16 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
-	"golang.org/x/oauth2"
 	"net/http"
 
 	"github.com/gorilla/sessions"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"github.com/vouch/vouch-proxy/pkg/providers/adfs"
+	"github.com/vouch/vouch-proxy/pkg/providers/alibaba"
 	"github.com/vouch/vouch-proxy/pkg/providers/azure"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/providers/github"
@@ -85,6 +86,8 @@ func getProvider() Provider {
 		return nextcloud.Provider{}
 	case cfg.Providers.OIDC:
 		return openid.Provider{}
+	case cfg.Providers.Alibaba:
+		return alibaba.Provider{}
 	default:
 		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
 		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
