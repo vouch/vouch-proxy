@@ -42,7 +42,8 @@ func CheckAndExitIfIsHealthCheck() {
 
 func healthcheck() {
 	url := fmt.Sprintf("http://%s:%d/healthcheck", cfg.Cfg.Listen, cfg.Cfg.Port)
-	log.Debug("Invoking healthcheck on URL ", url)
+	log.Debugf("Invoking healthcheck on %s", url)
+	// #nosec - turn off gosec checking which flags `http.Get(url)`
 	resp, err := http.Get(url)
 	if err == nil {
 		body, err := ioutil.ReadAll(resp.Body)

@@ -185,7 +185,9 @@ func Configure() {
 	if err := configureOauth(); err == nil {
 		setProviderDefaults()
 	}
-	cleanClaimsHeaders()
+	if err := cleanClaimsHeaders(); err != nil {
+		log.Fatalf("%w: %w", configFileErr, err)
+	}
 	if *CmdLine.port != -1 {
 		Cfg.Port = *CmdLine.port
 	}
@@ -516,7 +518,9 @@ func InitForTestPurposesWithProvider(provider string) {
 	// Configure()
 	// setRootDir()
 	setDefaults()
-	parseConfigFile()
+	if err := parseConfigFile(); err != nil {
+		log.Error(err)
+	}
 	configureFromEnv()
 	if err := configureOauth(); err == nil {
 		setProviderDefaults()
@@ -530,6 +534,6 @@ func InitForTestPurposesWithProvider(provider string) {
 		GenOAuth.Provider = provider
 		setProviderDefaults()
 	}
-	cleanClaimsHeaders()
+	_ = cleanClaimsHeaders()
 
 }
