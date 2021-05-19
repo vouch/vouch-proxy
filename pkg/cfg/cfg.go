@@ -35,16 +35,17 @@ import (
 // as well as a `envconfig` tag used by https://github.com/kelseyhightower/envconfig
 // though most of the time envconfig will use the struct key's name: VOUCH_PORT VOUCH_JWT_MAXAGE
 type Config struct {
-	LogLevel      string   `mapstructure:"logLevel"`
-	Listen        string   `mapstructure:"listen"`
-	Port          int      `mapstructure:"port"`
-	Domains       []string `mapstructure:"domains"`
-	WhiteList     []string `mapstructure:"whitelist"`
-	TeamWhiteList []string `mapstructure:"teamWhitelist"`
-	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
-	PublicAccess  bool     `mapstructure:"publicAccess"`
-
-	TLS struct {
+	LogLevel                    string   `mapstructure:"logLevel"`
+	Listen                      string   `mapstructure:"listen"`
+	Port                        int      `mapstructure:"port"`
+	Domains                     []string `mapstructure:"domains"`
+	CaseInsensitiveEmails       bool     `mapstructure:"case_insensitive_emails" envconfig:"case_insensitive_emails"`
+	CaseInsensitiveEmailDomains []string `mapstructure:"case_insensitive_email_domains" envconfig:"case_insensitive_email_domains"`
+	WhiteList                   []string `mapstructure:"whitelist"`
+	TeamWhiteList               []string `mapstructure:"teamWhitelist"`
+	AllowAllUsers               bool     `mapstructure:"allowAllUsers"`
+	PublicAccess                bool     `mapstructure:"publicAccess"`
+	TLS                         struct {
 		Cert    string `mapstructure:"cert"`
 		Key     string `mapstructure:"key"`
 		Profile string `mapstructure:"profile"`
@@ -385,6 +386,11 @@ func basicTest() error {
 	if (!Cfg.AllowAllUsers && len(Cfg.Domains) == 0) ||
 		(Cfg.AllowAllUsers && len(Cfg.Domains) > 0) {
 		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	}
+
+	// Email case insensitive list should be empty if the global case insensitivity flag is set
+	if Cfg.CaseInsensitiveEmails && len(Cfg.CaseInsensitiveEmailDomains) > 0 {
+		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".case_insensitive_emails", Branding.LCName+".case_insensitive_email_domains")
 	}
 
 	// issue a warning if the secret is too small

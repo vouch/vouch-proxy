@@ -32,6 +32,19 @@ vouch:
   - yourdomain.com
   - yourotherdomain.com
 
+  # case_insensitive_emails - VOUCH_CASE_INSENSITIVE_EMAILS
+  # Setting this to true will treat all email-based usernames returned by the
+  # service provider case insensitively when validating against the whitelist
+  case_insensitive_emails: false
+
+  # case_insensitive_email_domains - VOUCH_CASE_INSENSITIVE_EMAIL_DOMAINS
+  # Any email-based username returned by the service provider that belongs to
+  # any of the following domains will be treated case insensitively when
+  # validating against the whitelist. Subdomains of a case insensitive domain
+  # will not be assumed case insensitive.
+  # Comment `case_insensitive_email_domains:` out if you set case_insensitive_emails:true
+  # case_insensitive_email_domains:
+
   # Set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider - VOUCH_ALLOWALLUSERS
   # allowAllUsers: false
   # vouch.cookie.domain must be set below when enabling allowAllUsers

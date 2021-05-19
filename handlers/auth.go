@@ -13,6 +13,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -23,6 +25,17 @@ import (
 
 	"golang.org/x/oauth2"
 )
+
+// From https://golangcode.com/validate-an-email-address/
+var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+// isEmailValid checks if the email provided passes the required structure and length.
+func isEmailValid(e string) bool {
+	if len(e) < 3 || len(e) > 254 {
+		return false
+	}
+	return emailRegex.MatchString(e)
+}
 
 // CallbackHandler /auth
 // - redirects to /auth/{state}/ with the state coming from the query parameter
@@ -125,6 +138,24 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	responses.RenderIndex(w, "/auth "+tokenstring)
 }
 
+func isUsernameCaseInsensitive(user *structs.User) bool {
+	if cfg.Cfg.CaseInsensitiveEmails {
+		return true
+	}
+
+	lowerUsername := strings.ToLower(user.Username)
+	for _, caseInsensitiveDomain := range cfg.Cfg.CaseInsensitiveEmailDomains {
+		// Guarantees that
+		// 1) the username is an email
+		// 2) the username should be treated case-insensitively
+		if strings.HasSuffix(lowerUsername, "@"+strings.ToLower(caseInsensitiveDomain)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // verifyUser validates that the domains match for the user
 func verifyUser(u interface{}) (bool, error) {
 
@@ -139,8 +170,12 @@ func verifyUser(u interface{}) (bool, error) {
 
 	// WhiteList
 	case len(cfg.Cfg.WhiteList) != 0:
+		// If the username is from a case insensitive domain then we should perform case insensitive checks on the whitelist
+		usernameIsCaseInsensitive := isUsernameCaseInsensitive(&user)
+
 		for _, wl := range cfg.Cfg.WhiteList {
-			if user.Username == wl {
+			// Case sensitivity should only apply to email-based usernames
+			if user.Username == wl || (isEmailValid(user.Username) && usernameIsCaseInsensitive && strings.ToLower(user.Username) == strings.ToLower(wl)) {
 				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 				return true, nil
 			}
