@@ -83,7 +83,7 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := getUserInfo(r, &user, &customClaims, &ptokens, authCodeOptions...); err != nil {
-		responses.Error400(w, r, fmt.Errorf("/auth Error while retreiving user info after successful login at the OAuth provider: %w", err))
+		responses.Error400(w, r, fmt.Errorf("/auth Error while retrieving user info after successful login at the OAuth provider: %w", err))
 		return
 	}
 	log.Debugf("/auth/{state}/ Claims from userinfo: %+v", customClaims)
