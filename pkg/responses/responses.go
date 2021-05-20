@@ -59,6 +59,8 @@ func RenderIndex(w http.ResponseWriter, msg string) {
 // something terse for the end user
 func renderError(w http.ResponseWriter, msg string, status int) {
 	log.Debugf("rendering error for user: %s", msg)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(status)
 	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
 		log.Error(err)
@@ -85,54 +87,45 @@ func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 
 // Error400 Bad Request
 func Error400(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
-	cookie.ClearCookie(w, r)
-	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
-	w.WriteHeader(http.StatusBadRequest)
-	addErrandCancelRequest(r)
-	renderError(w, "400 Bad Request", http.StatusOK)
+	cancelClearSetError(w, r, e)
+	renderError(w, "400 Bad Request", http.StatusBadRequest)
 }
 
-// Error401 Unauthorized the standard error
+// Error401 Unauthorized, the standard error returned when failing /validate
 // this is captured by nginx, which converts the 401 into 302 to the login page
 func Error401(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
-	addErrandCancelRequest(r)
-	cookie.ClearCookie(w, r)
-	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
+	cancelClearSetError(w, r, e)
 	http.Error(w, e.Error(), http.StatusUnauthorized)
 	// renderError(w, "401 Unauthorized")
 }
 
+// Error401HTTP
 func Error401HTTP(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
-	addErrandCancelRequest(r)
-	cookie.ClearCookie(w, r)
-	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
+	cancelClearSetError(w, r, e)
 	renderError(w, e.Error(), http.StatusUnauthorized)
 }
 
 // Error403 Forbidden
 // if there's an error during /auth or if they don't pass validation in /auth
 func Error403(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
-	addErrandCancelRequest(r)
-	cookie.ClearCookie(w, r)
-	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
-	w.WriteHeader(http.StatusForbidden)
-	renderError(w, "403 Forbidden", http.StatusOK)
+	cancelClearSetError(w, r, e)
+	renderError(w, "403 Forbidden", http.StatusForbidden)
 }
 
 // Error500 Internal Error
 // something is not right, hopefully this never happens
 func Error500(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
+	cancelClearSetError(w, r, e)
 	log.Infof("If this error persists it may be worthy of a bug report but please check your setup first.  See the README at %s", cfg.Branding.URL)
-	addErrandCancelRequest(r)
+	renderError(w, "500 - Internal Server Error", http.StatusInternalServerError)
+}
+
+// cancelClearSetError convenience method to keep it DRY
+func cancelClearSetError(w http.ResponseWriter, r *http.Request, e error) {
+	log.Error(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
-	w.WriteHeader(http.StatusInternalServerError)
-	renderError(w, "500 - Internal Server Error", http.StatusOK)
+	addErrandCancelRequest(r)
 }
 
 // cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`
