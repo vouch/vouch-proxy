@@ -12,6 +12,8 @@ package jwtmanager
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -43,8 +45,6 @@ var (
 )
 
 func init() {
-	// log.SetLevel(log.DebugLevel)
-
 	cfg.InitForTestPurposes()
 	Configure()
 
@@ -54,6 +54,32 @@ func init() {
 		t1.PAccessToken,
 		t1.PIdToken,
 		StandardClaims,
+	}
+
+}
+
+func TestClaimsHMAC(t *testing.T) {
+	rootDir := os.Getenv(cfg.Branding.UCName + "_ROOT")
+	for _, cfgFile := range []string{"test_config.yml", "test_config_rsa.yml"} {
+		if err := os.Setenv(cfg.Branding.UCName+"_CONFIG", filepath.Join(rootDir, "config/testing", cfgFile)); err != nil {
+			t.Errorf("failed setting environment variable %s_CONFIG", cfg.Branding.UCName)
+		}
+
+		json.Unmarshal([]byte(claimjson), &customClaims.Claims)
+
+		log.Debugf("jwt config %s %d", string(cfg.Cfg.JWT.Secret), cfg.Cfg.JWT.MaxAge)
+		assert.NotEmpty(t, cfg.Cfg.JWT.SigningMethod)
+		assert.NotEmpty(t, cfg.Cfg.JWT.MaxAge)
+
+		uts, err := NewVPJWT(u1, customClaims, t1)
+		assert.NoError(t, err)
+
+		utsParsed, err := ParseTokenString(uts)
+		assert.NoError(t, err)
+
+		log.Infof("utsParsed: %+v", utsParsed)
+		// log.Infof("Sites: %+v", Sites)
+		assert.True(t, SiteInToken(cfg.Cfg.Domains[0], utsParsed))
 	}
 	json.Unmarshal([]byte(claimjson), &customClaims.Claims)
 }

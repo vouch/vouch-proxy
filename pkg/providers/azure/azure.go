@@ -46,27 +46,38 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	// just going to extract user info and custom claims from there.
 	azureUser := structs.AzureUser{}
 
-	tokenParts := strings.Split(ptokens.PAccessToken, ".")
+	var tokenParts []string
+
+	if cfg.GenOAuth.AzureToken == "access_token" {
+		tokenParts = strings.Split(ptokens.PAccessToken, ".")
+	} else if cfg.GenOAuth.AzureToken == "id_token" {
+		tokenParts = strings.Split(ptokens.PIdToken, ".")
+	} else {
+		err = fmt.Errorf("Azure Token not access_token or id_token")
+		log.Error(err)
+		return err
+	}
+
 	if len(tokenParts) < 2 {
 		err = fmt.Errorf("azure GetUserInfo: invalid token received; not enough parts")
 		log.Error(err)
 		return err
 	}
 
-	accessTokenBytes, err := base64.RawURLEncoding.DecodeString(tokenParts[1])
+	tokenBytes, err := base64.RawURLEncoding.DecodeString(tokenParts[1])
 	if err != nil {
 		err = fmt.Errorf("azure GetUserInfo: decoding token failed: %+v", err)
 		log.Error(err)
 		return err
 	}
 
-	if err = common.MapClaims(accessTokenBytes, customClaims); err != nil {
+	if err = common.MapClaims(tokenBytes, customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
 
-	log.Debugf("azure GetUserInfo: getting user info from accessToken: %+v", string(accessTokenBytes))
-	if err = json.Unmarshal(accessTokenBytes, &azureUser); err != nil {
+	log.Debugf("azure GetUserInfo: getting user info from token: %+v", string(tokenBytes))
+	if err = json.Unmarshal(tokenBytes, &azureUser); err != nil {
 		err = fmt.Errorf("azure getUserInfoFromTokens: unpacking token into AzureUser failed: %+v", err)
 		log.Error(err)
 		return err

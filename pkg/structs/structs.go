@@ -49,8 +49,9 @@ func (u *User) PrepareUserData() {
 // AzureUser is a retrieved and authenticated user from Azure AD
 type AzureUser struct {
 	User
-	Sub string `json:"sub"`
-	UPN string `json:"upn"`
+	Sub               string `json:"sub"`
+	UPN               string `json:"upn"`
+	PreferredUsername string `json:"preferred_username"`
 }
 
 // PrepareUserData implement PersonalData interface
@@ -60,6 +61,10 @@ func (u *AzureUser) PrepareUserData() {
 
 	if u.Username == "" {
 		u.Username = u.UPN
+	}
+
+	if u.Username == "" {
+		u.Username = u.PreferredUsername
 	}
 
 	if u.Email == "" {

@@ -74,6 +74,7 @@ func audience() string {
 	return strings.Join(aud, comma)
 }
 
+
 // NewVPJWT issue a signed Vouch Proxy JWT for a user
 func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) (string, error) {
 	// User`token`
@@ -99,14 +100,16 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 	}
 
 	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-
+	token := jwt.NewWithClaims(jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod), claims)
 	// log.Debugf("token: %v", token)
 	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
-	// token -> string. Only server knows this secret (foobar).
-	ss, err := token.SignedString([]byte(cfg.Cfg.JWT.Secret))
-	// ss, err := token.SignedString([]byte("testing"))
+	key, err := cfg.SigningKey()
+	if err != nil {
+		log.Errorf("%s", err)
+	}
+
+	ss, err := token.SignedString(key)
 	if ss == "" || err != nil {
 		return "", fmt.Errorf("New JWT: signed token error: %s", err)
 	}
@@ -117,25 +120,6 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 		}
 	}
 	return ss, nil
-}
-
-// TokenIsValid gett better error reporting
-func TokenIsValid(token *jwt.Token, err error) bool {
-	if token.Valid {
-		return true
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			log.Errorf("token malformed")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			log.Errorf("token expired %s", err)
-		} else {
-			log.Errorf("token unknown error")
-		}
-	} else {
-		log.Errorf("token unknown error")
-	}
-	return false
 }
 
 // SiteInToken searches does the token contain the site?
@@ -158,13 +142,18 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		log.Debugf("decompressed tokenString length %d", len(tokenString))
 	}
 
+	key, err := cfg.DecryptionKey()
+	if err != nil {
+		log.Errorf("%s", err)
+	}
+
 	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.GetSigningMethod("HS256") {
+		if token.Method != jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(cfg.Cfg.JWT.Secret), nil
+		return key, nil
 	})
 
 }
@@ -182,10 +171,6 @@ func (claims *VouchClaims) SiteInAudience(site string) bool {
 
 // PTokenClaims get all the claims
 func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
-	// func PTokenClaims(ptoken *jwt.Token) (VouchClaims, error) {
-	// return ptoken.Claims, nil
-
-	// return ptoken.Claims.(*VouchClaims), nil
 	ptokenClaims, ok := ptoken.Claims.(*VouchClaims)
 	if !ok {
 		log.Debugf("failed claims: %v %v", ptokenClaims, ptoken.Claims)
@@ -196,7 +181,6 @@ func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
 }
 
 func decodeAndDecompressTokenString(encgzipss string) string {
-
 	var gzipss []byte
 	// gzipss, err := url.QueryUnescape(encgzipss)
 	gzipss, err := base64.URLEncoding.DecodeString(encgzipss)

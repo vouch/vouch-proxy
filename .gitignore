@@ -14,3 +14,5 @@ coverage.out
 coverage.html.env_google
 .env*
 .cover
+config/testing/rsa.key
+config/testing/rsa.pub

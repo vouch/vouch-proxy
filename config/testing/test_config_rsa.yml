@@ -1,0 +1,28 @@
+vouch:
+  logLevel: debug
+  listen: 0.0.0.0
+  port: 9090
+  domains:
+    - vouch.github.io
+
+  whiteList:
+    - bob@yourdomain.com
+    - alice@yourdomain.com
+    - joe@yourdomain.com
+
+  cookie:
+    name: vouchTestingCookie
+
+  session:
+    name: VouchTestingSession
+
+  jwt:
+    signing_method: RS512
+    private_key_file: config/testing/rsa.key
+    public_key_file: config/testing/rsa.pub
+
+oauth:
+  provider: indieauth
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth

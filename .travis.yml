@@ -7,12 +7,13 @@ services:
   - docker
 
 go:
-  - "1.14"
+  - "1.16"
 
 env:
   - ISTRAVIS=true
 
 before_install:
+  - sudo apt-get install openssl
   - ./do.sh goget
   # - go get github.com/golang/lint/golint # Linter
   # - go get github.com/fzipp/gocyclo

@@ -62,8 +62,15 @@ vouch:
     profile: intermediate                           # VOUCH_TLS_PROFILE
 
   jwt:
+    # signing_method: the algorithm used to sign the JWT.  # VOUCH_JWT_SIGNING_METHOD
+    # Can be one of HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512
+    # Default is HS256 (HMAC) - and requires jwt.secret to be set
+    # Both RS* (RSA) and ES* (ECDSA) methods require jwt.private_key_file and
+    # jwt.public_key_file to be set.
+    # signing_method: HS256
+
     # secret - VOUCH_JWT_SECRET
-    # a random string used to cryptographically sign the jwt
+    # a random string used to cryptographically sign the jwt when signing_method is set to HS256, HS384 or HS512
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
     # if the secret is not set here then Vouch Proxy will..
     # - look for the secret in `./config/secret`
@@ -71,6 +78,10 @@ vouch:
     # in order to run multiple instances of vouch on multiple servers (perhaps purely for validating the jwt),
     # you'll want them all to have the same secret
     secret: your_random_string
+
+    # Path to the public/private key files when using an RSA or ECDSA signing method.
+    # public_key_file:  # VOUCH_JWT_PUBLIC_KEY_FILE
+    # private_key_file: # VOUCH_JWT_PRIVATE_KEY_FILE
 
     # issuer: Vouch # VOUCH_JWT_ISSUER
 

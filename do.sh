@@ -13,7 +13,7 @@ fi
 
 IMAGE=voucher/vouch-proxy:latest
 ALPINE=voucher/vouch-proxy:alpine
-GOIMAGE=golang:1.14
+GOIMAGE=golang:1.16
 NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
@@ -133,11 +133,14 @@ bug_report() {
 
     usage:
 
-      $0 bug_report redacted_string redacted_string 
+      $0 bug_report redacted_string redacted_string
 
 EOF
     exit 1;
   fi
+  echo -e "#\n# If sensitive information is still visible in the output, first try appending the string.." 
+  echo -e "#\n#    '$0 bug_report badstring1 badstring2'\n#\n"
+  echo -e "#\n# Please consider submitting a PR for the './do.sh _redact' routine if you feel that it should be improved.\n#"
   echo -e "\n-------------------------\n\n#\n# redacted Vouch Proxy ${CONFIG}\n# $(date -I)\n#\n"
   cat $CONFIG | _redact
 
@@ -184,6 +187,15 @@ coveragereport() {
 test() {
   if [ -z "$VOUCH_CONFIG" ]; then
     export VOUCH_CONFIG="$SDIR/config/testing/test_config.yml"
+  fi
+
+  TEST_PRIVATE_KEY_FILE="$SDIR/config/testing/rsa.key"
+  TEST_PUBLIC_KEY_FILE="$SDIR/config/testing/rsa.pub"
+  if [[ ! -f "$TEST_PRIVATE_KEY_FILE" ]]; then
+    openssl genrsa -out "$TEST_PRIVATE_KEY_FILE" 4096
+  fi
+  if [[ ! -f "$TEST_PUBLIC_KEY_FILE" ]]; then
+    openssl rsa -in "$TEST_PRIVATE_KEY_FILE" -pubout > "$TEST_PUBLIC_KEY_FILE"
   fi
 
   go get -t ./...
@@ -363,27 +375,27 @@ selfcert() {
 usage() {
    cat <<EOF
    usage:
-     $0 run                    - go run main.go
-     $0 build                  - go build
-     $0 install                - move binary to ${GOPATH}/bin/vouch
-     $0 goget                  - get all dependencies
-     $0 gofmt                  - gofmt the entire code base
-     $0 gosec                  - gosec security audit of the entire code base
-     $0 selfcert               - calls openssl to create a self signed key and cert
-     $0 dbuild                 - build docker container
-     $0 drun [args]            - run docker container
-     $0 dbuildalpine           - build docker container for alpine
-     $0 drunalpine [args]      - run docker container for alpine
-     $0 test [./pkg_test.go]   - run go tests (defaults to all tests)
-     $0 test_logging           - test the logging output
-     $0 coverage               - coverage test
-     $0 coveragereport         - coverage report published to .cover/coverage.html
-     $0 profile                - go pprof tools
-     $0 bug_report domain.com  - print config file removing secrets and each provided domain
-     $0 gogo [gocmd]           - run, build, any go cmd
-     $0 stats                  - simple metrics (lines of code in project, number of go files)
-     $0 watch [cmd]            - watch the $CWD for any change and re-reun the [cmd]
-     $0 license [file]         - apply the license to the file
+     $0 run                                - go run main.go
+     $0 build                              - go build
+     $0 install                            - move binary to ${GOPATH}/bin/vouch
+     $0 goget                              - get all dependencies
+     $0 gofmt                              - gofmt the entire code base
+     $0 gosec                              - gosec security audit of the entire code base
+     $0 selfcert                           - calls openssl to create a self signed key and cert
+     $0 dbuild                             - build docker container
+     $0 drun [args]                        - run docker container
+     $0 dbuildalpine                       - build docker container for alpine
+     $0 drunalpine [args]                  - run docker container for alpine
+     $0 test [./pkg_test.go]               - run go tests (defaults to all tests)
+     $0 test_logging                       - test the logging output
+     $0 coverage                           - coverage test
+     $0 coveragereport                     - coverage report published to .cover/coverage.html
+     $0 profile                            - go pprof tools
+     $0 bug_report domain.com [badstr2..]  - print config file and log removing secrets and each provided string
+     $0 gogo [gocmd]                       - run, build, any go cmd
+     $0 stats                              - simple metrics (lines of code in project, number of go files)
+     $0 watch [cmd]                        - watch the $CWD for any change and re-reun the [cmd]
+     $0 license [file]                     - apply the license to the file
 
   do is like make
 
