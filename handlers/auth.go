@@ -43,7 +43,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
-	authStateURL := fmt.Sprintf("/auth/%s/?%s", queryState, r.URL.RawQuery)
+	authStateURL := fmt.Sprintf("./auth/%s/?%s", queryState, r.URL.RawQuery)
 	responses.Redirect302(w, r, authStateURL)
 
 }
