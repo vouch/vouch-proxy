@@ -79,6 +79,7 @@ type Config struct {
 		ClaimHeader   string            `mapstructure:"claimheader"`
 		Claims        []string          `mapstructure:"claims"`
 		AccessToken   string            `mapstructure:"accesstoken"`
+        RefreshToken  string            `mapstructure:"refreshtoken"`
 		IDToken       string            `mapstructure:"idtoken"`
 		ClaimsCleaned map[string]string // the rawClaim is mapped to the actual claims header
 	}
