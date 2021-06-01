@@ -10,6 +10,7 @@ jobs:
         if: github.event_name == 'push'
         with:
           channel: "#vouch"
+          server: irc.libera.chat
           nickname: from-github
           message: |
             ${{ github.actor }} pushed ${{ github.event.ref }} ${{ github.event.compare }}
@@ -19,6 +20,7 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           channel: "#vouch"
+          server: irc.libera.chat
           nickname: from-github
           message: |
             ${{ github.actor }} opened PR ${{ github.event.html_url }}
@@ -27,6 +29,7 @@ jobs:
         if: github.event_name == 'create' && github.event.ref_type == 'tag'
         with:
           channel: "#vouch"
+          server: irc.libera.chat
           nickname: from-github
           message: |
             ${{ github.actor }} tagged ${{ github.repository }} ${{ github.event.ref }}
