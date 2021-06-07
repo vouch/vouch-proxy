@@ -18,6 +18,7 @@ oauth:
   client_secret: sauceSecret
   auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
   token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
+  # relying_party_id:  487d8ff7-80a8-4f62-b926-c2852ab06e94 # (optional)
   scopes:
     - openid
     - email

@@ -14,13 +14,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
@@ -54,7 +55,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	formData := url.Values{}
 	formData.Set("code", code)
 	formData.Set("grant_type", "authorization_code")
-	formData.Set("resource", cfg.GenOAuth.RedirectURL)
+	formData.Set("resource", cfg.GenOAuth.RelyingPartyId)
 	formData.Set("client_id", cfg.GenOAuth.ClientID)
 	formData.Set("redirect_uri", cfg.GenOAuth.RedirectURL)
 	if cfg.GenOAuth.ClientSecret != "" {
