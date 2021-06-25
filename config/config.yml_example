@@ -198,6 +198,7 @@ vouch:
 #   callback_urls:           OAUTH_CALLBACK_URLS
 #   scopes:                  OAUTH_SCOPES
 #   code_challenge_method:   OAUTH_CODE_CHALLENGE_METHOD
+#   relying_party_id         OAUTH_RELYING_PARTY_ID
 
 #
 # configure ONLY ONE of the following oauth providers
@@ -259,5 +260,20 @@ oauth:
   client_id: http://yourdomain.com
   auth_url: https://indielogin.com/auth
   callback_url: http://vouch.yourdomain.com:9090/auth
+
+  # adfs
+  provider: adfs
+  client_id:
+  client_secret:
+  auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
+  token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
+  # vouch-proxy use RedirectURL as relying party identifier by default, if you want a custom one:
+  # (resolves issue https://github.com/vouch/vouch-proxy/issues/189)
+  # relying_party_id:  487d8ff7-80a8-4f62-b926-c2852ab06e94
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: https://vouch.yourdomain.com/auth
 
 
