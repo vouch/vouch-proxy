@@ -109,6 +109,8 @@ var (
 
 	// RootDir is where Vouch Proxy looks for ./config/config.yml and ./data
 	RootDir string
+	// StateDir is where Vouch Proxy writes its state or files
+	StateDir string
 
 	secretFile string
 
@@ -175,7 +177,8 @@ func Configure() {
 	Logging.configureFromCmdline()
 
 	setRootDir()
-	secretFile = filepath.Join(RootDir, "config/secret")
+	setStateDir()
+	secretFile = filepath.Join(StateDir, "secret")
 
 	// bail if we're testing
 	if flag.Lookup("test.v") != nil {
@@ -259,6 +262,16 @@ func setRootDir() {
 			log.Panic(errEx)
 		}
 		RootDir = filepath.Dir(ex)
+	}
+}
+
+func setStateDir() {
+	// use systemd provided StateDirectory or default to $RootDir/config
+	if os.Getenv("STATE_DIRECTORY") != "" {
+		StateDir = strings.Split(os.Getenv("STATE_DIRECTORY"), ":")[0]
+		log.Warnf("set cfg.StateDir from STATE_DIRECTORY env var: %s", StateDir)
+	} else {
+		StateDir = filepath.Join(RootDir, "config")
 	}
 }
 
