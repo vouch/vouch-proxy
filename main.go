@@ -23,13 +23,13 @@ https://github.com/vouch/vouch-proxy#submitting-a-pull-request-for-a-new-feature
 */
 
 import (
+	"embed"
 	"errors"
 	"flag"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -57,7 +57,6 @@ var (
 	semver    = "undefined"
 	branch    = "undefined"
 	uname     = "undefined"
-	staticDir = "/static/"
 	logger    *zap.SugaredLogger
 	fastlog   *zap.Logger
 	help      = flag.Bool("help", false, "show usage")
@@ -67,6 +66,9 @@ var (
 	}
 	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
+
+//go:embed static
+var staticFs embed.FS
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
 // see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
@@ -152,16 +154,8 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	muxR.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
-	// setup static
-	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
-	if fastlog.Core().Enabled(zap.DebugLevel) {
-		if err != nil {
-			logger.Errorf("couldn't find static assets at %s", sPath)
-		}
-		logger.Debugf("serving static files from %s", sPath)
-	}
-	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
+	// setup /static/ urls to be satisfied from the embedded /static/... fs
+	muxR.PathPrefix("/static/").Handler(http.FileServer(http.FS(staticFs)))
 
 	//
 	// if *doProfile {

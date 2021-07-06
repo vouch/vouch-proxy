@@ -104,7 +104,7 @@ var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "https://github.com/vouch/vouch-proxy"}
 
-	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
+	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data and ./templates
 	RootDir string
 
 	secretFile string
