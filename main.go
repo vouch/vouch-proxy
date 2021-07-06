@@ -70,6 +70,9 @@ var (
 //go:embed static
 var staticFs embed.FS
 
+//go:embed templates
+var templatesFs embed.FS
+
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
 // see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
 type fwdToZapWriter struct {
@@ -110,7 +113,7 @@ func configure() {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
-	responses.Configure()
+	responses.Configure(templatesFs)
 	handlers.Configure()
 	timelog.Configure()
 }

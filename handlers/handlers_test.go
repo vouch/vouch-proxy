@@ -40,7 +40,8 @@ func setUp(configFile string) {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
-	responses.Configure()
+	var templatesFs = os.DirFS(os.Getenv("VOUCH_ROOT"))
+	responses.Configure(templatesFs)
 
 }
 

@@ -13,8 +13,8 @@ package responses
 import (
 	"errors"
 	"html/template"
+	"io/fs"
 	"net/http"
-	"path/filepath"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -39,12 +39,12 @@ var (
 )
 
 // Configure see main.go configure()
-func Configure() {
+func Configure(templatesFs fs.FS) {
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
 
-	log.Debugf("responses.Configure() attempting to parse templates with cfg.RootDir: %s", cfg.RootDir)
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
+	log.Debugf("responses.Configure() attempting to parse embedded templates")
+	indexTemplate = template.Must(template.ParseFS(templatesFs, "templates/index.tmpl"))
 
 }
 
