@@ -37,6 +37,9 @@ const failCountLimit = 6
 // currently performs a 302 redirect to Google
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/login")
+
+	//	log.Debugf("/login http.request: %+v", r)
+
 	// no matter how you ended up here, make sure the cookie gets cleared out
 	cookie.ClearCookie(w, r)
 
@@ -53,11 +56,22 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// set the state variable in the session
 	session.Values["state"] = state
 
-	// set the path for the session cookie to only send the correct cookie to /auth/{state}/
-	// must have a trailing slash. Otherwise, it is send to all endpoints that _start_ with the cookie path.
-	session.Options.Path = fmt.Sprintf("/auth/%s/", state)
+	// if vouch is run "in a path" under one domain such that all VP endpoints are proxied at /vouch/validate, /vouch/login, etc..
+	// then we need a hint to understand which path to use for the session cookie which will be passed from the browser back to VP
+	// after successful login at the IdP
+	// see https://github.com/vouch/vouch-proxy/issues/373
+	path := "/auth"
+	if r.Header.Get("X-Original-Uri") != "" {
+		ouri := r.Header.Get("X-Original-Uri")
+		path = strings.Replace(ouri, "login", "auth", 1)
+		log.Debugf("X-Original-Uri found: %s, path transformed to: ", ouri, path)
+	}
 
-	log.Debugf("session state set to %s", session.Values["state"])
+	// set the path for the session cookie to only send the correct cookie to /auth/{state}/
+	// must have a trailing slash. Otherwise, it is sent to all endpoints that _start_ with the cookie path.
+	session.Options.Path = fmt.Sprintf("%s/%s/", path, state)
+
+	log.Debugf("session state set to %s for path %s", session.Values["state"], session.Options.Path)
 
 	// requestedURL comes from nginx in the query string via a 302 redirect
 	// it sets the ultimate destination

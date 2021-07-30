@@ -29,6 +29,8 @@ import (
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
 
+	// log.Debugf("/auth http.request: %+v", r)
+
 	// did the IdP return an error?
 	errorIDP := r.URL.Query().Get("error")
 	if errorIDP != "" {
@@ -42,8 +44,17 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Error400(w, r, fmt.Errorf("/auth: could not find state in query %s", r.URL.RawQuery))
 		return
 	}
-	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
-	authStateURL := fmt.Sprintf("./auth/%s/?%s", queryState, r.URL.RawQuery)
+	// must have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
+	// preserve the requested path to accomodate VP being run within a path such as https://app1.ourdomain.com/vouch/auth
+	// https://github.com/vouch/vouch-proxy/issues/373
+
+	// see note in login.go and https://github.com/vouch/vouch-proxy/issues/373
+	path := "/auth"
+	if r.Header.Get("X-Original-URI") != "" {
+		path = r.Header.Get("X-Original-URI")
+	}
+
+	authStateURL := fmt.Sprintf("%s/%s/?%s", path, queryState, r.URL.RawQuery)
 	responses.Redirect302(w, r, authStateURL)
 
 }
