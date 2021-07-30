@@ -19,7 +19,7 @@ oauth:
   auth_url: https://adfs.yourdomain.com/adfs/oauth2/authorize/
   token_url: https://adfs.yourdomain.com/adfs/oauth2/token/
   # vouch-proxy use RedirectURL as relying party identifier by default, if you want a custom one:
-  # (resolves issue https://github.com/vouch/vouch-proxy/issues/189)
+  # see https://github.com/vouch/vouch-proxy/issues/189
   # relying_party_id:  487d8ff7-80a8-4f62-b926-c2852ab06e94
   scopes:
     - openid
