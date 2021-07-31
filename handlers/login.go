@@ -57,14 +57,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["state"] = state
 
 	// if vouch is run "in a path" under one domain such that all VP endpoints are proxied at /vouch/validate, /vouch/login, etc..
-	// then we need a hint to understand which path to use for the session cookie which will be passed from the browser back to VP
+	// then we need a hint to understand which path to use for the session cookie which is passed from the browser back to VP
 	// after successful login at the IdP
 	// see https://github.com/vouch/vouch-proxy/issues/373
 	path := "/auth"
-	if r.Header.Get("X-Original-Uri") != "" {
-		ouri := r.Header.Get("X-Original-Uri")
+	if r.Header.Get("X-Original-URI") != "" {
+		ouri := r.Header.Get("X-Original-URI")
 		path = strings.Replace(ouri, "login", "auth", 1)
-		log.Debugf("X-Original-Uri found: %s, path transformed to: ", ouri, path)
+		log.Debugf("X-Original-URI found: %s, path transformed to: %s", ouri, path)
 	}
 
 	// set the path for the session cookie to only send the correct cookie to /auth/{state}/

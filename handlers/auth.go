@@ -13,6 +13,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -29,7 +30,7 @@ import (
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("/auth")
 
-	// log.Debugf("/auth http.request: %+v", r)
+	log.Debugf("/auth http.request: %+v", r)
 
 	// did the IdP return an error?
 	errorIDP := r.URL.Query().Get("error")
@@ -51,7 +52,13 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// see note in login.go and https://github.com/vouch/vouch-proxy/issues/373
 	path := "/auth"
 	if r.Header.Get("X-Original-URI") != "" {
-		path = r.Header.Get("X-Original-URI")
+		ouri := r.Header.Get("X-Original-URI")
+		// look for "/auth" in the requested URI and prepend everything to the left to the 302 redirect
+		pathPrefix := strings.Split(ouri, path)
+		if pathPrefix != nil && pathPrefix[0] != "" {
+			path = pathPrefix[0] + path
+		}
+		log.Debugf("X-Original-URI found: %s, path transformed to: %s", ouri, path)
 	}
 
 	authStateURL := fmt.Sprintf("%s/%s/?%s", path, queryState, r.URL.RawQuery)
