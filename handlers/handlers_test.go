@@ -41,7 +41,8 @@ func setUp(configFile string) {
 	jwtmanager.Configure()
 	cookie.Configure()
 	var templatesFs = os.DirFS(os.Getenv("VOUCH_ROOT"))
-	responses.Configure(templatesFs)
+	responses.Configure()
+	responses.LoadTemplates(templatesFs)
 
 }
 
