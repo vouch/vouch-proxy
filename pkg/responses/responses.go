@@ -39,13 +39,14 @@ var (
 )
 
 // Configure see main.go configure()
-func Configure(templatesFs fs.FS) {
+func Configure() {
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
+}
 
+func LoadTemplates(templatesFs fs.FS) {
 	log.Debugf("responses.Configure() attempting to parse embedded templates")
 	indexTemplate = template.Must(template.ParseFS(templatesFs, "templates/index.tmpl"))
-
 }
 
 // RenderIndex render the response as an HTML page, mostly used in testing

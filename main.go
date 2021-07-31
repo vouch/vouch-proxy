@@ -113,7 +113,8 @@ func configure() {
 	domains.Configure()
 	jwtmanager.Configure()
 	cookie.Configure()
-	responses.Configure(templatesFs)
+	responses.Configure()
+	responses.LoadTemplates(templatesFs)
 	handlers.Configure()
 	timelog.Configure()
 }
