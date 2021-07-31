@@ -40,4 +40,4 @@ script:
 #      tags: true
 #
 notifications:
-  irc: "chat.freenode.net#vouch"
+  irc: "irc.libera.chat#vouch"

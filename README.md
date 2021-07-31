@@ -3,7 +3,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/vouch/vouch-proxy.svg)](https://github.com/vouch/vouch-proxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vouch/vouch-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/vouch/vouch-proxy/blob/master/LICENSE)
-[![Docker pulls](https://img.shields.io/docker/pulls/voucher/vouch-proxy.svg)](https://hub.docker.com/r/voucher/vouch-proxy/)
+[![Docker Repository on Quay](https://quay.io/repository/vouch/vouch-proxy/status 'Docker Repository on Quay')](https://quay.io/repository/vouch/vouch-proxy)
 [![GitHub version](https://img.shields.io/github/v/tag/vouch/vouch-proxy.svg?sort=semver&color=green)](https://github.com/vouch/vouch-proxy)
 
 An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module. Vouch Proxy can protect all of your websites at once.
@@ -245,7 +245,7 @@ docker run -d \
     -p 9090:9090 \
     --name vouch-proxy \
     -v ${PWD}/config:/config \
-    voucher/vouch-proxy
+    quay.io/vouch/vouch-proxy
 ```
 
 or
@@ -259,15 +259,23 @@ docker run -d \
     -e OAUTH_CLIENT_ID=1234 \
     -e OAUTH_CLIENT_SECRET=secretsecret \
     -e OAUTH_CALLBACK_URL=https://vouch.yourdomain.com/auth \
-    voucher/vouch-proxy
+    quay.io/vouch/vouch-proxy
 ```
 
-Automated container builds for each Vouch Proxy release are available from [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/). Each release produces..
+Automated container builds for each Vouch Proxy release are available from [quay.io](https://quay.io/repository/vouch/vouch-proxy). Each release produces..
 
-- `voucher/vouch-proxy:latest`
-- `voucher/vouch-proxy:x.y.z`
-- `voucher/vouch-proxy:alpine`
-- `voucher/vouch-proxy:alpine-x.y.z`
+a minimal go binary container built from `Dockerfile`
+
+- `quay.io/vouch/vouch-proxy:latest`
+- `quay.io/vouch/vouch-proxy:vx.y.z` such as `quay.io/vouch/vouch-proxy:v0.28.0`
+
+an `alpine` based container built from `Dockerfile.alpine`
+
+- `quay.io/vouch/vouch-proxy:alpine`
+- `quay.io/vouch/vouch-proxy:alpine-vx.y.z`
+
+Vouch Proxy `arm` images are available on [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/)
+
 - `voucher/vouch-proxy:latest-arm`
 
 ## Kubernetes Nginx Ingress
@@ -394,12 +402,12 @@ TLDR:
   - and follow the instructions at the end to redact your Nginx config
 - all of those go into a [gist](https://gist.github.com/)
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
-- or visit our IRC channel [#vouch](irc://freenode.net/#vouch) on freenode
+- or visit our IRC channel [#vouch](irc.libera.chat/#vouch) on libera.chat
 
-A bug report can be generated from a docker environment using the `voucher/vouch-proxy:alpine` image...
+A bug report can be generated from a docker environment using the `quay.io/vouch/vouch-proxy:alpine` image...
 
 ```!bash
-docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh voucher/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
+docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh quay.io/vouch/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
 ```
 
 ### submitting a Pull Request for a new feature

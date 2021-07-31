@@ -216,7 +216,7 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 	senv := []string{
 		"OAUTH_PROVIDER", "OAUTH_CLIENT_ID", "OAUTH_CLIENT_SECRET", "OAUTH_AUTH_URL", "OAUTH_TOKEN_URL",
 		"OAUTH_END_SESSION_ENDPOINT", "OAUTH_CALLBACK_URL", "OAUTH_USER_INFO_URL", "OAUTH_USER_TEAM_URL", "OAUTH_USER_ORG_URL",
-		"OAUTH_PREFERREDDOMAIN",
+		"OAUTH_PREFERREDDOMAIN", "OAUTH_RELYING_PARTY_ID",
 	}
 	// array of strings
 	saenv := []string{"OAUTH_CALLBACK_URLS", "OAUTH_SCOPES"}
@@ -247,6 +247,7 @@ func Test_configureFromEnvOAuth(t *testing.T) {
 		GenOAuth.UserTeamURL,
 		GenOAuth.UserOrgURL,
 		GenOAuth.PreferredDomain,
+		GenOAuth.RelyingPartyId,
 	}
 	sacfg := [][]string{
 		GenOAuth.RedirectURLs,
