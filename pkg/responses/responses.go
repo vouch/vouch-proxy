@@ -13,7 +13,6 @@ package responses
 import (
 	"errors"
 	"html/template"
-	"io/fs"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -42,11 +41,9 @@ var (
 func Configure() {
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
-}
 
-func LoadTemplates(templatesFs fs.FS) {
 	log.Debugf("responses.Configure() attempting to parse embedded templates")
-	indexTemplate = template.Must(template.ParseFS(templatesFs, "templates/index.tmpl"))
+	indexTemplate = template.Must(template.ParseFS(cfg.Templates, "templates/index.tmpl"))
 }
 
 // RenderIndex render the response as an HTML page, mostly used in testing

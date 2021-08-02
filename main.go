@@ -51,16 +51,16 @@ import (
 // version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 var (
-	version   = "undefined"
-	builddt   = "undefined"
-	host      = "undefined"
-	semver    = "undefined"
-	branch    = "undefined"
-	uname     = "undefined"
-	logger    *zap.SugaredLogger
-	fastlog   *zap.Logger
-	help      = flag.Bool("help", false, "show usage")
-	scheme    = map[bool]string{
+	version = "undefined"
+	builddt = "undefined"
+	host    = "undefined"
+	semver  = "undefined"
+	branch  = "undefined"
+	uname   = "undefined"
+	logger  *zap.SugaredLogger
+	fastlog *zap.Logger
+	help    = flag.Bool("help", false, "show usage")
+	scheme  = map[bool]string{
 		false: "http",
 		true:  "https",
 	}
@@ -103,6 +103,8 @@ func configure() {
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
 
+	cfg.Templates = templatesFs
+
 	logger = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
 
@@ -114,7 +116,6 @@ func configure() {
 	jwtmanager.Configure()
 	cookie.Configure()
 	responses.Configure()
-	responses.LoadTemplates(templatesFs)
 	handlers.Configure()
 	timelog.Configure()
 }

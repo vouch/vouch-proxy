@@ -14,6 +14,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -127,6 +128,9 @@ var (
 	errConfigNotFound = errors.New("configuration file not found")
 	// TODO: audit errors and use errConfigIsBad
 	// errConfigIsBad    = errors.New("configuration file is malformed")
+
+	// Templates are loaded from the file system with a go:embed directive in main.go
+	Templates fs.FS
 )
 
 type cmdLineFlags struct {
