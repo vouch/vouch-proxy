@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -74,7 +74,6 @@ func audience() string {
 	return strings.Join(aud, comma)
 }
 
-
 // NewVPJWT issue a signed Vouch Proxy JWT for a user
 func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs.PTokens) (string, error) {
 	// User`token`
@@ -99,7 +98,7 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 		claims.PIdToken = ""
 	}
 
-	// https://godoc.org/github.com/dgrijalva/jwt-go#NewWithClaims
+	// https://godoc.org/github.com/golang-jwt/jwt#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod), claims)
 	// log.Debugf("token: %v", token)
 	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())

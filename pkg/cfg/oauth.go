@@ -72,6 +72,7 @@ type oauthConfig struct {
 	LogoutURL           string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
 	RedirectURL         string   `mapstructure:"callback_url"  envconfig:"callback_url"`
 	RedirectURLs        []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
+	RelyingPartyId      string   `mapstructure:"relying_party_id"  envconfig:"relying_party_id"`
 	Scopes              []string `mapstructure:"scopes"`
 	UserInfoURL         string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
 	UserTeamURL         string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
@@ -180,7 +181,12 @@ func setDefaultsGoogle() {
 
 func setDefaultsADFS() {
 	log.Info("configuring ADFS OAuth")
-	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RedirectURL) // Needed or all claims won't be included
+
+	if GenOAuth.RelyingPartyId == "" {
+		GenOAuth.RelyingPartyId = GenOAuth.RedirectURL
+	}
+
+	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RelyingPartyId)
 }
 
 func setDefaultsAzure() {
