@@ -11,10 +11,11 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"bytes"
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -130,7 +131,10 @@ var (
 	// errConfigIsBad    = errors.New("configuration file is malformed")
 
 	// Templates are loaded from the file system with a go:embed directive in main.go
-	Templates fs.FS
+	Templates embed.FS
+
+	// Defaults are loaded from the file system with a go:embed directive in main.go
+	Defaults embed.FS
 )
 
 type cmdLineFlags struct {
@@ -476,10 +480,15 @@ func basicTest() error {
 // setDefaults set default options for most items from `.defaults.yml` in the root dir
 func setDefaults() {
 
-	viper.SetConfigName(".defaults")
+	// viper.SetConfigName(".defaults")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(RootDir)
-	viper.ReadInConfig()
+	// viper.AddConfigPath(RootDir)
+	// viper.ReadInConfig()
+	d, err := Defaults.ReadFile(".defaults.yml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	viper.ReadConfig(bytes.NewBuffer(d))
 	if err := viper.UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}

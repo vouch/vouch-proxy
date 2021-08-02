@@ -17,7 +17,6 @@ FROM alpine:latest
 LABEL maintainer="vouch@bnf.net"
 ENV VOUCH_ROOT=/
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY .defaults.yml /.defaults.yml 
 
 #  do.sh requires bash
 RUN apk add --no-cache bash

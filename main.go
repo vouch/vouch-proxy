@@ -73,6 +73,9 @@ var staticFs embed.FS
 //go:embed templates
 var templatesFs embed.FS
 
+//go:embed .defaults.yml
+var defaultsFs embed.FS
+
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
 // see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
 type fwdToZapWriter struct {
@@ -100,10 +103,11 @@ func configure() {
 		os.Exit(1)
 	}
 
+	cfg.Templates = templatesFs
+	cfg.Defaults = defaultsFs
+
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
-
-	cfg.Templates = templatesFs
 
 	logger = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger

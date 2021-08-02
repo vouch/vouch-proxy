@@ -295,6 +295,8 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
   ./vouch-proxy
 ```
 
+As of `v0.29.0` all templates, static assets and configuration defaults in `.defaults.yml` are built into the static binary using [go:embed](https://pkg.go.dev/embed) directives.
+
 ## /login and /logout endpoint redirection
 
 As of `v0.11.0` additional checks are in place to reduce [the attack surface of url redirection](https://blog.detectify.com/2019/05/16/the-real-impact-of-an-open-redirect/).
