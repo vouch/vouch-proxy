@@ -81,26 +81,32 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 			// log.Debug("setting cache for %+v", w.Header().Clone())
 
 			claims, err := ClaimsFromJWT(jwt)
-			now := time.Now().Unix()
 			if err != nil {
 				log.Error("very unusual error, we found a jwt for /validate but we couldn't parse it for claims while setting it into cache, returning")
 				return
-				// log.Debugf("*HERE* claims expire, time.now.unix, dExp %d - %d = %d > %d", claims.ExpiresAt, now, claims.ExpiresAt-now, int64(dExp))
-				// log.Debugf("*HERE* time.Duration((claims.ExpiresAt-time.Now().Unix())*time.Second.Nanoseconds()) %d", time.Duration((claims.ExpiresAt-time.Now().Unix())*time.Second.Nanoseconds()))
+				// log.Debugf("claims expire, time.now.unix, dExp %d - %d = %d > %d", claims.ExpiresAt, now, claims.ExpiresAt-now, int64(dExp))
+				// log.Debugf("time.Duration((claims.ExpiresAt-time.Now().Unix())*time.Second.Nanoseconds()) %d", time.Duration((claims.ExpiresAt-time.Now().Unix())*time.Second.Nanoseconds()))
 			}
 
-			// first see if the jwt's expiration will arrive before the cache expiration
-			// if this jwt expires in 10 minutes then we don't want to cache it for 20
-			// this might happen if the jwt expiration is set to 240 minutes, and the user last logged into the IdP 230 minutes ago
-			// then the user went away, cache was purged and now they return with 10 minutes left before token expiration
-			if !claims.VerifyExpiresAt(now+int64(dExp/time.Second), true) {
-				jwtExpiresIn := time.Duration((claims.ExpiresAt - now) * int64(time.Second))
-				log.Debugf("cache default expiration (%d) is after claim expiration (%d). setting cache experation to claim expiration for this entry", dExp, jwtExpiresIn)
-				Cache.Set(jwt, w.Header().Clone(), jwtExpiresIn)
-			} else {
-				Cache.SetDefault(jwt, w.Header().Clone())
-			}
-
+			cacheExp := getCacheExpirationDuration(claims)
+			Cache.Set(jwt, w.Header().Clone(), cacheExp)
 		}
 	})
+}
+
+// getCacheExpirationDuration - return time.Duration til the jwt should be purged from cache
+// first see if the jwt's expiration will arrive before the cache expiration
+// if this jwt expires in 10 minutes then we don't want to cache it for 20
+// this might happen if the jwt expiration is set to 240 minutes, and the user last logged into the IdP 230 minutes ago
+// then the user went away, cache was purged and now they return with 10 minutes left before token expiration
+func getCacheExpirationDuration(claims *VouchClaims) time.Duration {
+
+	now := time.Now().Unix()
+	expiresAt := now + int64(dExp/time.Second)
+	if !claims.VerifyExpiresAt(expiresAt, true) {
+		jwtExpiresIn := time.Duration((claims.ExpiresAt - now) * int64(time.Second))
+		log.Debugf("cache default expiration (%d) is after jwt expiration (%d). setting cache expiration to claim expiration for this entry", dExp, jwtExpiresIn)
+		return jwtExpiresIn
+	}
+	return dExp
 }
