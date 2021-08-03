@@ -16,6 +16,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -131,7 +132,7 @@ var (
 	// errConfigIsBad    = errors.New("configuration file is malformed")
 
 	// Templates are loaded from the file system with a go:embed directive in main.go
-	Templates embed.FS
+	Templates fs.FS
 
 	// Defaults are loaded from the file system with a go:embed directive in main.go
 	Defaults embed.FS
@@ -563,6 +564,7 @@ func InitForTestPurposes() {
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+
 	Logging.setLogLevel(zapcore.InfoLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
@@ -575,7 +577,20 @@ func InitForTestPurposesWithProvider(provider string) {
 	}
 	// Configure()
 	// setRootDir()
-	setDefaults()
+
+	// can't use setDefaults for testing which is go:embed based so we do it the old way
+	// setDefaults()
+	viper.SetConfigName(".defaults")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(RootDir)
+	viper.ReadInConfig()
+	if err := UnmarshalKey(Branding.LCName, &Cfg); err != nil {
+		log.Error(err)
+	}
+
+	// this also mimics the go:embed testing setup
+	Templates = os.DirFS(RootDir)
+
 	if err := parseConfigFile(); err != nil {
 		log.Error(err)
 	}
