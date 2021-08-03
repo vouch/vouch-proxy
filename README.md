@@ -208,16 +208,17 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
 - [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
+- [systemd startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 
 Please do help us to expand this list.
 
 ### Scopes and Claims
 
-With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are extracted and stored in the vouch cookie.
+With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. The required `claims` are extracted from the provider's response and stored in the VP cookie.
 
 ⚠️ **Additional claims and tokens will be added to the VP cookie and can make it large**
 
-The VP cookie may get split up into several cookies, but if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
+The VP cookie may be split into several cookies to accomdate browser cookie size limits. But if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
 #### Setup `scopes` and `claims` in Vouch Proxy with Nginx
 
