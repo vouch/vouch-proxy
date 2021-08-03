@@ -23,13 +23,13 @@ https://github.com/vouch/vouch-proxy#submitting-a-pull-request-for-a-new-feature
 */
 
 import (
+	"embed"
 	"errors"
 	"flag"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -51,22 +51,30 @@ import (
 // version and semver get overwritten by build with
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 var (
-	version   = "undefined"
-	builddt   = "undefined"
-	host      = "undefined"
-	semver    = "undefined"
-	branch    = "undefined"
-	uname     = "undefined"
-	staticDir = "/static/"
-	logger    *zap.SugaredLogger
-	fastlog   *zap.Logger
-	help      = flag.Bool("help", false, "show usage")
-	scheme    = map[bool]string{
+	version = "undefined"
+	builddt = "undefined"
+	host    = "undefined"
+	semver  = "undefined"
+	branch  = "undefined"
+	uname   = "undefined"
+	logger  *zap.SugaredLogger
+	fastlog *zap.Logger
+	help    = flag.Bool("help", false, "show usage")
+	scheme  = map[bool]string{
 		false: "http",
 		true:  "https",
 	}
 	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
+
+//go:embed static
+var staticFs embed.FS
+
+//go:embed templates
+var templatesFs embed.FS
+
+//go:embed .defaults.yml
+var defaultsFs embed.FS
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
 // see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
@@ -94,6 +102,9 @@ func configure() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
+	cfg.Templates = templatesFs
+	cfg.Defaults = defaultsFs
 
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
@@ -152,16 +163,8 @@ func main() {
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	muxR.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
 
-	// setup static
-	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
-	if fastlog.Core().Enabled(zap.DebugLevel) {
-		if err != nil {
-			logger.Errorf("couldn't find static assets at %s", sPath)
-		}
-		logger.Debugf("serving static files from %s", sPath)
-	}
-	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
+	// setup /static/ urls to be satisfied from the embedded /static/... fs
+	muxR.PathPrefix("/static/").Handler(http.FileServer(http.FS(staticFs)))
 
 	//
 	// if *doProfile {
