@@ -1,4 +1,4 @@
-name: Publish Docker image to Quay.io
+name: Publish Docker image to Quay.io using Dockerfile.alpine
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         with:
           images: quay.io/vouch/vouch-proxy
           flavor: |
-            prefix=alpine-,onlatest=true
+            prefix=alpine-
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
