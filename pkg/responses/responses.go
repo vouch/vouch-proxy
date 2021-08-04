@@ -120,7 +120,7 @@ func Error500(w http.ResponseWriter, r *http.Request, e error) {
 
 // cancelClearSetError convenience method to keep it DRY
 func cancelClearSetError(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
+	log.Warn(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	addErrandCancelRequest(r)
