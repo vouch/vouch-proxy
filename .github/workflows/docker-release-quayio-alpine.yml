@@ -27,11 +27,11 @@ jobs:
       
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@a67f45cb0f8e65cf693a0bc5bfa1c5057c623030
         with:
           images: quay.io/vouch/vouch-proxy
           flavor: |
-            prefix=alpine-
+            prefix=alpine-,onlatest=true
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}

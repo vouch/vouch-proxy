@@ -268,12 +268,12 @@ Automated container builds for each Vouch Proxy release are available from [quay
 a minimal go binary container built from `Dockerfile`
 
 - `quay.io/vouch/vouch-proxy:latest`
-- `quay.io/vouch/vouch-proxy:vx.y.z` such as `quay.io/vouch/vouch-proxy:v0.28.0`
+- `quay.io/vouch/vouch-proxy:x.y.z` such as `quay.io/vouch/vouch-proxy:0.28.0`
 
 an `alpine` based container built from `Dockerfile.alpine`
 
-- `quay.io/vouch/vouch-proxy:alpine`
-- `quay.io/vouch/vouch-proxy:alpine-vx.y.z`
+- `quay.io/vouch/vouch-proxy:alpine-latest`
+- `quay.io/vouch/vouch-proxy:alpine-x.y.z`
 
 Vouch Proxy `arm` images are available on [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/)
 
