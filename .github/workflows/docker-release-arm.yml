@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  Publish-to-docker:
+  publish-to-docker-arm:
     runs-on: ubuntu-latest
     env:
       DOCKER_TAG: latest-arm
