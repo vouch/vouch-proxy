@@ -30,16 +30,18 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: quay.io/vouch/vouch-proxy
+          flavor: |
+            prefix=alpine-,onlatest=true
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
      
-      - name: Build and push Docker image using Dockerfile
+      - name: Build and push Docker image using Dockerfile.alpine
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
+          file: Dockerfile.alpine
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
