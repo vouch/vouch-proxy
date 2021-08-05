@@ -1,0 +1,17 @@
+_metadata:
+  major_version: 1
+  minor_version: 1
+display_information:
+  name: Vouch Proxy - Login to Slack
+  description: enforce login to Slack to provide authorized access to your websites
+  background_color: "#002da8"
+oauth_config:
+  scopes:
+    user:
+      - email
+      - openid
+      - profile
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
