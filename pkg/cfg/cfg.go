@@ -306,7 +306,7 @@ func logConfigIfDebug() {
 	// log.Debugf("viper settings %+v", viper.AllSettings())
 
 	// Mask sensitive configuration items before logging
-	maskedCfg := *Cfg
+	maskedCfg := Cfg
 	if len(Cfg.Session.Key) != 0 {
 		maskedCfg.Session.Key = "XXXXXXXX"
 	}
