@@ -19,6 +19,7 @@ oauth:
   # create a new OAuth application at:
   # https://api.slack.com/apps
   # use the manifest at `examples/slack/vouch-slack-oidc-app-manifest.yml`
+  # but be sure to match the `callback_url`'s below to the `redirect_urls` in the manifest
   # then install the new app to your slack instance
   provider: oidc
   # careful! the slack client_id must be single quoted so that the yaml parser 

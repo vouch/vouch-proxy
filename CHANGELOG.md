@@ -16,7 +16,7 @@ Coming soon! Please document any work in progress here as part of your PR. It wi
 
 ## v0.29.0
 
-- embed static assets at templates using [go:embed](https://golang.org/pkg/embed/)
+- embed static assets as templates using [go:embed](https://golang.org/pkg/embed/)
 
 ## v0.28.0
 
