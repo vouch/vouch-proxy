@@ -26,6 +26,7 @@ import (
 	"embed"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -51,16 +52,17 @@ import (
 // `version`, `semver` and others are populated during build by..
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 var (
-	version = "undefined"
-	builddt = "undefined"
-	host    = "undefined"
-	semver  = "undefined"
-	branch  = "undefined"
-	uname   = "undefined"
-	logger  *zap.SugaredLogger
-	fastlog *zap.Logger
-	help    = flag.Bool("help", false, "show usage")
-	scheme  = map[bool]string{
+	version     = "undefined"
+	builddt     = "undefined"
+	host        = "undefined"
+	semver      = "undefined"
+	branch      = "undefined"
+	uname       = "undefined"
+	logger      *zap.SugaredLogger
+	fastlog     *zap.Logger
+	showVersion = flag.Bool("version", false, "display version and exit")
+	help        = flag.Bool("help", false, "show usage")
+	scheme      = map[bool]string{
 		false: "http",
 		true:  "https",
 	}
@@ -101,6 +103,11 @@ func configure() {
 	if *help {
 		flag.PrintDefaults()
 		os.Exit(1)
+	}
+
+	if *showVersion {
+		fmt.Printf("%s\n", semver)
+		os.Exit(0)
 	}
 
 	cfg.Templates = templatesFs
