@@ -1,0 +1,47 @@
+name: Publish Docker image to Quay.io using Dockerfile.alpine
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+
+
+jobs:
+  publish-to-docker-quayio:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REPO: quay.io
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      
+      - name: Log in to Docker repository
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.DOCKER_REPO }}
+          username: ${{ secrets.QUAYIO_ROBOT_USERNAME }}
+          password: ${{ secrets.QUAYIO_ROBOT_PASSWORD }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@a67f45cb0f8e65cf693a0bc5bfa1c5057c623030
+        with:
+          images: quay.io/vouch/vouch-proxy
+          flavor: |
+            prefix=alpine-,onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+     
+      - name: Build and push Docker image using Dockerfile.alpine
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          file: Dockerfile.alpine
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

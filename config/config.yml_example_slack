@@ -1,0 +1,33 @@
+
+# vouch config
+# bare minimum to get vouch running with Slack
+
+vouch:
+  domains:
+  - yourdomain.com
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # allowAllUsers: true
+
+  # cookie:
+    # secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
+
+
+oauth:
+  # create a new OAuth application at:
+  # https://api.slack.com/apps
+  # use the manifest at `examples/slack/vouch-slack-oidc-app-manifest.yml`
+  # but be sure to match the `callback_url`'s below to the `redirect_urls` in the manifest
+  # then install the new app to your slack instance
+  provider: oidc
+  # careful! the slack client_id must be single quoted so that the yaml parser 
+  # doesn't interpret it as a number (because yaml is actually javascript)
+  client_id: 'xxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxx'
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  callback_url: https://vouch.yourdomain.com/auth  
+  # from https://slack.com/.well-known/openid-configuration
+  auth_url: https://slack.com/openid/connect/authorize
+  token_url: https://slack.com/api/openid.connect.token
+  user_info_url: https://slack.com/api/openid.connect.userInfo

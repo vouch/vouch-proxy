@@ -29,7 +29,7 @@ build () {
   local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
   local BRANCH=$(git rev-parse --abbrev-ref HEAD)
   local UNAME=$(uname)
-  go build -i -v -ldflags=" -X main.version=${VERSION} -X main.uname=${UNAME} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
+  go build -v -ldflags=" -X main.version=${VERSION} -X main.uname=${UNAME} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
 }
 
 _hostname() {

@@ -14,7 +14,6 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"path/filepath"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -43,9 +42,8 @@ func Configure() {
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
 
-	log.Debugf("responses.Configure() attempting to parse templates with cfg.RootDir: %s", cfg.RootDir)
-	indexTemplate = template.Must(template.ParseFiles(filepath.Join(cfg.RootDir, "templates/index.tmpl")))
-
+	log.Debugf("responses.Configure() attempting to parse embedded templates")
+	indexTemplate = template.Must(template.ParseFS(cfg.Templates, "templates/index.tmpl"))
 }
 
 // RenderIndex render the response as an HTML page, mostly used in testing
@@ -122,7 +120,7 @@ func Error500(w http.ResponseWriter, r *http.Request, e error) {
 
 // cancelClearSetError convenience method to keep it DRY
 func cancelClearSetError(w http.ResponseWriter, r *http.Request, e error) {
-	log.Error(e)
+	log.Warn(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
 	addErrandCancelRequest(r)

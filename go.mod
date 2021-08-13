@@ -8,9 +8,9 @@ require (
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.5.6
-	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/influxdata/tdigest v0.0.1 // indirect
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/karupanerura/go-mock-http-response v0.0.0-20171201120521-7c242a447d45
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mailru/easyjson v0.7.7 // indirect

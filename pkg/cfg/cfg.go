@@ -11,9 +11,12 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"bytes"
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -104,7 +107,7 @@ var (
 	// Branding that's our name
 	Branding = branding{"vouch", "VOUCH", "Vouch", "Vouch Proxy", "https://github.com/vouch/vouch-proxy"}
 
-	// RootDir is where Vouch Proxy looks for ./config/config.yml, ./data, ./static and ./templates
+	// RootDir is where Vouch Proxy looks for ./config/config.yml and ./data
 	RootDir string
 
 	secretFile string
@@ -127,6 +130,12 @@ var (
 	errConfigNotFound = errors.New("configuration file not found")
 	// TODO: audit errors and use errConfigIsBad
 	// errConfigIsBad    = errors.New("configuration file is malformed")
+
+	// Templates are loaded from the file system with a go:embed directive in main.go
+	Templates fs.FS
+
+	// Defaults are loaded from the file system with a go:embed directive in main.go
+	Defaults embed.FS
 )
 
 type cmdLineFlags struct {
@@ -472,10 +481,15 @@ func basicTest() error {
 // setDefaults set default options for most items from `.defaults.yml` in the root dir
 func setDefaults() {
 
-	viper.SetConfigName(".defaults")
+	// viper.SetConfigName(".defaults")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(RootDir)
-	viper.ReadInConfig()
+	// viper.AddConfigPath(RootDir)
+	// viper.ReadInConfig()
+	d, err := Defaults.ReadFile(".defaults.yml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	viper.ReadConfig(bytes.NewBuffer(d))
 	if err := viper.UnmarshalKey(Branding.LCName, &Cfg); err != nil {
 		log.Error(err)
 	}
@@ -550,6 +564,7 @@ func InitForTestPurposes() {
 // InitForTestPurposesWithProvider just for testing
 func InitForTestPurposesWithProvider(provider string) {
 	Cfg = &Config{} // clear it out since we're called multiple times from subsequent tests
+
 	Logging.setLogLevel(zapcore.InfoLevel)
 	setRootDir()
 	// _, b, _, _ := runtime.Caller(0)
@@ -562,7 +577,20 @@ func InitForTestPurposesWithProvider(provider string) {
 	}
 	// Configure()
 	// setRootDir()
-	setDefaults()
+
+	// can't use setDefaults for testing which is go:embed based so we do it the old way
+	// setDefaults()
+	viper.SetConfigName(".defaults")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(RootDir)
+	viper.ReadInConfig()
+	if err := UnmarshalKey(Branding.LCName, &Cfg); err != nil {
+		log.Error(err)
+	}
+
+	// this also mimics the go:embed testing setup
+	Templates = os.DirFS(RootDir)
+
 	if err := parseConfigFile(); err != nil {
 		log.Error(err)
 	}

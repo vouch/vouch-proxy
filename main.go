@@ -23,19 +23,20 @@ https://github.com/vouch/vouch-proxy#submitting-a-pull-request-for-a-new-feature
 */
 
 import (
+	"embed"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
 	// "net/http/pprof"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/handlers"
@@ -48,25 +49,34 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/timelog"
 )
 
-// version and semver get overwritten by build with
+// `version`, `semver` and others are populated during build by..
 // go build -i -v -ldflags="-X main.version=$(git describe --always --long) -X main.semver=v$(git semver get)"
 var (
-	version   = "undefined"
-	builddt   = "undefined"
-	host      = "undefined"
-	semver    = "undefined"
-	branch    = "undefined"
-	uname     = "undefined"
-	staticDir = "/static/"
-	logger    *zap.SugaredLogger
-	fastlog   *zap.Logger
-	help      = flag.Bool("help", false, "show usage")
-	scheme    = map[bool]string{
+	version     = "undefined"
+	builddt     = "undefined"
+	host        = "undefined"
+	semver      = "undefined"
+	branch      = "undefined"
+	uname       = "undefined"
+	logger      *zap.SugaredLogger
+	fastlog     *zap.Logger
+	showVersion = flag.Bool("version", false, "display version and exit")
+	help        = flag.Bool("help", false, "show usage")
+	scheme      = map[bool]string{
 		false: "http",
 		true:  "https",
 	}
 	// doProfile = flag.Bool("profile", false, "run profiler at /debug/pprof")
 )
+
+//go:embed static
+var staticFs embed.FS
+
+//go:embed templates
+var templatesFs embed.FS
+
+//go:embed .defaults.yml
+var defaultsFs embed.FS
 
 // fwdToZapWriter allows us to use the zap.Logger as our http.Server ErrorLog
 // see https://stackoverflow.com/questions/52294334/net-http-set-custom-logger
@@ -94,6 +104,14 @@ func configure() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
+	if *showVersion {
+		fmt.Printf("%s\n", semver)
+		os.Exit(0)
+	}
+
+	cfg.Templates = templatesFs
+	cfg.Defaults = defaultsFs
 
 	cfg.Configure()
 	healthcheck.CheckAndExitIfIsHealthCheck()
@@ -131,45 +149,46 @@ func main() {
 		"tls", tls,
 		"oauth.provider", cfg.GenOAuth.Provider)
 
-	muxR := mux.NewRouter()
+	// router := mux.NewRouter()
+	router := httprouter.New()
 
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	muxR.HandleFunc("/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
-	muxR.HandleFunc("/_external-auth-{id}", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	router.HandlerFunc(http.MethodGet, "/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	router.HandlerFunc(http.MethodGet, "/_external-auth-:id", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
-	muxR.HandleFunc("/login", timelog.TimeLog(loginH))
+	router.HandlerFunc(http.MethodGet, "/login", timelog.TimeLog(loginH))
 
 	logoutH := http.HandlerFunc(handlers.LogoutHandler)
-	muxR.HandleFunc("/logout", timelog.TimeLog(logoutH))
-
-	authStateH := http.HandlerFunc(handlers.AuthStateHandler)
-	muxR.HandleFunc("/auth/{state}/", timelog.TimeLog(authStateH))
+	router.HandlerFunc(http.MethodGet, "/logout", timelog.TimeLog(logoutH))
 
 	callH := http.HandlerFunc(handlers.CallbackHandler)
-	muxR.HandleFunc("/auth", timelog.TimeLog(callH))
+	router.HandlerFunc(http.MethodGet, "/auth/", timelog.TimeLog(callH))
+
+	authStateH := http.HandlerFunc(handlers.AuthStateHandler)
+	router.HandlerFunc(http.MethodGet, "/auth/:state/", timelog.TimeLog(authStateH))
 
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
-	muxR.HandleFunc("/healthcheck", timelog.TimeLog(healthH))
+	router.HandlerFunc(http.MethodGet, "/healthcheck", timelog.TimeLog(healthH))
 
-	// setup static
-	sPath, err := filepath.Abs(cfg.RootDir + staticDir)
-	if fastlog.Core().Enabled(zap.DebugLevel) {
-		if err != nil {
-			logger.Errorf("couldn't find static assets at %s", sPath)
-		}
-		logger.Debugf("serving static files from %s", sPath)
-	}
-	// https://golangcode.com/serve-static-assets-using-the-mux-router/
-	muxR.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir(sPath))))
+	// this is the documented implemenation for static file serving but it doesn't seem to work with go:embed
+	// router.ServeFiles("/static/*filepath", http.FS(staticFs))
+
+	// so instead we publish all three routes
+	router.Handler(http.MethodGet, "/static/css/main.css", http.FileServer(http.FS(staticFs)))
+	router.Handler(http.MethodGet, "/static/img/favicon.ico", http.FileServer(http.FS(staticFs)))
+	router.Handler(http.MethodGet, "/static/img/multicolor_V_500x500.png", http.FileServer(http.FS(staticFs)))
+
+	// this also works for static files
+	// router.NotFound = http.FileServer(http.FS(staticFs))
 
 	//
 	// if *doProfile {
-	// 	addProfilingHandlers(muxR)
+	// 	addProfilingHandlers(router)
 	// }
 
 	srv := &http.Server{
-		Handler: muxR,
+		Handler: router,
 		Addr:    listen,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
@@ -199,16 +218,16 @@ func checkTCPPortAvailable(listen string) {
 }
 
 // if you'd like to enable profiling uncomment these
-// func addProfilingHandlers(muxR *mux.Router) {
+// func addProfilingHandlers(router *httprouter.Router) {
 // 	// https://stackoverflow.com/questions/47452471/pprof-profile-with-julienschmidtrouter-and-benchmarks-not-profiling-handler
 // 	logger.Debugf("profiling routes added at http://%s:%d/debug/pprof/", cfg.Cfg.Listen, cfg.Cfg.Port)
-// 	muxR.HandleFunc("/debug/pprof/", pprof.Index)
-// 	muxR.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-// 	muxR.HandleFunc("/debug/pprof/profile", pprof.Profile)
-// 	muxR.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-// 	muxR.HandleFunc("/debug/pprof/trace", pprof.Trace)
-// 	muxR.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-// 	muxR.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-// 	muxR.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-// 	muxR.Handle("/debug/pprof/block", pprof.Handler("block"))
+// 	router.HandlerFunc(http.MethodGet, "/debug/pprof/", pprof.Index)
+// 	router.HandlerFunc(http.MethodGet, "/debug/pprof/cmdline", pprof.Cmdline)
+// 	router.HandlerFunc(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+// 	router.HandlerFunc(http.MethodGet, "/debug/pprof/symbol", pprof.Symbol)
+// 	router.HandlerFunc(http.MethodGet, "/debug/pprof/trace", pprof.Trace)
+// 	router.Handler(http.MethodGet, "/debug/pprof/goroutine", pprof.Handler("goroutine"))
+// 	router.Handler(http.MethodGet, "/debug/pprof/heap", pprof.Handler("heap"))
+// 	router.Handler(http.MethodGet, "/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+// 	router.Handler(http.MethodGet, "/debug/pprof/block", pprof.Handler("block"))
 // }

@@ -1,9 +1,9 @@
 # Vouch Proxy
 
 [![GitHub stars](https://img.shields.io/github/stars/vouch/vouch-proxy.svg)](https://github.com/vouch/vouch-proxy)
+[![Build Status](https://travis-ci.org/vouch/vouch-proxy.svg?branch=master)](https://travis-ci.org/vouch/vouch-proxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vouch/vouch-proxy)](https://goreportcard.com/report/github.com/vouch/vouch-proxy)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/vouch/vouch-proxy/blob/master/LICENSE)
-[![Docker Repository on Quay](https://quay.io/repository/vouch/vouch-proxy/status 'Docker Repository on Quay')](https://quay.io/repository/vouch/vouch-proxy)
 [![GitHub version](https://img.shields.io/github/v/tag/vouch/vouch-proxy.svg?sort=semver&color=green)](https://github.com/vouch/vouch-proxy)
 
 An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) module. Vouch Proxy can protect all of your websites at once.
@@ -15,6 +15,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - GitHub Enterprise
 - [IndieAuth](https://indieauth.spec.indieweb.org/)
 - [Okta](https://developer.okta.com/blog/2018/08/28/nginx-auth-request)
+- [Slack](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_slack)
 - [ADFS](https://github.com/vouch/vouch-proxy/pull/68)
 - [Azure AD](https://github.com/vouch/vouch-proxy/issues/290)
 - [Alibaba / Aliyun iDaas](https://github.com/vouch/vouch-proxy/issues/344)
@@ -208,16 +209,17 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
 - [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
+- [systemd startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 
 Please do help us to expand this list.
 
 ### Scopes and Claims
 
-With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. From the provider's response the required `claims` are extracted and stored in the vouch cookie.
+With Vouch Proxy you can request various `scopes` (standard and custom) to obtain more information about the user or gain access to the provider's APIs. Internally, Vouch Proxy launches a requests to `user_info_url` after successful authentication. The required `claims` are extracted from the provider's response and stored in the VP cookie.
 
 ⚠️ **Additional claims and tokens will be added to the VP cookie and can make it large**
 
-The VP cookie may get split up into several cookies, but if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
+The VP cookie may be split into several cookies to accomdate browser cookie size limits. But if you need it, you need it. Large cookies and headers require Nginx to be configured with larger buffers. See [large_client_header_buffers](http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers) and [proxy_buffer_size](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) for more information.
 
 #### Setup `scopes` and `claims` in Vouch Proxy with Nginx
 
@@ -267,12 +269,12 @@ Automated container builds for each Vouch Proxy release are available from [quay
 a minimal go binary container built from `Dockerfile`
 
 - `quay.io/vouch/vouch-proxy:latest`
-- `quay.io/vouch/vouch-proxy:vx.y.z` such as `quay.io/vouch/vouch-proxy:v0.28.0`
+- `quay.io/vouch/vouch-proxy:x.y.z` such as `quay.io/vouch/vouch-proxy:0.28.0`
 
 an `alpine` based container built from `Dockerfile.alpine`
 
-- `quay.io/vouch/vouch-proxy:alpine`
-- `quay.io/vouch/vouch-proxy:alpine-vx.y.z`
+- `quay.io/vouch/vouch-proxy:alpine-latest`
+- `quay.io/vouch/vouch-proxy:alpine-x.y.z`
 
 Vouch Proxy `arm` images are available on [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/)
 
@@ -302,6 +304,8 @@ Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are avai
   ./do.sh build
   ./vouch-proxy
 ```
+
+As of `v0.29.0` all templates, static assets and configuration defaults in `.defaults.yml` are built into the static binary using [go:embed](https://pkg.go.dev/embed) directives.
 
 ## /login and /logout endpoint redirection
 

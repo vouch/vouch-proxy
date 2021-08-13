@@ -41,7 +41,6 @@ func setUp(configFile string) {
 	jwtmanager.Configure()
 	cookie.Configure()
 	responses.Configure()
-
 }
 
 func TestVerifyUserPositiveUserInWhiteList(t *testing.T) {
