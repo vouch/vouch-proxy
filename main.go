@@ -163,7 +163,7 @@ func main() {
 	router.HandlerFunc(http.MethodGet, "/logout", timelog.TimeLog(logoutH))
 
 	callH := http.HandlerFunc(handlers.CallbackHandler)
-	router.HandlerFunc(http.MethodGet, "/auth/", timelog.TimeLog(callH))
+	router.HandlerFunc(http.MethodGet, "/auth", timelog.TimeLog(callH))
 
 	authStateH := http.HandlerFunc(handlers.AuthStateHandler)
 	router.HandlerFunc(http.MethodGet, "/auth/:state/", timelog.TimeLog(authStateH))
