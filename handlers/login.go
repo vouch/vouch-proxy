@@ -60,16 +60,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// then we need a hint to understand which path to use for the session cookie which is passed from the browser back to VP
 	// after successful login at the IdP
 	// see https://github.com/vouch/vouch-proxy/issues/373
-	path := "/auth"
+	apath := fmt.Sprintf("/auth/%s/", state)
 	if r.Header.Get("X-Original-URI") != "" {
-		ouri := r.Header.Get("X-Original-URI")
-		path = strings.Replace(ouri, "login", "auth", 1)
-		log.Debugf("X-Original-URI found: %s, path transformed to: %s", ouri, path)
+		ouri, err := url.Parse(r.Header.Get("X-Original-URI"))
+		if err != nil {
+			log.Error(err)
+		} else {
+			LtoA := strings.Replace(ouri.Path, "login", "auth", 1)
+			apath = fmt.Sprintf("%s/%s/", LtoA, state)
+			log.Debugf("X-Original-URI found: %s, path transformed to: %s", ouri, apath)
+		}
 	}
 
 	// set the path for the session cookie to only send the correct cookie to /auth/{state}/
 	// must have a trailing slash. Otherwise, it is sent to all endpoints that _start_ with the cookie path.
-	session.Options.Path = fmt.Sprintf("%s/%s/", path, state)
+	session.Options.Path = apath
 
 	log.Debugf("session state set to %s for path %s", session.Values["state"], session.Options.Path)
 
