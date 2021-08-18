@@ -234,7 +234,7 @@ The VP cookie may be split into several cookies to accomdate browser cookie size
    5. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
 2. Set the necessary `claims` in the `header` section of the vouch-proxy `config.yml`
    1. log in and call the `/validate` endpoint in a modern browser
-   2. check the response headers for headers of the form `X-Vouch-Idp-Claims-<ClaimName>`
+   2. check the response headers for headers of the form `X-Vouch-IdP-Claims-<ClaimName>`
    3. If they are not there clear your cookies and cached browser data
    4. 🐞 If they are still not there but exist in the jwt (esp. custom claims) there might be a bug
    5. remove the `idtoken: X-Vouch-IdP-IdToken` from the `headers` section of vouch-proxy's `config.yml` if you don't need it
