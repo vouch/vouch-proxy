@@ -210,6 +210,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
 - [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
 - [systemd startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
+- [using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
 
 Please do help us to expand this list.
 
