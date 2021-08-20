@@ -1,0 +1,59 @@
+
+# vouch config
+# bare minimum to get vouch running with SecureAuth OpenID Connect
+
+vouch:
+  logLevel: debug
+  testing: false
+  listen: 0.0.0.0  # VOUCH_LISTEN
+  port: 9090       # VOUCH_PORT
+
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  #- domain.com
+
+  # - OR -
+  
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # and set vouch.cookie.domain to the domain you wish to protect
+
+  allowAllUsers: true
+
+  jwt:
+    # This issuer value should be match with SecureAuth OpenID configuration on Post Auth tab.
+    issuer: XXXXXXXXXXXXXXXXXXX
+    compress: false
+
+  headers:
+    accesstoken: X-Vouch-IdP-AccessToken
+    idtoken: X-Vouch-IdP-IdToken
+    claims:
+      - sub
+      - name
+      - email
+
+  cookie:
+
+    # Cookie name can be set anything you want
+    # Extract value of this cookie to get accesstoken and idtoken.
+
+    name: SecureAuth-Vouch
+    secure: true
+    domain: domain.com
+
+oauth:
+  # SecureAuth OpenID Connect
+  provider: oidc
+  client_id: XXXXXXXXXXXXXXX
+  client_secret: XXXXXXXXXXXXXXXXXXXXXX
+  auth_url: https://<SecureAuth FQDN>/SecureAuth<XX>/SecureAuth.aspx
+  token_url: https://<SecureAuth FQDN>/SecureAuth<XX>/OidcToken.aspx
+  user_info_url: https://<SecureAuth FQDN>/SecureAuth<XX>/OidcUserInfo.aspx
+  scopes:
+    - openid
+    - email
+    - profile
+  # This callback_url need to set on SecureAuth Post Auth tab as a redirect url.
+  callback_url: https://<vouch>.<domain.com>/auth 
