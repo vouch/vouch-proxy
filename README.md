@@ -417,7 +417,7 @@ A bug report can be generated from a docker environment using the `quay.io/vouch
 docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh quay.io/vouch/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
 ```
 
-### submitting a Pull Request for a new feature
+### Contributing to Vouch Proxy by submitting a Pull Request
 
 I really love Vouch Proxy! I wish it did XXXX...
 
@@ -426,6 +426,7 @@ Please make a proposal before you spend your time and our time integrating a new
 Code contributions should..
 
 - include unit tests and in some cases end-to-end tests
+- include an entry at the top of CHANGELOG.md in the **Unreleased** section
 - be formatted with `go fmt`, checked with `go vet` and other common go tools
 - not break existing setups without a clear reason (usually security related)
 - and generally be discussed beforehand in a GitHub issue
