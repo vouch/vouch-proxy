@@ -21,6 +21,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [Alibaba / Aliyun iDaas](https://github.com/vouch/vouch-proxy/issues/344)
 - [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
 - [Discord](https://github.com/eltariel/foundry-docker-nginx-vouch)
+- [SecureAuth](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_secureauth)
 - [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
 - Keycloak
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
