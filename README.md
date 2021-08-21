@@ -10,7 +10,6 @@ An SSO solution for Nginx using the [auth_request](http://nginx.org/en/docs/http
 
 Vouch Proxy supports many OAuth and OIDC login providers and can enforce authentication to...
 
-- [SecureAuth](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_secureauth)
 - Google
 - [GitHub](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/)
 - GitHub Enterprise
@@ -21,6 +20,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [Azure AD](https://github.com/vouch/vouch-proxy/issues/290)
 - [Alibaba / Aliyun iDaas](https://github.com/vouch/vouch-proxy/issues/344)
 - [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
+- [SecureAuth](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_secureauth)
 - [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
 - Keycloak
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)

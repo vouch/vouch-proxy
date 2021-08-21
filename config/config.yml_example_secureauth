@@ -3,45 +3,16 @@
 # bare minimum to get vouch running with SecureAuth OpenID Connect
 
 vouch:
-  logLevel: debug
-  testing: false
-  listen: 0.0.0.0  # VOUCH_LISTEN
-  port: 9090       # VOUCH_PORT
-
-  # valid domains that the jwt cookies can be set into
-  # the callback_urls will be to these domains
   domains:
-  #- domain.com
+  - yourdomain.com
 
-  # - OR -
-  
-  # instead of setting specific domains you may prefer to allow all users...
-  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
-  # and set vouch.cookie.domain to the domain you wish to protect
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # allowAllUsers: true
 
-  allowAllUsers: true
-
-  jwt:
-    # This issuer value should be match with SecureAuth OpenID configuration on Post Auth tab.
-    issuer: XXXXXXXXXXXXXXXXXXX
-    compress: false
-
-  headers:
-    accesstoken: X-Vouch-IdP-AccessToken
-    idtoken: X-Vouch-IdP-IdToken
-    claims:
-      - sub
-      - name
-      - email
-
-  cookie:
-
-    # Cookie name can be set anything you want
-    # Extract value of this cookie to get accesstoken and idtoken.
-
-    name: SecureAuth-Vouch
-    secure: true
-    domain: domain.com
+  # cookie:
+    # secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
 
 oauth:
   # SecureAuth OpenID Connect
@@ -55,5 +26,5 @@ oauth:
     - openid
     - email
     - profile
-  # This callback_url need to set on SecureAuth Post Auth tab as a redirect url.
+  # callback_url needs to be set as a "redirect url" on the SecureAuth Post Auth tab 
   callback_url: https://<vouch>.<domain.com>/auth 
