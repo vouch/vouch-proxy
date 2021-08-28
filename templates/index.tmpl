@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="icon" type="image/png" href="/static/img/favicon.ico" />
-    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="icon" type="image/png" href="{{ .DocumentRoot }}/static/img/favicon.ico" />
+    <link rel="stylesheet" href="{{ .DocumentRoot }}/static/css/main.css" />
     <meta name="robots" content="noindex, nofollow" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -14,7 +14,7 @@
   </head>
   <body>
 <div class="top">
-  <a href="https://github.com/vouch/vouch-proxy"><img src="/static/img/multicolor_V_500x500.png"/></a>
+  <a href="https://github.com/vouch/vouch-proxy"><img src="{{ .DocumentRoot }}/static/img/multicolor_V_500x500.png"/></a>
   <a href="https://github.com/vouch/vouch-proxy"><span>Vouch Proxy</span></a>
 </div>
 
@@ -30,9 +30,9 @@ All 302 redirects will be captured and presented as links here
 
 
 <ul>
-  <li><a href="/login">login</a></li>
-  <li><a href="/logout">logout</a></li>
-  <li><a href="/validate">validate</a></li>
+  <li><a href="{{ .DocumentRoot }}/login">login</a></li>
+  <li><a href="{{ .DocumentRoot }}/logout">logout</a></li>
+  <li><a href="{{ .DocumentRoot }}/validate">validate</a></li>
 {{ if .TestURLs }}
   {{ range $url := .TestURLs}}
   <li><a href="{{ $url }}">{{ $url }}</a></li>

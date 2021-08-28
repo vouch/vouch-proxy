@@ -44,6 +44,7 @@ type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
+	DocumentRoot  string   `mapstructure:"document_root" envconfig:"document_root"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`

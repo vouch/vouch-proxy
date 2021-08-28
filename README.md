@@ -177,6 +177,47 @@ server {
 }
 ```
 
+### Vouch Proxy "in a path"
+
+As of `v0.33.0` Vouch Proxy can be served within an Nginx location (path) by configuring `vouch.document_root: /vp_in_a_path`
+
+This avoids the need to setup a separate domain for Vouch Proxy such as `vouch.yourdomain.com`. For example VP login will be served from https://protectedapp.yourdomain.com/vp_in_a_path/login
+
+```{.nginxconf}
+server {
+    listen 443 ssl http2;
+    server_name protectedapp.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/protectedapp.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/protectedapp.yourdomain.com/privkey.pem;
+
+    # This location serves all Vouch Proxy endpoints as /vp_in_a_path/$uri
+    #   including /vp_in_a_path/validate, /vp_in_a_path/login, /vp_in_a_path/logout, /vp_in_a_path/auth, /vp_in_a_path/auth/$STATE, etc
+    location /vp_in_a_path {
+      proxy_pass http://127.0.0.1:9090; # must not! have a slash at the end
+      proxy_set_header Host $http_host;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+    }
+
+    # if /vp_in_a_path/validate returns `401 not authorized` then forward the request to the error401block
+    error_page 401 = @error401;
+
+    location @error401 {
+        # redirect to Vouch Proxy for login
+        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount
+    }
+
+    location / {
+      auth_request /vp_in_a_path/validate;
+      proxy_pass http://127.0.0.1:8080;
+      # see the Nginx config above for additional headers which can be set from Vouch Proxy
+    }
+
+```
+
+### Additional Nginx Configurations
+
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## Configuring Vouch Proxy using Environmental Variables

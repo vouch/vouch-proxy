@@ -23,9 +23,10 @@ import (
 
 // Index variables passed to index.tmpl
 type Index struct {
-	Msg      string
-	TestURLs []string
-	Testing  bool
+	Msg          string
+	TestURLs     []string
+	Testing      bool
+	DocumentRoot string
 }
 
 var (
@@ -48,7 +49,7 @@ func Configure() {
 
 // RenderIndex render the response as an HTML page, mostly used in testing
 func RenderIndex(w http.ResponseWriter, msg string) {
-	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURLs: cfg.Cfg.TestURLs, Testing: cfg.Cfg.Testing}); err != nil {
+	if err := indexTemplate.Execute(w, &Index{Msg: msg, TestURLs: cfg.Cfg.TestURLs, Testing: cfg.Cfg.Testing, DocumentRoot: cfg.Cfg.DocumentRoot}); err != nil {
 		log.Error(err)
 	}
 }

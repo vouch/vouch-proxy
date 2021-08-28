@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.33.0
+
+- [Vouch Proxy running in a path](https://github.com/vouch/vouch-proxy/issues/373)
+
 ## v0.32.0
 
 - [slack oidc example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_slack) and [slack app manifest](https://github.com/vouch/vouch-proxy/blob/master/examples/slack/vouch-slack-oidc-app-manifest.yml)
