@@ -75,7 +75,7 @@ type oauthConfig struct {
 	RedirectURLs   []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
 	RelyingPartyId string   `mapstructure:"relying_party_id"  envconfig:"relying_party_id"`
 	Scopes         []string `mapstructure:"scopes"`
-	// pointer-to-pointer so that the default value is nil
+	// pointer-to-pointer so that the default uninitialized value is nil
 	Claims              **oauthClaimsConfig `mapstructure:"claims"`
 	UserInfoURL         string              `mapstructure:"user_info_url" envconfig:"user_info_url"`
 	UserTeamURL         string              `mapstructure:"user_team_url" envconfig:"user_team_url"`

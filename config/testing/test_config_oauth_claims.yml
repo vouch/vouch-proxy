@@ -1,0 +1,48 @@
+vouch:
+  logLevel: debug
+  listen: 0.0.0.0
+  port: 9090
+  domains:
+    - vouch.github.io
+
+  whiteList:
+    - bob@yourdomain.com
+    - alice@yourdomain.com
+    - joe@yourdomain.com
+
+  cookie:
+    name: vouchTestingCookie
+
+  session:
+    name: VouchTestingSession
+
+  jwt:
+    secret: testingsecret
+
+oauth:
+  provider: oidc
+  auth_url: https://oauth2.example.info/authorize
+  token_url: https://oauth2.example.info/token
+  user_info_url: https://oauth2.example.info/userinfo
+  scopes:
+    - openid
+    - email
+    - profile
+  claims:
+    userinfo:
+      given_name:
+        essential: true
+      nickname: null
+      email:
+        essential: true
+      email_verified:
+        essential: true
+      picture: null
+      "http://example.info/claims/groups": null
+    id_token:
+      auth_time:
+        essential: true
+      acr:
+        values:
+          - "urn:mace:incommon:iap:silver"
+  callback_url: https://vouch.yourdomain.com:9090/auth

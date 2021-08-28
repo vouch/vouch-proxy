@@ -11,7 +11,10 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_checkCallbackConfig(t *testing.T) {
@@ -32,4 +35,11 @@ func Test_checkCallbackConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_configureOAuthWithClaims(t *testing.T) {
+	setUp("/config/testing/test_config_oauth_claims.yml")
+	authCodeURL, err := url.Parse(OAuthClient.AuthCodeURL("state", OAuthopts...))
+	assert.Nil(t, err)
+	assert.Equal(t, authCodeURL.Query().Get("claims"), `{"userinfo":{"email":{"essential":true},"email_verified":{"essential":true},"given_name":{"essential":true},"http://example.info/claims/groups":null,"nickname":null,"picture":null},"id_token":{"acr":{"values":["urn:mace:incommon:iap:silver"]},"auth_time":{"essential":true}}}`)
 }

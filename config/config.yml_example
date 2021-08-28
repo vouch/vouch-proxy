@@ -249,6 +249,25 @@ oauth:
     - openid
     - email
     - profile
+  # optionally set the "claims" request parameter (see https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
+  # resolves issue https://github.com/vouch/vouch-proxy/issues/414
+  # claims:
+    # userinfo:
+      # given_name:
+        # essential: true
+      # nickname: null
+      # email:
+        # essential: true
+      # email_verified:
+        # essential: true
+      # picture: null
+      # "http://example.info/claims/groups": null
+    # id_token:
+      # auth_time:
+        # essential: true
+      # acr:
+        # values:
+          # - "urn:mace:incommon:iap:silver"
   callback_url: http://vouch.yourdomain.com:9090/auth
   # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
   # resolves issue https://github.com/vouch/vouch-proxy/issues/303
