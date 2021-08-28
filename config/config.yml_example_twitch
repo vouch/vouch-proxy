@@ -1,0 +1,43 @@
+
+# vouch config
+# bare minimum to get vouch running with Twitch
+
+vouch:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+  - yourotherdomain.com
+
+  # - OR -
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # and set vouch.cookie.domain to the domain you wish to protect
+  # allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
+
+oauth:
+  # Generic OpenID Connect
+  # including okta
+  provider: oidc
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  auth_url: https://id.twitch.tv/oauth2/authorize
+  token_url: https://id.twitch.tv/oauth2/token
+  user_info_url: https://id.twitch.tv/oauth2/userinfo
+  scopes:
+    - openid
+    - user:read:email
+  claims:
+    userinfo:
+      email:
+        essential: true
+      email_verified:
+        essential: true
+  callback_url: https://vouch.yourdomain.com:9090/auth

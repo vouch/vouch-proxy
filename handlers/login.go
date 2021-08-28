@@ -274,7 +274,7 @@ func oauthLoginURL(r *http.Request, session sessions.Session) string {
 		opts = append(opts, oauth2.SetAuthURLParam("code_challenge", session.Values["codeChallenge"].(string)))
 	}
 	if cfg.OAuthopts != nil {
-		opts = append(opts, cfg.OAuthopts)
+		opts = append(opts, cfg.OAuthopts...)
 	}
 	return cfg.OAuthClient.AuthCodeURL(state, opts...)
 }

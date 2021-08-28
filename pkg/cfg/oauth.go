@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,7 +30,7 @@ var (
 	// this actually carries the oauth2 client ala oauthclient.Client(oauth2.NoContext, providerToken)
 	OAuthClient *oauth2.Config
 	// OAuthopts authentication options
-	OAuthopts oauth2.AuthCodeOption
+	OAuthopts []oauth2.AuthCodeOption
 
 	// Providers static strings to test against
 	Providers = &OAuthProviders{
@@ -64,28 +65,51 @@ type OAuthProviders struct {
 // `envconfig` tag is for env var support
 // https://github.com/kelseyhightower/envconfig
 type oauthConfig struct {
-	Provider            string   `mapstructure:"provider"`
-	ClientID            string   `mapstructure:"client_id" envconfig:"client_id"`
-	ClientSecret        string   `mapstructure:"client_secret" envconfig:"client_secret"`
-	AuthURL             string   `mapstructure:"auth_url" envconfig:"auth_url"`
-	TokenURL            string   `mapstructure:"token_url" envconfig:"token_url"`
-	LogoutURL           string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
-	RedirectURL         string   `mapstructure:"callback_url"  envconfig:"callback_url"`
-	RedirectURLs        []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
-	RelyingPartyId      string   `mapstructure:"relying_party_id"  envconfig:"relying_party_id"`
-	Scopes              []string `mapstructure:"scopes"`
-	UserInfoURL         string   `mapstructure:"user_info_url" envconfig:"user_info_url"`
-	UserTeamURL         string   `mapstructure:"user_team_url" envconfig:"user_team_url"`
-	UserOrgURL          string   `mapstructure:"user_org_url" envconfig:"user_org_url"`
-	PreferredDomain     string   `mapstructure:"preferredDomain"`
-	AzureToken          string   `mapstructure:"azure_token" envconfig:"azure_token"`
-	CodeChallengeMethod string   `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+	Provider       string   `mapstructure:"provider"`
+	ClientID       string   `mapstructure:"client_id" envconfig:"client_id"`
+	ClientSecret   string   `mapstructure:"client_secret" envconfig:"client_secret"`
+	AuthURL        string   `mapstructure:"auth_url" envconfig:"auth_url"`
+	TokenURL       string   `mapstructure:"token_url" envconfig:"token_url"`
+	LogoutURL      string   `mapstructure:"end_session_endpoint"  envconfig:"end_session_endpoint"`
+	RedirectURL    string   `mapstructure:"callback_url"  envconfig:"callback_url"`
+	RedirectURLs   []string `mapstructure:"callback_urls"  envconfig:"callback_urls"`
+	RelyingPartyId string   `mapstructure:"relying_party_id"  envconfig:"relying_party_id"`
+	Scopes         []string `mapstructure:"scopes"`
+	// pointer-to-pointer so that the default value is nil
+	Claims              **oauthClaimsConfig `mapstructure:"claims"`
+	UserInfoURL         string              `mapstructure:"user_info_url" envconfig:"user_info_url"`
+	UserTeamURL         string              `mapstructure:"user_team_url" envconfig:"user_team_url"`
+	UserOrgURL          string              `mapstructure:"user_org_url" envconfig:"user_org_url"`
+	PreferredDomain     string              `mapstructure:"preferredDomain"`
+	AzureToken          string              `mapstructure:"azure_token" envconfig:"azure_token"`
+	CodeChallengeMethod string              `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+}
+
+type oauthClaimsConfig struct {
+	UserInfo map[string]*oauthClaimValueConfig `mapstructure:"userinfo" json:"userinfo,omitempty"`
+	IDToken  map[string]*oauthClaimValueConfig `mapstructure:"id_token" json:"id_token,omitempty"`
+}
+
+type oauthClaimValueConfig struct {
+	Essential bool          `mapstructure:"essential" json:"essential,omitempty"`
+	Value     interface{}   `mapstructure:"value" json:"value,omitempty"`
+	Values    []interface{} `mapstructure:"values" json:"values,omitempty"`
 }
 
 func configureOauth() error {
 	// OAuth defaults and client configuration
-	return UnmarshalKey("oauth", &GenOAuth)
-
+	if err := UnmarshalKey("oauth", &GenOAuth); err != nil {
+		return err
+	}
+	if GenOAuth.Claims != nil {
+		claims, err := json.Marshal(GenOAuth.Claims)
+		if err != nil {
+			return err
+		}
+		log.Infof("setting OAuth param 'claims' to %s", claims)
+		OAuthopts = append(OAuthopts, oauth2.SetAuthURLParam("claims", string(claims)))
+	}
+	return nil
 }
 
 func oauthBasicTest() error {
@@ -174,7 +198,7 @@ func setDefaultsGoogle() {
 	}
 	if GenOAuth.PreferredDomain != "" {
 		log.Infof("setting Google OAuth preferred login domain param 'hd' to %s", GenOAuth.PreferredDomain)
-		OAuthopts = oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain)
+		OAuthopts = append(OAuthopts, oauth2.SetAuthURLParam("hd", GenOAuth.PreferredDomain))
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }
@@ -186,7 +210,7 @@ func setDefaultsADFS() {
 		GenOAuth.RelyingPartyId = GenOAuth.RedirectURL
 	}
 
-	OAuthopts = oauth2.SetAuthURLParam("resource", GenOAuth.RelyingPartyId)
+	OAuthopts = append(OAuthopts, oauth2.SetAuthURLParam("resource", GenOAuth.RelyingPartyId))
 }
 
 func setDefaultsAzure() {
