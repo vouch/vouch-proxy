@@ -1,4 +1,4 @@
-# vouch config
+# Vouch Proxy configuration
 
 # you should probably start with one of the other example configs in this directory
 # Vouch Proxy does a fairly good job of setting its config to sane defaults

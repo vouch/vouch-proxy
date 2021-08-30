@@ -1,6 +1,6 @@
 
-# vouch config
-# bare minimum to get vouch running with OpenID Connect (such as okta)
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with OpenID Connect (such as okta)
 
 vouch:
   # domains:

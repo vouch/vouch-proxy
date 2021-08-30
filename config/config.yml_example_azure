@@ -1,5 +1,5 @@
-# vouch config
-# bare minimum to get vouch running with Azure AD
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with Azure AD
 # https://github.com/vouch/vouch-proxy/issues/290
 
 vouch:

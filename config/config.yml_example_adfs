@@ -1,5 +1,5 @@
-# vouch config
-# bare minimum to get vouch running with adfs
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with adfs
 
 vouch:
   # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate to ADFS

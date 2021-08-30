@@ -1,6 +1,6 @@
 
-# vouch config
-# bare minimum to get vouch running with Nextcloud Authentication
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with Nextcloud Authentication
 
 vouch:
   # domains:

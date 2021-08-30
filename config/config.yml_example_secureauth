@@ -1,6 +1,6 @@
 
-# vouch config
-# bare minimum to get vouch running with SecureAuth OpenID Connect
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with SecureAuth OpenID Connect
 
 vouch:
   domains:

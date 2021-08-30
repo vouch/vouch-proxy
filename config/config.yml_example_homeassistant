@@ -1,5 +1,5 @@
-# vouch config
-# bare minimum to get vouch running with HomeAssistant
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with HomeAssistant
 
 vouch:
   # logLevel: debug

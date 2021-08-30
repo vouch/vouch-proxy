@@ -1,5 +1,5 @@
-# vouch config
-# bare minimum to get vouch running with github enterprise
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with github enterprise
 # see config.yml_example for all options
 
 vouch:

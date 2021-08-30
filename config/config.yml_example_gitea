@@ -1,6 +1,6 @@
 
-# vouch config
-# bare minimum to get vouch running with Gitea
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with Gitea
 
 vouch:
   domains:
