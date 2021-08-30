@@ -21,7 +21,8 @@ vouch:
   port: 9090       # VOUCH_PORT
 
   # document_root - VOUCH_DOCUMENT_ROOT
-  # see README for "
+  # see README for `Vouch Proxy "in a path"` - https://github.com/vouch/vouch-proxy#vouch-proxy-in-a-path
+  # document_root: vp_in_a_path
 
   # domains - VOUCH_DOMAINS
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
@@ -200,6 +201,7 @@ vouch:
 #   preferreddomain:         OAUTH_PREFERREDDOMAIN
 #   callback_urls:           OAUTH_CALLBACK_URLS
 #   scopes:                  OAUTH_SCOPES
+#   claims:                  OAUTH_CLAIMS
 #   code_challenge_method:   OAUTH_CODE_CHALLENGE_METHOD
 #   relying_party_id         OAUTH_RELYING_PARTY_ID
 
@@ -252,8 +254,9 @@ oauth:
     - openid
     - email
     - profile
+  callback_url: http://vouch.yourdomain.com:9090/auth
   # optionally set the "claims" request parameter (see https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
-  # resolves issue https://github.com/vouch/vouch-proxy/issues/414
+  # required by Twitch, resolves issue https://github.com/vouch/vouch-proxy/issues/414
   # claims:
     # userinfo:
       # given_name:
@@ -271,7 +274,6 @@ oauth:
       # acr:
         # values:
           # - "urn:mace:incommon:iap:silver"
-  callback_url: http://vouch.yourdomain.com:9090/auth
   # PKCE method if enabled, S256 is currently supported (check https://www.oauth.com/oauth2-servers/pkce/)
   # resolves issue https://github.com/vouch/vouch-proxy/issues/303
   code_challenge_method: S256
