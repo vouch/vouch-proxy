@@ -147,26 +147,31 @@ func main() {
 		"semver", semver,
 		"listen", scheme[tls]+"://"+listen,
 		"tls", tls,
+		"document_root", cfg.Cfg.DocumentRoot,
 		"oauth.provider", cfg.GenOAuth.Provider)
 
 	// router := mux.NewRouter()
 	router := httprouter.New()
 
+	if cfg.Cfg.DocumentRoot != "" {
+		logger.Debugf("adjusting all served URIs to be under %s", cfg.Cfg.DocumentRoot)
+	}
+
 	authH := http.HandlerFunc(handlers.ValidateRequestHandler)
-	router.HandlerFunc(http.MethodGet, "/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
-	router.HandlerFunc(http.MethodGet, "/_external-auth-:id", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/validate", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/_external-auth-:id", timelog.TimeLog(jwtmanager.JWTCacheHandler(authH)))
 
 	loginH := http.HandlerFunc(handlers.LoginHandler)
-	router.HandlerFunc(http.MethodGet, "/login", timelog.TimeLog(loginH))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/login", timelog.TimeLog(loginH))
 
 	logoutH := http.HandlerFunc(handlers.LogoutHandler)
-	router.HandlerFunc(http.MethodGet, "/logout", timelog.TimeLog(logoutH))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/logout", timelog.TimeLog(logoutH))
 
 	callH := http.HandlerFunc(handlers.CallbackHandler)
-	router.HandlerFunc(http.MethodGet, "/auth/", timelog.TimeLog(callH))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/auth", timelog.TimeLog(callH))
 
 	authStateH := http.HandlerFunc(handlers.AuthStateHandler)
-	router.HandlerFunc(http.MethodGet, "/auth/:state/", timelog.TimeLog(authStateH))
+	router.HandlerFunc(http.MethodGet, cfg.Cfg.DocumentRoot+"/auth/:state/", timelog.TimeLog(authStateH))
 
 	healthH := http.HandlerFunc(handlers.HealthcheckHandler)
 	router.HandlerFunc(http.MethodGet, "/healthcheck", timelog.TimeLog(healthH))
@@ -175,9 +180,9 @@ func main() {
 	// router.ServeFiles("/static/*filepath", http.FS(staticFs))
 
 	// so instead we publish all three routes
-	router.Handler(http.MethodGet, "/static/css/main.css", http.FileServer(http.FS(staticFs)))
-	router.Handler(http.MethodGet, "/static/img/favicon.ico", http.FileServer(http.FS(staticFs)))
-	router.Handler(http.MethodGet, "/static/img/multicolor_V_500x500.png", http.FileServer(http.FS(staticFs)))
+	router.Handler(http.MethodGet, cfg.Cfg.DocumentRoot+"/static/css/main.css", http.StripPrefix(cfg.Cfg.DocumentRoot, http.FileServer(http.FS(staticFs))))
+	router.Handler(http.MethodGet, cfg.Cfg.DocumentRoot+"/static/img/favicon.ico", http.StripPrefix(cfg.Cfg.DocumentRoot, http.FileServer(http.FS(staticFs))))
+	router.Handler(http.MethodGet, cfg.Cfg.DocumentRoot+"/static/img/multicolor_V_500x500.png", http.StripPrefix(cfg.Cfg.DocumentRoot, http.FileServer(http.FS(staticFs))))
 
 	// this also works for static files
 	// router.NotFound = http.FileServer(http.FS(staticFs))

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -128,6 +129,57 @@ func Test_getValidRequestedURL(t *testing.T) {
 	}
 }
 
+func TestLoginHandlerDocumentRoot(t *testing.T) {
+	handler := http.HandlerFunc(LoginHandler)
+
+	tests := []struct {
+		name       string
+		configFile string
+		wantcode   int
+	}{
+		{"general test", "/config/testing/handler_login_url_document_root.yml", http.StatusFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setUp(tt.configFile)
+
+			req, err := http.NewRequest("GET", cfg.Cfg.DocumentRoot+"/logout?url=http://myapp.example.com/login", nil)
+			req.Header.Set("Host", "my.example.com")
+			if err != nil {
+				t.Fatal(err)
+			}
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantcode {
+				t.Errorf("LogoutHandler() status = %v, want %v", rr.Code, tt.wantcode)
+			}
+
+			found := false
+			for _, c := range rr.Result().Cookies() {
+				if c.Name == cfg.Cfg.Session.Name {
+					if strings.HasPrefix(c.Path, cfg.Cfg.DocumentRoot+"/auth") {
+						found = true
+					}
+				}
+			}
+			if !found {
+				t.Errorf("session cookie is not set into path that begins with Cfg.DocumentRoot %s", cfg.Cfg.DocumentRoot)
+			}
+
+			// confirm the OAuthClient has a properly configured
+			redirectURL, err := url.Parse(rr.Header()["Location"][0])
+			if err != nil {
+				t.Fatal(err)
+			}
+			redirectParam := redirectURL.Query().Get("redirect_uri")
+			assert.NotEmpty(t, cfg.OAuthClient.RedirectURL, "cfg.OAuthClient.RedirectURL is empty")
+			assert.NotEmpty(t, redirectParam, "redirect_uri should not be empty when redirected to google oauth")
+
+		})
+	}
+}
 func TestLoginHandler(t *testing.T) {
 	handler := http.HandlerFunc(LoginHandler)
 

@@ -57,7 +57,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 
 ---
 
-## What Vouch Proxy Does...
+## What Vouch Proxy Does
 
 Vouch Proxy (VP) forces visitors to login and authenticate with an [IdP](https://en.wikipedia.org/wiki/Identity_provider) (such as one of the services listed above) before allowing them access to a website.
 
@@ -177,6 +177,52 @@ server {
 }
 ```
 
+### Vouch Proxy "in a path"
+
+As of `v0.33.0` Vouch Proxy can be served within an Nginx location (path) by configuring `vouch.document_root: /vp_in_a_path`
+
+This avoids the need to setup a separate domain for Vouch Proxy such as `vouch.yourdomain.com`. For example VP login will be served from `https://protectedapp.yourdomain.com/vp_in_a_path/login`
+
+```{.nginxconf}
+server {
+    listen 443 ssl http2;
+    server_name protectedapp.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/protectedapp.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/protectedapp.yourdomain.com/privkey.pem;
+
+    # This location serves all Vouch Proxy endpoints as /vp_in_a_path/$uri
+    #   including /vp_in_a_path/validate, /vp_in_a_path/login, /vp_in_a_path/logout, /vp_in_a_path/auth, /vp_in_a_path/auth/$STATE, etc
+    location /vp_in_a_path {
+      proxy_pass http://127.0.0.1:9090; # must not! have a slash at the end
+      proxy_set_header Host $http_host;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+    }
+
+    # if /vp_in_a_path/validate returns `401 not authorized` then forward the request to the error401block
+    error_page 401 = @error401;
+
+    location @error401 {
+        # redirect to Vouch Proxy for login
+        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err
+    }
+
+    location / {
+      auth_request /vp_in_a_path/validate;
+      proxy_pass http://127.0.0.1:8080;
+      # see the Nginx config above for additional headers which can be set from Vouch Proxy
+    }
+
+```
+
+### Additional Nginx Configurations
+
 Additional Nginx configurations can be found in the [examples](https://github.com/vouch/vouch-proxy/tree/master/examples) directory.
 
 ## Configuring Vouch Proxy using Environmental Variables
@@ -232,7 +278,7 @@ The VP cookie may be split into several cookies to accomdate browser cookie size
    1. set `idtoken: X-Vouch-IdP-IdToken` in the `headers` section of vouch-proxy's `config.yml`
    2. log in and call the `/validate` endpoint in a modern browser
    3. check the response header for a `X-Vouch-IdP-IdToken` header
-   4. copy the value of the header into the debugger at https://jwt.io/ and ensure that the necessary claims are part of the jwt
+   4. copy the value of the header into the debugger at [https://jwt.io/](https://jwt.io/) and ensure that the necessary claims are part of the jwt
    5. if they are not, you need to adjust the `scopes` in the `oauth` section of your `config.yml` or reconfigure your oauth provider
 2. Set the necessary `claims` in the `header` section of the vouch-proxy `config.yml`
    1. log in and call the `/validate` endpoint in a modern browser

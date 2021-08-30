@@ -42,10 +42,11 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		responses.Error400(w, r, fmt.Errorf("/auth: could not find state in query %s", r.URL.RawQuery))
 		return
 	}
-	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
-	authStateURL := fmt.Sprintf("/auth/%s/?%s", queryState, r.URL.RawQuery)
-	responses.Redirect302(w, r, authStateURL)
 
+	// has to have a trailing / in its path, because the path of the session cookie is set to /auth/{state}/.
+	// see note in login.go and https://github.com/vouch/vouch-proxy/issues/373
+	authStateURL := fmt.Sprintf("%s/auth/%s/?%s", cfg.Cfg.DocumentRoot, queryState, r.URL.RawQuery)
+	responses.Redirect302(w, r, authStateURL)
 }
 
 // AuthStateHandler /auth/{state}/

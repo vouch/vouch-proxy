@@ -4,12 +4,18 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.34.0
+
 - add support for [the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter) to support Twitch OIDC as IdP
 - add [Twitch OIDC example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_twitch)
 
+## v0.33.0
+
+- [Vouch Proxy running in a path](https://github.com/vouch/vouch-proxy/issues/373)
+
 ## v0.32.0
 
-- [slack oidc example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_slack) and [slack app manifest](https://github.com/vouch/vouch-proxy/blob/master/examples/slack/vouch-slack-oidc-app-manifest.yml)
+- [Slack oidc example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_slack) and [slack app manifest](https://github.com/vouch/vouch-proxy/blob/master/examples/slack/vouch-slack-oidc-app-manifest.yml)
 - [CHANGELOG.md](https://github.com/vouch/vouch-proxy/blob/master/CHANGELOG.md)
 
 ## v0.31.0

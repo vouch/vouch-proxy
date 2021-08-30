@@ -20,6 +20,9 @@ vouch:
   listen: 0.0.0.0  # VOUCH_LISTEN
   port: 9090       # VOUCH_PORT
 
+  # document_root - VOUCH_DOCUMENT_ROOT
+  # see README for "
+
   # domains - VOUCH_DOMAINS
   # each of these domains must serve the url https://vouch.$domains[0] https://vouch.$domains[1] ...
   # so that the cookie which stores the JWT can be set in the relevant domain
