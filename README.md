@@ -42,7 +42,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [What Vouch Proxy Does...](#what-vouch-proxy-does)
 - [Installation and Configuration](#installation-and-configuration)
   - [Vouch Proxy "in a path"](#vouch-proxy-in-a-path)
-  - [Additional Nginx Configurations](#Additional Nginx Configurations)
+  - [Additional Nginx Configurations](#additional-nginx-configurations)
   - [Configuration via Environmental Variables](#configuring-via-environmental-variables)
 - [Tips, Tricks and Advanced Configurations](#tips-tricks-and-advanced-configurations)
   - [Scopes and Claims](#scopes-and-claims)
@@ -50,7 +50,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
 - [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
 - [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
-- [Troubleshooting, Support and Feature Requests](#troubleshooting--support-and-feature-requests--read-this-before-submitting-an-issue-at-github-)
+- [Troubleshooting, Support and Feature Requests](#troubleshooting-support-and-feature-requests-read-this-before-submitting-an-issue-at-github)
   (Read this before submitting an issue at GitHub)
   - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
   - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
@@ -247,7 +247,7 @@ All lists with multiple values must be comma separated: `VOUCH_DOMAINS="yourdoma
 
 The variable `VOUCH_CONFIG` can be used to set an alternate location for the configuration file. `VOUCH_ROOT` can be used to set an alternate root directory for Vouch Proxy to look for support files.
 
-## Tips, Ticks and Advanced Configurations
+## Tips, Tricks and Advanced Configurations
 
 All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
 
