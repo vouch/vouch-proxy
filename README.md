@@ -58,8 +58,6 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
 - [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
 
----
-
 ## What Vouch Proxy Does
 
 Vouch Proxy (VP) forces visitors to login and authenticate with an [IdP](https://en.wikipedia.org/wiki/Identity_provider) (such as one of the services listed above) before allowing them access to a website.
@@ -262,6 +260,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
 - [systemd startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 - [using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
+- [Developing a Single Page App (SPA) while consuming a VP protected API](https://github.com/vouch/vouch-proxy/issues/416)
 
 Please do help us to expand this list.
 
@@ -386,7 +385,7 @@ this url must be present in the configuration file on the list `vouch.post_logou
 # the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
 post_logout_redirect_uris:
   # your apps login page
-  - http://.yourdomain.com/login
+  - https://yourdomain.com/login
   # your IdPs logout enpoint
   # from https://accounts.google.com/.well-known/openid-configuration
   - https://oauth2.googleapis.com/revoke
