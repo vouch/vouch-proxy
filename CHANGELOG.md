@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.34.1
+
+- bug fix: [Azure provider no longer requires `oauth.user_info_url` to be configured](https://github.com/vouch/vouch-proxy/issues/417)
+
 ## v0.34.0
 
 - add support for [the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter) to support Twitch OIDC as IdP
