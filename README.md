@@ -249,18 +249,19 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 
 All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
 
-- [cacheing of the Vouch Proxy validation response in Nginx](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743)
-- [handleing `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
-- [validation by GitHub Team or GitHub Org](https://github.com/vouch/vouch-proxy/pull/205)
-- [running on a Raspberry Pi using the ARM based Docker image](https://github.com/vouch/vouch-proxy/pull/247)
+- [Cacheing of the Vouch Proxy `/validate` response in Nginx](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743)
+- [Handleing `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
+- [Validation by GitHub Team or GitHub Org](https://github.com/vouch/vouch-proxy/pull/205)
+- [Running VP on a Raspberry Pi using the ARM based Docker image](https://github.com/vouch/vouch-proxy/pull/247)
 - [Kubernetes architecture post ingress](https://github.com/vouch/vouch-proxy/pull/263#issuecomment-628297832)
 - [set `HTTP_PROXY` to relay Vouch Proxy IdP requests through an outbound proxy server](https://github.com/vouch/vouch-proxy/issues/291)
 - [Reverse Proxy for Google Cloud Run Services](https://github.com/karthikv2k/oauth_reverse_proxy)
 - [Enable native TLS in Vouch Proxy](https://github.com/vouch/vouch-proxy/pull/332#issue-522612010)
 - [FreeBSD support](https://github.com/vouch/vouch-proxy/issues/368)
-- [systemd startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
-- [using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
+- [`systemd` startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
+- [Using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
 - [Developing a Single Page App (SPA) while consuming a VP protected API](https://github.com/vouch/vouch-proxy/issues/416)
+- [Filter by IP address before VP validation by using `satisfy any;`](https://github.com/vouch/vouch-proxy/issues/378#issuecomment-814423460)
 
 Please do help us to expand this list.
 
