@@ -341,6 +341,14 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
     nginx.ingress.kubernetes.io/auth-url: https://vouch.yourdomain.com/validate
     nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
     nginx.ingress.kubernetes.io/auth-snippet: |
+      # If your Vouch is using HTTPS and is hosted externally to k8s, you
+      # should uncomment the following values to ensure the SSL cert is
+      # valid. Nginx does not validate SSL certs by default, so it could
+      # be a MITM risk otherwise.
+      # proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+      # proxy_ssl_session_reuse on;
+      # proxy_ssl_verify_depth 2;
+      # proxy_ssl_verify on;
       # these return values are used by the @error401 call
       auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
       auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
