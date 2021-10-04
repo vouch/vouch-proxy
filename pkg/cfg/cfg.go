@@ -87,8 +87,9 @@ type Config struct {
 		ClaimsCleaned map[string]string // the rawClaim is mapped to the actual claims header
 	}
 	Session struct {
-		Name string `mapstructure:"name"`
-		Key  string `mapstructure:"key"`
+		Name   string `mapstructure:"name"`
+		MaxAge int    `mapstructure:"maxage"`
+		Key    string `mapstructure:"key"`
 	}
 	TestURL            string   `mapstructure:"test_url"`
 	TestURLs           []string `mapstructure:"test_urls"`

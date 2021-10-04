@@ -59,7 +59,7 @@ func Configure() {
 	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
 	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
 	sessstore.Options.SameSite = cookie.SameSite()
-	sessstore.Options.MaxAge = 300 // give the user five minutes to log in at the IdP
+	sessstore.Options.MaxAge = cfg.Cfg.Session.MaxAge // how long the user has to login to the IdP
 
 	provider = getProvider()
 	provider.Configure()
