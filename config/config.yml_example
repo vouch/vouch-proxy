@@ -122,7 +122,7 @@ vouch:
     # name of session variable stored locally - VOUCH_SESSION_NAME
     name: VouchSession
     # number of minutes for maximum session age, configuring how long the user has to login at their IdP (defaults to 300) - VOUCH_SESSION_MAXAGE
-    maxAge: 300
+    maxAge: 5
     # key - a cryptographic string used to store the session variable - VOUCH_SESSION_KEY
     # if the key is not set here then it is generated at startup and stored in memory
     # Vouch Proxy complains if the string is less than 44 characters (256 bits as 32 base64 bytes)
