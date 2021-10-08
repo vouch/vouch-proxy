@@ -27,10 +27,12 @@ import (
 const maxCookieSize = 4000
 
 var log *zap.SugaredLogger
+var sameSite http.SameSite
 
 // Configure see main.go configure()
 func Configure() {
 	log = cfg.Logging.Logger
+	sameSite = SameSite()
 }
 
 // SetCookie http
@@ -47,7 +49,6 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		domain = cfg.Cfg.Cookie.Domain
 		log.Debugf("setting the cookie domain to %v", domain)
 	}
-	sameSite := SameSite()
 
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,

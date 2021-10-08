@@ -2,6 +2,16 @@
 --     User Authentication
 --      via X-Vouch-User
 -- ==============================
+-- Function to turn a table with only values into a k=>v table
+function Set (list)
+    local set = {}
+    for _, l in ipairs(list) do set[l] = true end
+    return set
+end
+-- Function to find a key in a table
+function tableHasKey(table,key)
+    return table[key] ~= nil
+end
 -- Validate a user in nginx, instead of vouch
 local authorized_users = Set {
     "my@account.com",
