@@ -211,7 +211,7 @@ server {
 
     location @error401 {
         # redirect to Vouch Proxy for login
-        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err
+        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 
     location / {
@@ -219,7 +219,7 @@ server {
       proxy_pass http://127.0.0.1:8080;
       # see the Nginx config above for additional headers which can be set from Vouch Proxy
     }
-
+}
 ```
 
 ### Additional Nginx Configurations
