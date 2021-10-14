@@ -61,7 +61,7 @@ func renderError(w http.ResponseWriter, msg string, status int) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(status)
-	if err := indexTemplate.Execute(w, &Index{Msg: msg}); err != nil {
+	if err := indexTemplate.Execute(w, &Index{Msg: msg, DocumentRoot: cfg.Cfg.DocumentRoot}); err != nil {
 		log.Error(err)
 	}
 }
@@ -74,7 +74,7 @@ func OK200(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Redirect302 redirect to the specificed rURL
+// Redirect302 redirect to the specified rURL
 func Redirect302(w http.ResponseWriter, r *http.Request, rURL string) {
 	if cfg.Cfg.Testing {
 		cfg.Cfg.TestURLs = append(cfg.Cfg.TestURLs, rURL)
