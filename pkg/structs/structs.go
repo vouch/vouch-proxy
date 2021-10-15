@@ -43,6 +43,9 @@ type User struct {
 func (u *User) PrepareUserData() {
 	if u.Username == "" {
 		u.Username = u.Email
+		if u.Username == "" {
+			u.Username = u.Name
+		}
 	}
 }
 
