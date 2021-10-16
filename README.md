@@ -261,6 +261,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [`systemd` startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 - [Using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
 - [Developing a Single Page App (SPA) while consuming a VP protected API](https://github.com/vouch/vouch-proxy/issues/416)
+- [Integrate Vouch Proxy into a server side application for User Authn and Authz](https://github.com/vouch/vouch-proxy/issues/421)
 - [Filter by IP address before VP validation by using `satisfy any;`](https://github.com/vouch/vouch-proxy/issues/378#issuecomment-814423460)
 
 Please do help us to expand this list.
