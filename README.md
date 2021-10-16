@@ -261,6 +261,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [`systemd` startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 - [Using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
 - [Developing a Single Page App (SPA) while consuming a VP protected API](https://github.com/vouch/vouch-proxy/issues/416)
+- [Integrate Vouch Proxy into a server side application for User Authn and Authz](https://github.com/vouch/vouch-proxy/issues/421)
 - [Filter by IP address before VP validation by using `satisfy any;`](https://github.com/vouch/vouch-proxy/issues/378#issuecomment-814423460)
 
 Please do help us to expand this list.
@@ -345,6 +346,11 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
       auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
       auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+      # when VP is hosted externally to k8s ensure the SSL cert is valid to avoid MITM risk
+      # proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+      # proxy_ssl_session_reuse on;
+      # proxy_ssl_verify_depth 2;
+      # proxy_ssl_verify on;
 ```
 
 Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
