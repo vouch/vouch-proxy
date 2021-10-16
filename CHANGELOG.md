@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.35.1
+
+- [include DocumentRoot if configured in error pages](https://github.com/vouch/vouch-proxy/pull/439)
+
 ## v0.35.0
 
 - [make session.MaxAge configurable](https://github.com/vouch/vouch-proxy/issues/318) to allow more time to login at the IdP
