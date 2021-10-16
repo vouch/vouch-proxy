@@ -2,6 +2,16 @@
 --     Group Authentication
 --    via X-Vouch-IdP-Groups
 -- ==============================
+-- Function to turn a table with only values into a k=>v table
+function Set (list)
+    local set = {}
+    for _, l in ipairs(list) do set[l] = true end
+    return set
+end
+-- Function to find a key in a table
+function tableHasKey(table,key)
+    return table[key] ~= nil
+end
 -- Validate that a user is in a group
 local authorized_groups = Set {
     "CN=Domain Users,CN=Users,DC=Contoso,DC=com",

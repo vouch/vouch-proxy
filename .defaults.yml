@@ -38,6 +38,7 @@ vouch:
 
   session:
     name: VouchSession
+    maxAge: 5
     # key:
 
   headers:

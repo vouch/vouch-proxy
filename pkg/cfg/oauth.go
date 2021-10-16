@@ -142,6 +142,8 @@ func oauthBasicTest() error {
 		return errors.New("configuration error: oauth.user_info_url not found")
 	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
+	case GenOAuth.Provider == Providers.Azure || GenOAuth.Provider == Providers.ADFS || GenOAuth.Provider == Providers.Nextcloud || GenOAuth.Provider == Providers.OIDC:
+		checkScopes([]string{"openid", "email", "profile"})
 	}
 
 	if GenOAuth.RedirectURL != "" {
@@ -156,9 +158,20 @@ func oauthBasicTest() error {
 			}
 		}
 	}
+
 	return nil
 }
 
+func checkScopes(scopes []string) {
+	for _, s := range scopes {
+		if !arrContains(GenOAuth.Scopes, s) {
+			log.Warnf("Configuration Warning: for 'oauth.provider: %s', 'oauth.scopes' should usually contain: -%s", GenOAuth.Provider, strings.Join(scopes, " -"))
+			return
+		}
+	}
+}
+
+// TODO: all of these methods should become `provider.SetDefaults()` or `provider.SetDefaults(*GenOAuth)`
 func setProviderDefaults() {
 	if GenOAuth.Provider == Providers.Google {
 		setDefaultsGoogle()
@@ -288,4 +301,13 @@ func checkCallbackConfig(url string) error {
 	}
 
 	return nil
+}
+
+func arrContains(arr []string, str string) bool {
+	for _, v := range arr {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

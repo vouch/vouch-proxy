@@ -44,7 +44,7 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 		// http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
-	log.Errorf("ptoken.AccessToken: %s", ptoken.AccessToken)
+	log.Debugf("ptoken.AccessToken: %s", ptoken.AccessToken)
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL + ptoken.AccessToken)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusBadRequest)

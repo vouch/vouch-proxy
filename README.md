@@ -211,7 +211,7 @@ server {
 
     location @error401 {
         # redirect to Vouch Proxy for login
-        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err
+        return 302 https://protectedapp.yourdomain.com/vp_in_a_path/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err;
     }
 
     location / {
@@ -219,7 +219,7 @@ server {
       proxy_pass http://127.0.0.1:8080;
       # see the Nginx config above for additional headers which can be set from Vouch Proxy
     }
-
+}
 ```
 
 ### Additional Nginx Configurations
@@ -261,6 +261,7 @@ All Vouch Proxy configuration items are documented in [config/config.yml_example
 - [`systemd` startup of Vouch Proxy](https://github.com/vouch/vouch-proxy/tree/master/examples/startup)
 - [Using Node.js instead of Nginx to route requests](https://github.com/vouch/vouch-proxy/issues/359)
 - [Developing a Single Page App (SPA) while consuming a VP protected API](https://github.com/vouch/vouch-proxy/issues/416)
+- [Integrate Vouch Proxy into a server side application for User Authn and Authz](https://github.com/vouch/vouch-proxy/issues/421)
 - [Filter by IP address before VP validation by using `satisfy any;`](https://github.com/vouch/vouch-proxy/issues/378#issuecomment-814423460)
 
 Please do help us to expand this list.

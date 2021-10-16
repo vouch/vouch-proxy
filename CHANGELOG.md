@@ -4,6 +4,16 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.35.0
+
+- [make session.MaxAge configurable](https://github.com/vouch/vouch-proxy/issues/318) to allow more time to login at the IdP
+
+## v0.34.2
+
+- [log github token only at `logLevel: debug`](https://github.com/vouch/vouch-proxy/pull/436)
+- documentation edits
+- move `cookie.sameSite` configuration to `cookie.Configure()`
+
 ## v0.34.1
 
 - bug fix: [Azure provider no longer requires `oauth.user_info_url` to be configured](https://github.com/vouch/vouch-proxy/issues/417)
