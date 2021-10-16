@@ -23,8 +23,9 @@ oauth:
   # https://console.developers.google.com/apis/credentials
   client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  # Google may require callbac_urls (redirect URIs) to be 'https'
   callback_urls: 
-    - http://yourdomain.com:9090/auth
-    - http://yourotherdomain.com:9090/auth
+    - https://yourdomain.com:9090/auth
+    - https://yourotherdomain.com:9090/auth
   preferredDomain: yourdomain.com # be careful with this option, it may conflict with chrome on Android 
   # endpoints are set from https://godoc.org/golang.org/x/oauth2/google
