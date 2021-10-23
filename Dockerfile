@@ -19,8 +19,14 @@ RUN ./do.sh install
 
 FROM scratch
 LABEL maintainer="vouch@bnf.net"
+
+ARG UID=190
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
+
+USER $UID
+
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
 HEALTHCHECK --interval=1m --timeout=5s CMD [ "/vouch-proxy", "-healthcheck" ]

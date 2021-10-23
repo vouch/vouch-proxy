@@ -16,6 +16,9 @@ RUN ./do.sh install
 FROM alpine:latest
 LABEL maintainer="vouch@bnf.net"
 ENV VOUCH_ROOT=/
+
+ARG UID=190
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 #  do.sh requires bash
@@ -23,6 +26,9 @@ RUN apk add --no-cache bash
 COPY do.sh /do.sh
 
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
+
+USER $UID
+
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
 HEALTHCHECK --interval=1m --timeout=5s CMD [ "/vouch-proxy", "-healthcheck" ]
