@@ -12,6 +12,8 @@ COPY . .
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
 RUN ./do.sh install
+RUN groupadd -g 1001 vouch && \
+    useradd -m vouch_user --uid=1001 --gid=1001
 
 FROM alpine:latest
 LABEL maintainer="vouch@bnf.net"
@@ -23,12 +25,9 @@ RUN apk add --no-cache bash
 COPY do.sh /do.sh
 
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
+COPY --from=builder /etc/passwd /etc/passwd
 
-RUN groupadd -g 1001 vouch && \
-    useradd -m vouch_user --uid=1001 --gid=1001 && \
-    chown vouch_user:vouch /etc/ssl/certs/ca-certificates.crt && \
-    chown vouch_user:vouch /vouch-proxy && \
-    chown vouch_user:vouch /do.sh
+USER vouch_user
 
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]

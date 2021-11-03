@@ -12,6 +12,8 @@ COPY . .
 # RUN go-wrapper download  # "go get -d -v ./..."
 # RUN ./do.sh build    # see `do.sh` for vouch build details
 # RUN go-wrapper install # "go install -v ./..."
+RUN groupadd -g 1001 vouch && \
+    useradd -m vouch_user --uid=1001 --gid=1001
 
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
@@ -20,12 +22,10 @@ RUN ./do.sh install
 FROM scratch
 LABEL maintainer="vouch@bnf.net"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 
-RUN groupadd -g 1001 vouch && \
-    useradd -m vouch_user --uid=1001 --gid=1001 && \
-    chown vouch_user:vouch /etc/ssl/certs/ca-certificates.crt && \
-    chown vouch_user:vouch /vouch-proxy
+USER vouch_user
 
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
