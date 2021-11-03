@@ -21,6 +21,12 @@ FROM scratch
 LABEL maintainer="vouch@bnf.net"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
+
+RUN groupadd -g 1001 vouch && \
+    useradd -m vouch_user --uid=1001 --gid=1001 && \
+    chown vouch_user:vouch /etc/ssl/certs/ca-certificates.crt && \
+    chown vouch_user:vouch /vouch-proxy
+
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
 HEALTHCHECK --interval=1m --timeout=5s CMD [ "/vouch-proxy", "-healthcheck" ]
