@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- [run vouch-proxy as non-root user](https://github.com/vouch/vouch-proxy/pull/444)
+
 ## v0.35.1
 
 - [include DocumentRoot if configured in error pages](https://github.com/vouch/vouch-proxy/pull/439)
