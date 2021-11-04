@@ -12,8 +12,10 @@ COPY . .
 # RUN go-wrapper download  # "go get -d -v ./..."
 # RUN ./do.sh build    # see `do.sh` for vouch build details
 # RUN go-wrapper install # "go install -v ./..."
-RUN groupadd -g 1001 vouch && \
-    useradd -m vouch_user --uid=1001 --gid=1001
+ARG UID=1001
+ARG GID=1001
+RUN groupadd -g $GID vouch && \
+    useradd -m vouch_user --uid=$UID --gid=$GID
 
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
