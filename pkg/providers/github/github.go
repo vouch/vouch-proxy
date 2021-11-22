@@ -72,11 +72,7 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 	log.Debug(user)
 
 	ghUser.PrepareUserData()
-	user.Email = ghUser.Email
-	user.Name = ghUser.Name
-	user.Username = ghUser.Username
-
-	// user = &ghUser.User
+	*user = ghUser.User
 
 	toOrgAndTeam := func(orgAndTeam string) (string, string) {
 		split := strings.Split(orgAndTeam, "/")
