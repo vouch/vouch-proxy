@@ -179,8 +179,6 @@ type AliData struct {
 	Username string `json:"username"`
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
-	Phone    string `json:"phone_number"`
-	OuName   string `json:"ou_name"`
 }
 
 // Team has members and provides acess to sites
