@@ -11,8 +11,8 @@ if [ -z "$VOUCH_ROOT" ]; then
   export VOUCH_ROOT=${GOPATH}/src/github.com/vouch/vouch-proxy/
 fi
 
-IMAGE=voucher/vouch-proxy:latest
-ALPINE=voucher/vouch-proxy:alpine
+IMAGE=quay.io/vouch/vouch-proxy:latest
+ALPINE=quay.io/vouch/vouch-proxy:alpine-latest
 GOIMAGE=golang:1.16
 NAME=vouch-proxy
 HTTPPORT=9090
@@ -394,7 +394,7 @@ usage() {
      $0 bug_report domain.com [badstr2..]  - print config file and log removing secrets and each provided string
      $0 gogo [gocmd]                       - run, build, any go cmd
      $0 stats                              - simple metrics (lines of code in project, number of go files)
-     $0 watch [cmd]                        - watch the $CWD for any change and re-reun the [cmd]
+     $0 watch [cmd]                        - watch the \$CWD for any change and re-reun the [cmd] (defaults to 'go run main.go')
      $0 license [file]                     - apply the license to the file
 
   do is like make
