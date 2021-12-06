@@ -28,6 +28,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
+- [Ory Hydra](https://github.com/vouch/vouch-proxy/issues/288)
 - [Nextcloud](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html)
 - most other OpenID Connect (OIDC) providers
 
