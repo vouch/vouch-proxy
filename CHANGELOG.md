@@ -4,6 +4,12 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.36.0
+
+- [run Docker containers as non-root user](https://github.com/vouch/vouch-proxy/pull/444)
+
+Permissions may need to be adjusted for `/config/secret` and `/config/config.yml` in Docker environemnts. See the [README](https://github.com/vouch/vouch-proxy#running-from-docker)
+
 ## v0.35.1
 
 - [include DocumentRoot if configured in error pages](https://github.com/vouch/vouch-proxy/pull/439)

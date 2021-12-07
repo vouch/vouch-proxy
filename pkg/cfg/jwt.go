@@ -35,7 +35,8 @@ func getOrGenerateJWTSecret() string {
 		b = []byte(rstr)
 		err = ioutil.WriteFile(secretFile, b, 0600)
 		if err != nil {
-			log.Debug(err)
+			log.Error(err)
+			logSysInfo()
 		}
 	}
 	return string(b)
