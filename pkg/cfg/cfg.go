@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/user"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -193,6 +194,7 @@ func Configure() {
 
 	if !didConfigFromEnv && configFileErr != nil {
 		// then it's probably config file not found
+		logSysInfo()
 		log.Fatal(configFileErr)
 	}
 
@@ -207,7 +209,6 @@ func Configure() {
 	if *CmdLine.port != -1 {
 		Cfg.Port = *CmdLine.port
 	}
-
 	logConfigIfDebug()
 }
 
@@ -285,6 +286,7 @@ func parseConfigFile() error {
 	}
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
+
 		return fmt.Errorf("%w: %s", errConfigNotFound, err)
 	}
 
@@ -676,4 +678,45 @@ func SigningKey() (interface{}, error) {
 	}
 
 	return key, nil
+}
+
+// Check that we have read permission for this file
+// https://stackoverflow.com/questions/60128401/how-to-check-if-a-file-is-executable-in-go
+func canRead(file string) bool {
+	stat, err := os.Stat(file)
+	if err != nil {
+		log.Debug(err)
+		return false
+	}
+
+	m := stat.Mode()
+	return m&0400 != 0
+}
+
+// detect if we're in a docker environment
+func isDocker() bool {
+	return canRead("/.dockerenv")
+}
+
+func logSysInfo() {
+	if isDocker() {
+		log.Warn("detected Docker environment, beware of Docker userid and permissions changes in v0.36.0")
+	}
+	u, err := user.Current()
+	if err != nil {
+		log.Error(err)
+	}
+	g, err := user.LookupGroupId(u.Gid)
+	if err != nil {
+		log.Error(err)
+	}
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		log.Error(err)
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		log.Error(err)
+	}
+	log.Debugf("%s was executed as '%s' (pid: %d) running as user %s (uid: %s) with group %s (gid: %s)", Branding.FullName, exe, p.Pid, u.Username, u.Uid, g.Name, u.Gid)
 }

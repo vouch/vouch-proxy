@@ -1,21 +1,19 @@
-# voucher/vouch-proxy
+# quay.io/vouch/vouch-proxy
 # https://github.com/vouch/vouch-proxy
 FROM golang:1.16 AS builder
 
+ARG UID=999
+ARG GID=999
 LABEL maintainer="vouch@bnf.net"
 
 RUN mkdir -p ${GOPATH}/src/github.com/vouch/vouch-proxy
 WORKDIR ${GOPATH}/src/github.com/vouch/vouch-proxy
 
+RUN groupadd -g $GID vouch \
+    && useradd --system vouch --uid=$UID --gid=$GID
+
 COPY . .
 
-# RUN go-wrapper download  # "go get -d -v ./..."
-# RUN ./do.sh build    # see `do.sh` for vouch build details
-# RUN go-wrapper install # "go install -v ./..."
-ARG UID=1001
-ARG GID=1001
-RUN groupadd -g $GID vouch && \
-    useradd -m vouch_user --uid=$UID --gid=$GID
 
 RUN ./do.sh goget
 RUN ./do.sh gobuildstatic # see `do.sh` for vouch-proxy build details
@@ -25,9 +23,10 @@ FROM scratch
 LABEL maintainer="vouch@bnf.net"
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 
-USER vouch_user
+USER vouch
 
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]

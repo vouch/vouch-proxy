@@ -318,6 +318,8 @@ docker run -d \
     quay.io/vouch/vouch-proxy
 ```
 
+As of `v0.36.0` the docker process in the container runs as user `vouch` with UID 999 and GID 999. You may need to set the permissions of `/config/config.yml` and `/config/secret` to correspond to be readable by this user, or otherwise use `docker run --user $UID:$GID ...` or perhaps build the docker container from source and use the available ARGs for UID and GID.
+
 Automated container builds for each Vouch Proxy release are available from [quay.io](https://quay.io/repository/vouch/vouch-proxy). Each release produces..
 
 a minimal go binary container built from `Dockerfile`
