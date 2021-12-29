@@ -29,6 +29,8 @@ func Configure() {
 	log = cfg.Logging.Logger
 }
 
+type PrepareTokensAndClientT func(r *http.Request, ptokens *structs.PTokens, setProviderToken bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error)
+
 // PrepareTokensAndClient setup the client, usually for a UserInfo request
 func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProviderToken bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error) {
 	providerToken, err := cfg.OAuthClient.Exchange(context.TODO(), r.URL.Query().Get("code"), opts...)

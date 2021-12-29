@@ -414,10 +414,12 @@ func basicTest() error {
 		return errors.New("configuration error: required configuration option 'oauth.client_id' is not set")
 	}
 
-	// Domains is required _unless_ Cfg.AllowAllUsers is set
-	if (!Cfg.AllowAllUsers && len(Cfg.Domains) == 0) ||
-		(Cfg.AllowAllUsers && len(Cfg.Domains) > 0) {
-		return fmt.Errorf("configuration error: either one of %s or %s needs to be set (but not both)", Branding.LCName+".domains", Branding.LCName+".allowAllUsers")
+	// Domains or a whitelist is required _unless_ Cfg.AllowAllUsers is set
+	whitelistLength := len(Cfg.Domains) + len(Cfg.WhiteList) + len(Cfg.TeamWhiteList)
+	if (!Cfg.AllowAllUsers && whitelistLength == 0) ||
+		(Cfg.AllowAllUsers && whitelistLength > 0) {
+		return fmt.Errorf("configuration error: either %s.allowAllUsers or a whitelist (%s.domains, %s.whitelist, %s.teamWhitelist) needs to be set (but not both)",
+			Branding.LCName, Branding.LCName, Branding.LCName, Branding.LCName)
 	}
 
 	// issue a warning if the secret is too small
