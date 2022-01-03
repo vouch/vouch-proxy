@@ -1,0 +1,35 @@
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with GitLab CE Authentication
+
+vouch:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  domains:
+  - yourdomain.com
+  - yourotherdomain.com
+
+  # - OR -
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
+
+oauth:
+  # Create a new global or group application and paste the id and the secret
+  provider: oidc
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  scopes:
+    - openid
+    - email
+    - profile
+  auth_url:      https://gitlab.yourdomain.com/oauth/authorize
+  token_url:     https://gitlab.yourdomain.com/oauth/token
+  user_info_url: https://gitlab.yourdomain.com/oauth/userinfo
+  callback_url:  http://vouch.yourdomain.com:9090/auth
