@@ -1,0 +1,16 @@
+vouch:
+  domains:
+    - vouch.github.io
+  Redis:
+    host: '127.0.0.1'
+    port: 6300
+    db: 2
+    username: redis
+    password: redis
+    key_prefix: 'vouch_'
+
+oauth:
+  provider: indieauth
+  client_id: http://vouch.github.io
+  auth_url: https://indielogin.com/auth
+  callback_url: http://vouch.github.io:9090/auth

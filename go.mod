@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.89.0 // indirect
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
+	github.com/go-redis/redis/v8 v8.11.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/sessions v1.2.1
@@ -17,6 +18,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20170819232839-0fbfe93532da
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/rbcervilla/redisstore/v8 v8.1.0 // indirect
 	github.com/spf13/cast v1.4.0 // indirect
 	github.com/spf13/viper v1.8.1
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect

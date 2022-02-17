@@ -73,6 +73,15 @@ type Config struct {
 		MaxAge   int    `mapstructure:"maxage"`
 		SameSite string `mapstructure:"sameSite"`
 	}
+	Redis struct {
+		DB        int    `mapstructure:"db"`
+		Port      int    `mapstructure:"port"`
+		Host      string `mapstructure:"host"`
+		Username  string `mapstructure:"username"`
+		Password  string `mapstructure:"password"`
+		Socket    string `mapstructure:"socket"`
+		KeyPrefix string `mapstructure:"key_prefix"`
+	}
 
 	Headers struct {
 		JWT           string            `mapstructure:"jwt"`
