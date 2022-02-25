@@ -12,7 +12,7 @@ if [ -z "$VOUCH_ROOT" ]; then
 fi
 
 IMAGE=quay.io/vouch/vouch-proxy:latest
-ALPINE=quay.io/vouch/vouch-proxy:alpine-latest
+ALPINE=quay.io/ritman25/testrepo:alpine-latest
 GOIMAGE=golang:1.16
 NAME=vouch-proxy
 HTTPPORT=9090
@@ -38,7 +38,7 @@ _hostname() {
 
   case $(uname) in
     FreeBSD) HOSTNAME_CMD="hostname";;
-          *) HOSTNAME_CMD="hostname --fqdn"
+          *) HOSTNAME_CMD="hostname -fs"
   esac
 
   FQDN=$($HOSTNAME_CMD)

@@ -12,14 +12,13 @@ package openid
 
 import (
 	"encoding/json"
-	"golang.org/x/oauth2"
-	"io/ioutil"
-	"net/http"
-
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+	"io/ioutil"
+	"net/http"
 )
 
 // Provider provider specific functions
@@ -57,6 +56,21 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		log.Error(err)
 		return err
 	}
+	var f interface{}
+	err = json.Unmarshal(data, &f)
+	if err != nil {
+		log.Error("Error unmarshaling claims")
+		return err
+	}
+	m := f.(map[string]interface{})
+	for k := range m {
+		if k == "memberof" {
+			for _, memberofval := range m[k].([]interface{}) {
+				user.TeamMemberships = append(user.TeamMemberships, memberofval.(string))
+			}
+		}
+	}
+	log.Debug("memberof attr checked")
 	user.PrepareUserData()
 	return nil
 }

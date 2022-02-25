@@ -26,8 +26,13 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 COPY --from=builder /go/bin/vouch-proxy /vouch-proxy
 
+RUN mkdir /config
+COPY ./config/config.yml /config
+CMD ["voucher/vouch-proxy"]
+
 USER vouch
 
 EXPOSE 9090
 ENTRYPOINT ["/vouch-proxy"]
 HEALTHCHECK --interval=1m --timeout=5s CMD [ "/vouch-proxy", "-healthcheck" ]
+
