@@ -55,7 +55,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
   (Read this before submitting an issue at GitHub)
   - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
   - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
-  - [submitting a Pull Request for a new feature](#submitting-a-pull-request-for-a-new-feature)
+  - [Contributing to Vouch Proxy](#contributing)
 - [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
 - [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
 
@@ -356,7 +356,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       # proxy_ssl_verify on;
 ```
 
-Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
+Helm Charts are maintained by [punkle](https://github.com/punkle), [martina-if](https://github.com/martina-if) and [halkeye](https://github.com/halkeye) and are available at [https://github.com/vouch/helm-charts](https://github.com/vouch/helm-charts)
 
 ## Compiling from source and running the binary
 
@@ -475,24 +475,9 @@ A bug report can be generated from a docker environment using the `quay.io/vouch
 docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh quay.io/vouch/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
 ```
 
-### Contributing to Vouch Proxy by submitting a Pull Request
+### Contributing
 
-**_I really love Vouch Proxy! I wish it did XXXX..._**
-
-That's really wonderful and contributions are greatly appreciated. However, please search through the existing issues, both open and closed, to look for any prior work or conversation. Then please make a proposal before we all spend valuable time considering and integrating a new feature.
-
-Code contributions should..
-
-- generally be discussed beforehand in a GitHub issue
-- include unit tests and in some cases end-to-end tests
-- be formatted with `go fmt`, checked with `go vet` and other common go tools
-- accomodate configuration via `config.yml` as well as `ENVIRONMENT_VARIABLEs`.
-- not break existing setups without a clear reason (usually security related)
-- include an entry at the top of CHANGELOG.md in the **Unreleased** section
-
-For larger contributions or code related to a platform that we don't currently support we will ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
-
-**Thank you to all of the contributors that have provided their time and effort and thought to improving VP.**
+We'd love to have you contribute! Please refer to our [contribution guidelines](https://github.com/vouch/vouch-proxy/blob/master/CONTRIBUTING.md) for details.
 
 ## Advanced Authorization Using OpenResty
 
