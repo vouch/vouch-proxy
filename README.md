@@ -356,7 +356,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       # proxy_ssl_verify on;
 ```
 
-Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
+Helm Charts are maintained by [punkle](https://github.com/punkle), [martina-if](https://github.com/martina-if) and [halkeye](https://github.com/halkeye) and are available at [https://github.com/vouch/helm-charts](https://github.com/vouch/helm-charts)
 
 ## Compiling from source and running the binary
 
