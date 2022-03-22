@@ -87,7 +87,7 @@ The following Nginx config assumes..
 - Nginx, `vouch.yourdomain.com` and `protectedapp.yourdomain.com` are running on the same server
 - both domains are served as `https` and have valid certs (if not, change to `listen 80` and set [vouch.cookie.secure](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L84-L85) to `false`)
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name protectedapp.yourdomain.com;
@@ -164,7 +164,7 @@ server {
 
 If Vouch is configured behind the **same** nginx reverseproxy ([perhaps so you can configure ssl](https://github.com/vouch/vouch-proxy/issues/64#issuecomment-461085139)) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name vouch.yourdomain.com;
@@ -185,7 +185,7 @@ As of `v0.33.0` Vouch Proxy can be served within an Nginx location (path) by con
 
 This avoids the need to setup a separate domain for Vouch Proxy such as `vouch.yourdomain.com`. For example VP login will be served from `https://protectedapp.yourdomain.com/vp_in_a_path/login`
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name protectedapp.yourdomain.com;
