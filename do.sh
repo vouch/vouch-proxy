@@ -12,7 +12,7 @@ if [ -z "$VOUCH_ROOT" ]; then
 fi
 
 IMAGE=quay.io/vouch/vouch-proxy:latest
-ALPINE=quay.io/ritman25/testrepo:alpine-latest
+ALPINE=quay.io/ritman25/testrepo:alpine-permissionName2
 GOIMAGE=golang:1.16
 NAME=vouch-proxy
 HTTPPORT=9090

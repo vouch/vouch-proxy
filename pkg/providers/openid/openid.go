@@ -38,6 +38,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		return err
 	}
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
+
 	if err != nil {
 		return err
 	}
@@ -62,15 +63,20 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		log.Error("Error unmarshaling claims")
 		return err
 	}
-	m := f.(map[string]interface{})
-	for k := range m {
-		if k == "memberof" {
-			for _, memberofval := range m[k].([]interface{}) {
-				user.TeamMemberships = append(user.TeamMemberships, memberofval.(string))
+	if cfg.Cfg.TeamWhiteListClaim != "" {
+		m := f.(map[string]interface{})
+		for k := range m {
+			log.Infof("checking claim %s", k)
+			if k == cfg.Cfg.TeamWhiteListClaim {
+				/*for _, membership := range m[k].([]interface{}) {
+					user.TeamMemberships = append(user.TeamMemberships, membership.(string))
+				}*/
+				user.TeamMemberships = append(user.TeamMemberships, m[k].(string))
 			}
 		}
+		log.Infof("teammemberships : %+v", user.TeamMemberships)
+		log.Debug("memberof attr checked")
 	}
-	log.Debug("memberof attr checked")
 	user.PrepareUserData()
 	return nil
 }

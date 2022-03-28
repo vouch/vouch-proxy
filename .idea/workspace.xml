@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0eb14ca6-d2cd-4d9a-a3dd-fbe9e3d03ec0" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/do.sh" beforeDir="false" afterPath="$PROJECT_DIR$/do.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/auth.go" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/auth.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/logout.go" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/logout.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/validate.go" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/validate.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/cfg/cfg.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/cfg/cfg.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/jwtmanager/jwtcache.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/jwtmanager/jwtcache.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/jwtmanager/jwtmanager.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/jwtmanager/jwtmanager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/providers/common/common.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/providers/common/common.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/providers/openid/openid.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/providers/openid/openid.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///usr/local/opt/go/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="25jFk7oKDs6Cy6APbeDRN5CYNJb" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.format.on.save.advertiser.fired" value="true" />
+    <property name="go.formatter.settings.were.checked" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.modules.go.list.on.any.changes.was.set" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.watchers.conflict.with.on.save.actions.check.performed" value="true" />
+    <property name="last_opened_file_path" value="$USER_HOME$" />
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="vouch-proxy" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="vouch-proxy" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="vouch-proxy" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <package value="vouch-proxy" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+</project>

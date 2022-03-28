@@ -42,16 +42,17 @@ import (
 // as well as a `envconfig` tag used by https://github.com/kelseyhightower/envconfig
 // though most of the time envconfig will use the struct key's name: VOUCH_PORT VOUCH_JWT_MAXAGE
 type Config struct {
-	LogLevel      string   `mapstructure:"logLevel"`
-	Listen        string   `mapstructure:"listen"`
-	Port          int      `mapstructure:"port"`
-	DocumentRoot  string   `mapstructure:"document_root" envconfig:"document_root"`
-	Domains       []string `mapstructure:"domains"`
-	WhiteList     []string `mapstructure:"whitelist"`
-	TeamWhiteList []string `mapstructure:"teamWhitelist"`
-	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
-	PublicAccess  bool     `mapstructure:"publicAccess"`
-	TLS           struct {
+	LogLevel           string   `mapstructure:"logLevel"`
+	Listen             string   `mapstructure:"listen"`
+	Port               int      `mapstructure:"port"`
+	DocumentRoot       string   `mapstructure:"document_root" envconfig:"document_root"`
+	Domains            []string `mapstructure:"domains"`
+	WhiteList          []string `mapstructure:"whitelist"`
+	TeamWhiteList      []string `mapstructure:"teamWhitelist"`
+	TeamWhiteListClaim string   `mapstructure:"teamWhitelistclaim"`
+	AllowAllUsers      bool     `mapstructure:"allowAllUsers"`
+	PublicAccess       bool     `mapstructure:"publicAccess"`
+	TLS                struct {
 		Cert    string `mapstructure:"cert"`
 		Key     string `mapstructure:"key"`
 		Profile string `mapstructure:"profile"`

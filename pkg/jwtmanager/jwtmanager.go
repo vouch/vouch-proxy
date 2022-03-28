@@ -100,7 +100,7 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 
 	// https://godoc.org/github.com/golang-jwt/jwt#NewWithClaims
 	token := jwt.NewWithClaims(jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod), claims)
-	// log.Debugf("token: %v", token)
+	log.Debugf("token: %v", token)
 	log.Debugf("token created, expires: %d diff from now: %d", claims.StandardClaims.ExpiresAt, claims.StandardClaims.ExpiresAt-time.Now().Unix())
 
 	key, err := cfg.SigningKey()

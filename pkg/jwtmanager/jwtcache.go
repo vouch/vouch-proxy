@@ -52,7 +52,7 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		jwt := FindJWT(r)
-
+		log.Infof("%s jwt from cookies", jwt)
 		// check to see if we have headers cached for this jwt
 		if jwt != "" {
 			if resp, found := Cache.Get(jwt); found {
@@ -62,7 +62,7 @@ func JWTCacheHandler(next http.Handler) http.Handler {
 				// or better still can we just cache the entire response including 200OK?
 				for k, v := range resp.(http.Header) {
 					w.Header().Add(k, strings.Join(v, ","))
-
+					log.Debugf("headers in cache: %+v %+v", k, v)
 				}
 
 				responses.OK200(w, r)

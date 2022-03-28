@@ -66,6 +66,7 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.PAccessToken)
 	}
 	if cfg.Cfg.Headers.IDToken != "" && claims.PIdToken != "" {
+		log.Infof("Id token populated %+v", len(claims.PIdToken))
 		w.Header().Add(cfg.Cfg.Headers.IDToken, claims.PIdToken)
 	}
 	// fastlog.Debugf("response headers %+v", w.Header())

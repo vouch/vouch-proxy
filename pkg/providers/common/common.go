@@ -48,6 +48,7 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProvid
 	}
 
 	log.Debugf("ptokens: accessToken length: %d, IdToken length: %d", len(ptokens.PAccessToken), len(ptokens.PIdToken))
+	log.Debugf("%d ----- %d", ptokens.PAccessToken, ptokens.PIdToken)
 	client := cfg.OAuthClient.Client(context.TODO(), providerToken)
 	return client, providerToken, err
 }
