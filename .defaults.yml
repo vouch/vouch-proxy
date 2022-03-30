@@ -15,6 +15,9 @@ vouch:
   publicAccess: false
   # whiteList:
   # teamWhitelist:
+  writeTimeout: 15
+  readTimeout: 15
+  idleTimeout: 15
 
   tls:
     # cert:

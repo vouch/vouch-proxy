@@ -46,6 +46,9 @@ type Config struct {
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
 	DocumentRoot  string   `mapstructure:"document_root" envconfig:"document_root"`
+	WriteTimeout  int      `mapstructure:"writeTimeout"`
+	ReadTimeout   int      `mapstructure:"readTimeout"`
+	IdleTimeout   int      `mapstructure:"idleTimeout"`
 	Domains       []string `mapstructure:"domains"`
 	WhiteList     []string `mapstructure:"whitelist"`
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`

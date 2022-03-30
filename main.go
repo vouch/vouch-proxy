@@ -196,8 +196,9 @@ func main() {
 		Handler: router,
 		Addr:    listen,
 		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		WriteTimeout: time.Duration(cfg.Cfg.WriteTimeout) * time.Second,
+		ReadTimeout:  time.Duration(cfg.Cfg.ReadTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.Cfg.IdleTimeout) * time.Second,
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 

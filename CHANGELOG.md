@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- [allow configurable Write, Read and Idle timeouts for the http server](https://github.com/vouch/vouch-proxy/pull/468)
+
 ## v0.36.0
 
 - [run Docker containers as non-root user](https://github.com/vouch/vouch-proxy/pull/444)

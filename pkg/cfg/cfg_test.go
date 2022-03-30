@@ -138,7 +138,8 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	// array of strings
 	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
 	// int
-	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE", "VOUCH_SESSION_MAXAGE"}
+	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE", "VOUCH_SESSION_MAXAGE", "VOUCH_WRITETIMEOUT", "VOUCH_READTIMEOUT",
+		"VOUCH_IDLETIMEOUT"}
 	// bool
 	benv := []string{"VOUCH_ALLOWALLUSERS", "VOUCH_PUBLICACCESS", "VOUCH_JWT_COMPRESS", "VOUCH_COOKIE_SECURE",
 		"VOUCH_COOKIE_HTTPONLY", "VOUCH_TESTING"}
@@ -175,7 +176,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	}
 
 	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
-	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge}
+	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge, Cfg.WriteTimeout, Cfg.ReadTimeout, Cfg.IdleTimeout}
 	bcfg := []bool{Cfg.AllowAllUsers, Cfg.PublicAccess, Cfg.JWT.Compress,
 		Cfg.Cookie.Secure,
 		Cfg.Cookie.HTTPOnly,
