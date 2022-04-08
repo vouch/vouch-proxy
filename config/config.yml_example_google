@@ -7,7 +7,7 @@ vouch:
   - yourdomain.com
   - yourotherdomain.com
 
-  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate with Google
   # allowAllUsers: true
 
   cookie:
@@ -23,7 +23,7 @@ oauth:
   # https://console.developers.google.com/apis/credentials
   client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
-  # Google may require callbac_urls (redirect URIs) to be 'https'
+  # Google may require callback_urls (redirect URIs) to be 'https'
   callback_urls: 
     - https://yourdomain.com:9090/auth
     - https://yourotherdomain.com:9090/auth
