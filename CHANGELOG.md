@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.37.0
+
 - [allow configurable Write, Read and Idle timeouts for the http server](https://github.com/vouch/vouch-proxy/pull/468)
 
 ## v0.36.0
