@@ -44,6 +44,7 @@ var (
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
 		Alibaba:       "alibaba",
+		Auth0:         "auth0",
 	}
 )
 
@@ -59,6 +60,7 @@ type OAuthProviders struct {
 	OpenStax      string
 	Nextcloud     string
 	Alibaba       string
+	Auth0         string
 }
 
 // oauth config items endoint for access
@@ -122,7 +124,8 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud &&
-		GenOAuth.Provider != Providers.Alibaba {
+		GenOAuth.Provider != Providers.Alibaba &&
+		GenOAuth.Provider != Providers.Auth0 {
 		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks
@@ -131,18 +134,18 @@ func oauthBasicTest() error {
 		// everyone has a clientID
 		return errors.New("configuration error: oauth.client_id not found")
 	case GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.OIDC && GenOAuth.ClientSecret == "":
-		// everyone except IndieAuth has a clientSecret
+		// everyone except IndieAuth and HomeAssistant has a clientSecret
 		// ADFS and OIDC providers also do not require this, but can have it optionally set.
 		return errors.New("configuration error: oauth.client_secret not found")
 	case GenOAuth.Provider != Providers.Google && GenOAuth.AuthURL == "":
-		// everyone except IndieAuth and Google has an authURL
+		// everyone except Google has an authURL
 		return errors.New("configuration error: oauth.auth_url not found")
 	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.Azure && GenOAuth.UserInfoURL == "":
-		// everyone except IndieAuth, Google and ADFS has an userInfoURL, and Azure does not actively use it
+		// everyone except IndieAuth, Google, HomeAssistant and ADFS has an userInfoURL, and Azure does not actively use it
 		return errors.New("configuration error: oauth.user_info_url not found")
 	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
-	case GenOAuth.Provider == Providers.Azure || GenOAuth.Provider == Providers.ADFS || GenOAuth.Provider == Providers.Nextcloud || GenOAuth.Provider == Providers.OIDC:
+	case GenOAuth.Provider == Providers.Azure || GenOAuth.Provider == Providers.ADFS || GenOAuth.Provider == Providers.Nextcloud || GenOAuth.Provider == Providers.OIDC || GenOAuth.Provider == Providers.Auth0:
 		checkScopes([]string{"openid", "email", "profile"})
 	}
 

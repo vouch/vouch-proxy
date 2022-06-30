@@ -276,6 +276,15 @@ func oauthLoginURL(r *http.Request, session sessions.Session) string {
 	if cfg.OAuthopts != nil {
 		opts = append(opts, cfg.OAuthopts...)
 	}
+
+	// append auth0 organization if parameter was specified in /login?url=
+	if cfg.GenOAuth.Provider == cfg.Providers.Auth0 {
+		var orgid = r.URL.Query().Get("x-vouch-orgid")
+		if orgid != "" {
+			opts = append(opts, oauth2.SetAuthURLParam("organization", orgid))
+		}
+	}
+
 	return cfg.OAuthClient.AuthCodeURL(state, opts...)
 }
 

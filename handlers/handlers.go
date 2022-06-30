@@ -88,6 +88,8 @@ func getProvider() Provider {
 		return openid.Provider{}
 	case cfg.Providers.Alibaba:
 		return alibaba.Provider{}
+	case cfg.Providers.Auth0:
+		return openid.Provider{}
 	default:
 		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
 		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
