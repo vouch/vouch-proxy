@@ -31,6 +31,6 @@ oauth:
   callback_url: https://vouch.yourdomain.com:9090/auth
 
 # Note: this provider can login directly to a specific auth0 organization
-# use 'x-vouch-orgid={orgId}' in /login redirect to make Vouch Proxy send 'organization={orgId}' in the authorize request
+# use 'x-vouch-orgid={orgId}' in /login redirect to make Vouch Proxy send 'organization={orgId}' in the authorize request (see https://auth0.com/docs/api/authentication#authorization-code-flow)
 # nginx redirect example: set $orgid variable and use 
 # https://vouch.yourdomain.com/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err&x-vouch-orgid=$orgid;
