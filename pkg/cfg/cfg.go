@@ -229,6 +229,7 @@ func configureFromEnv() bool {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	// did anything change?
 	if !reflect.DeepEqual(preEnvConfig, *Cfg) ||
 		!reflect.DeepEqual(preEnvGenOAuth, *GenOAuth) {
@@ -270,8 +271,31 @@ func setRootDir() {
 
 // parseConfig parse the config file
 func parseConfigFile() error {
-	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
+	secretsFileVar := Branding.UCName + "_SECRETS_FILE"
+	overlayConfigPath := os.Getenv(secretsFileVar)
+	if overlayConfigPath == "" {
+		// see if systemd LoadCredential was used to pass in the overlay config
+		if credDir := os.Getenv("CREDENTIALS_DIRECTORY"); credDir != "" {
+			overlayConfigPath = filepath.Join(credDir, secretsFileVar)
+			if _, err := os.Stat(overlayConfigPath); os.IsNotExist(err) {
+				log.Warnf("%s not found in CREDENTIALS_DIRECTORY %s", secretsFileVar, credDir)
+				overlayConfigPath = ""
+			} else {
+				log.Infof("reading secrets file from CREDENTIALS_DIRECTORY: %s", overlayConfigPath)
+			}
+		}
+	} else {
+		log.Infof("reading secrets file from %s env var: %s", secretsFileVar, overlayConfigPath)
+	}
+	if overlayConfigPath != "" {
+		viper.SetConfigFile(overlayConfigPath)
+		if err := viper.ReadInConfig(); err != nil {
+			return err
+		}
+		viper.SetConfigFile("")
+	}
 
+	configEnv := os.Getenv(Branding.UCName + "_CONFIG")
 	if configEnv != "" {
 		log.Warnf("config file loaded from environmental variable %s: %s", Branding.UCName+"_CONFIG", configEnv)
 		configFile, _ := filepath.Abs(configEnv)
@@ -287,8 +311,8 @@ func parseConfigFile() error {
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(filepath.Join(RootDir, "config"))
 	}
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	err := viper.MergeInConfig() // Find and read the config file
+	if err != nil {              // Handle errors reading the config file
 
 		return fmt.Errorf("%w: %s", errConfigNotFound, err)
 	}

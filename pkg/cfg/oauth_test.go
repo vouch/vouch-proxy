@@ -11,7 +11,10 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
+	"io/ioutil"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,4 +45,49 @@ func Test_configureOAuthWithClaims(t *testing.T) {
 	authCodeURL, err := url.Parse(OAuthClient.AuthCodeURL("state", OAuthopts...))
 	assert.Nil(t, err)
 	assert.Equal(t, authCodeURL.Query().Get("claims"), `{"userinfo":{"email":{"essential":true},"email_verified":{"essential":true},"given_name":{"essential":true},"http://example.info/claims/groups":null,"nickname":null,"picture":null},"id_token":{"acr":{"values":["urn:mace:incommon:iap:silver"]},"auth_time":{"essential":true}}}`)
+}
+
+func Test_readOverlayConfig_fileVar(t *testing.T) {
+	defer cleanupEnv()
+	rootDir := os.Getenv(Branding.UCName + "_ROOT")
+	assert.NotEmpty(t, rootDir)
+	assert.NoError(t, os.Setenv(Branding.UCName+"_SECRETS_FILE", filepath.Join(rootDir, "config/testing/secret_overlay.yml")))
+	setUp("config/testing/handler_login_url.yml")
+	assert.Equal(t, "my client secret from overlay", OAuthClient.ClientSecret)
+}
+
+func Test_readOverlayConfig_credentialsDir(t *testing.T) {
+	defer cleanupEnv()
+	rootDir := os.Getenv(Branding.UCName + "_ROOT")
+	assert.NotEmpty(t, rootDir)
+	tempDir, err := ioutil.TempDir("", "")
+	assert.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
+	destFileName := Branding.UCName + "_SECRETS_FILE"
+	srcFileName := filepath.Join(rootDir, "config/testing/secret_overlay.yml")
+	assert.NoError(t, os.Symlink(srcFileName, filepath.Join(tempDir, destFileName)))
+	assert.NoError(t, os.Setenv("CREDENTIALS_DIRECTORY", tempDir))
+	setUp("config/testing/handler_login_url.yml")
+	assert.Equal(t, "my client secret from overlay", OAuthClient.ClientSecret)
+}
+
+func Test_readOverlayConfig_emptyCredentialsDir(t *testing.T) {
+	defer cleanupEnv()
+	tempDir, err := ioutil.TempDir("", "")
+	assert.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
+	assert.NoError(t, os.Setenv("CREDENTIALS_DIRECTORY", tempDir))
+	setUp("config/testing/handler_login_url.yml")
+	assert.Equal(t, "", OAuthClient.ClientSecret)
+}
+
+func Test_readOverlayConfig_missingCredentialsDir(t *testing.T) {
+	defer cleanupEnv()
+	assert.NoError(t, os.Setenv("CREDENTIALS_DIRECTORY", "/this/doesnt/exist"))
+	setUp("config/testing/handler_login_url.yml")
+	assert.Equal(t, "", OAuthClient.ClientSecret)
 }
