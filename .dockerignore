@@ -13,6 +13,5 @@ Dockerfile
 handlers/rice-box.go
 certs
 .cover/*
-.git
 .github
 .whitesource

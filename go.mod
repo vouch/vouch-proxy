@@ -29,3 +29,5 @@ require (
 	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 )
+
+replace go.uber.org/atomic => go.uber.org/atomic v1.9.0
