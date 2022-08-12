@@ -154,12 +154,17 @@ func normalizeLoginURLParam(loginURL *url.URL) (*url.URL, []string, error) {
 			// Still looking for url param
 			if paramKey == "url" {
 				// Found it
-				parsed, e := url.Parse(loginURL.Query().Get("url"))
+				parsed, e := url.ParseQuery(param)
+
 				if e != nil {
 					return nil, []string{}, e // failure to parse url param
 				}
 
-				urlParam = parsed
+				urlParam, e = url.Parse(parsed.Get("url"))
+
+				if e != nil {
+					return nil, []string{}, e // failure to parse url param
+				}
 			} else if !isVouchParam {
 				// Non-vouch param before url param is a stray param
 				log.Infof("Stray param in login request (%s)", paramKey)
