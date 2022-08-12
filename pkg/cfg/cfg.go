@@ -431,7 +431,7 @@ func basicTest() error {
 			return fmt.Errorf("%s.jwt.public_key_file should not be set when using signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
 		}
 
-		if len(Cfg.JWT.PrivateKeyFile) > 9 {
+		if len(Cfg.JWT.PrivateKeyFile) > 0 {
 			return fmt.Errorf("%s.jwt.private_key_file should not be set when using signing method %s", Branding.LCName, Cfg.JWT.SigningMethod)
 		}
 
