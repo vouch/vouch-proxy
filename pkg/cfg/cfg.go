@@ -45,6 +45,8 @@ type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`
 	Port          int      `mapstructure:"port"`
+	SocketMode    int      `mapstructure:"socket_mode"`
+	SocketGroup   string   `mapstructure:"socket_group"`
 	DocumentRoot  string   `mapstructure:"document_root" envconfig:"document_root"`
 	WriteTimeout  int      `mapstructure:"writeTimeout"`
 	ReadTimeout   int      `mapstructure:"readTimeout"`

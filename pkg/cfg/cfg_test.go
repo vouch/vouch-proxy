@@ -134,12 +134,12 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	senv := []string{"VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT",
 		"VOUCH_HEADERS_USER", "VOUCH_HEADERS_QUERYSTRING", "VOUCH_HEADERS_REDIRECT", "VOUCH_HEADERS_SUCCESS", "VOUCH_HEADERS_ERROR",
 		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
-		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY", "VOUCH_DOCUMENT_ROOT"}
+		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY", "VOUCH_DOCUMENT_ROOT", "VOUCH_SOCKETGROUP"}
 	// array of strings
 	saenv := []string{"VOUCH_DOMAINS", "VOUCH_WHITELIST", "VOUCH_TEAMWHITELIST", "VOUCH_HEADERS_CLAIMS", "VOUCH_TESTURLS", "VOUCH_POST_LOGOUT_REDIRECT_URIS"}
 	// int
 	ienv := []string{"VOUCH_PORT", "VOUCH_JWT_MAXAGE", "VOUCH_COOKIE_MAXAGE", "VOUCH_SESSION_MAXAGE", "VOUCH_WRITETIMEOUT", "VOUCH_READTIMEOUT",
-		"VOUCH_IDLETIMEOUT"}
+		"VOUCH_IDLETIMEOUT", "VOUCH_SOCKETMODE"}
 	// bool
 	benv := []string{"VOUCH_ALLOWALLUSERS", "VOUCH_PUBLICACCESS", "VOUCH_JWT_COMPRESS", "VOUCH_COOKIE_SECURE",
 		"VOUCH_COOKIE_HTTPONLY", "VOUCH_TESTING"}
@@ -172,11 +172,11 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	scfg := []string{Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT,
 		Cfg.Headers.User, Cfg.Headers.QueryString, Cfg.Headers.Redirect, Cfg.Headers.Success, Cfg.Headers.Error,
 		Cfg.Headers.ClaimHeader, Cfg.Headers.AccessToken, Cfg.Headers.IDToken, Cfg.Cookie.Name, Cfg.Cookie.Domain,
-		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key, Cfg.DocumentRoot,
+		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key, Cfg.DocumentRoot, Cfg.SocketGroup,
 	}
 
 	sacfg := [][]string{Cfg.Domains, Cfg.WhiteList, Cfg.TeamWhiteList, Cfg.Headers.Claims, Cfg.TestURLs, Cfg.LogoutRedirectURLs}
-	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge, Cfg.WriteTimeout, Cfg.ReadTimeout, Cfg.IdleTimeout}
+	icfg := []int{Cfg.Port, Cfg.JWT.MaxAge, Cfg.Cookie.MaxAge, Cfg.WriteTimeout, Cfg.ReadTimeout, Cfg.IdleTimeout, Cfg.SocketMode}
 	bcfg := []bool{Cfg.AllowAllUsers, Cfg.PublicAccess, Cfg.JWT.Compress,
 		Cfg.Cookie.Secure,
 		Cfg.Cookie.HTTPOnly,

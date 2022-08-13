@@ -20,6 +20,15 @@ vouch:
   listen: 0.0.0.0  # VOUCH_LISTEN
   port: 9090       # VOUCH_PORT
 
+  # Listen can specify a Unix domain socket instead.
+  # listen: unix:/path/to/socket # VOUCH_LISTEN
+
+  # Optionally set the mode of the Unix domain socket. The default if not specified is 0777.
+  # socket_mode: 0770 # VOUCH_SOCKETMODE
+
+  # Optionally set the group owner of the Unix domain socket.
+  # socket_group: users # VOUCH_SOCKETGROUP
+
   # The default read, write and idle timeouts are 15 seconds.
   # If you have a load balancer or proxy in front that has its
   # own idle timeout, you may need to ensure that the Vouch idle

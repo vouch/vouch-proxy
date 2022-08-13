@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- [add support for listening on unix domain sockets](https://github.com/vouch/vouch-proxy/pull/488)
+
 ## v0.37.0
 
 - [allow configurable Write, Read and Idle timeouts for the http server](https://github.com/vouch/vouch-proxy/pull/468)
