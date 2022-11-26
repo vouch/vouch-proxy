@@ -19,6 +19,7 @@ To get it to work, we must set some environment variables in `.vscode/settings.j
         "TEST_PRIVATE_KEY_FILE": "${workspaceFolder}/config/testing/rsa.key",
         "TEST_PUBLIC_KEY_FILE": "${workspaceFolder}/config/testing/rsa.pub",
     }
+    "go.testFlags": ["-coverpkg=all"],
 }
 ```
 
