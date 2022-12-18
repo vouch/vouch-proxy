@@ -10,7 +10,9 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
@@ -148,7 +150,7 @@ type Contact struct {
 	Verified bool   `json:"is_verified"`
 }
 
-//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+// OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
 type OpenStaxUser struct {
 	User
 	Contacts []Contact `json:"contact_infos"`
@@ -215,6 +217,33 @@ type AliData struct {
 	ID       string `json:"ou_id"`
 	Phone    string `json:"phone_number"`
 	OuName   string `json:"ou_name"`
+}
+
+// GitLabUser is a user provided by GitLab
+// https://docs.gitlab.com/ee/integration/openid_connect_provider.html
+type GitLabUser struct {
+	User
+	Sub                string   `json:"sub"`
+	AuthTime           int      `json:"auth_time"`
+	Name               string   `json:"name"`
+	Nickname           string   `json:"nickname"`
+	Email              string   `json:"email"`
+	EmailVerified      bool     `json:"email_verified"`
+	Website            string   `json:"website"`
+	Profile            string   `json:"profile"`
+	Picture            string   `json:"picture"`
+	Groups             []string `json:"groups"`
+	GroupsDirect       []string `json:"groups_direct"`
+	OwnerOfGroups      []string `json:"https://gitlab.org/claims/groups/owner"`
+	MaintainerOfGroups []string `json:"https://gitlab.org/claims/groups/maintainer"`
+	DeveloperOfGroups  []string `json:"https://gitlab.org/claims/groups/developer"`
+}
+
+func (g *GitLabUser) PrepareUserData() {
+	g.User.Name = g.Name
+	g.User.Username = g.Nickname
+	g.User.Email = g.Email
+	g.User.TeamMemberships = g.Groups
 }
 
 // Team has members and provides acess to sites
