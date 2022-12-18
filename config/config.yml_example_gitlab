@@ -1,0 +1,34 @@
+
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with gitlab
+
+vouch:
+  # domains:
+  # valid domains that the jwt cookies can be set into
+  # the callback_urls will be to these domains
+  # for github that's only one domain since they only allow one callback URL
+  # https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/#redirect-urls
+  # each of these domains must serve the url https://login.$domains[0] https://login.$domains[1] ...
+  domains:
+  - yourothersite.io
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at GitHub
+  # allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    #  domain: yourdomain.com
+
+  # set teamWhitelist: to list of GitLab group/repositories
+  # The user is authorized if they have access to the given group or repository.
+  # teamWhitelist:
+  # - myGroup
+  # - myGroup/myRepository
+
+oauth:
+  # remember to create a new OAuth application in GitLab
+  provider: gitlab
+  client_id: xxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
