@@ -44,6 +44,7 @@ var (
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
 		Alibaba:       "alibaba",
+		GitLab:        "gitlab",
 	}
 )
 
@@ -59,6 +60,7 @@ type OAuthProviders struct {
 	OpenStax      string
 	Nextcloud     string
 	Alibaba       string
+	GitLab        string
 }
 
 // oauth config items endoint for access
@@ -122,7 +124,8 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud &&
-		GenOAuth.Provider != Providers.Alibaba {
+		GenOAuth.Provider != Providers.Alibaba &&
+		GenOAuth.Provider != Providers.GitLab {
 		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks
@@ -187,6 +190,9 @@ func setProviderDefaults() {
 		configureOAuthClient()
 	} else if GenOAuth.Provider == Providers.IndieAuth {
 		GenOAuth.CodeChallengeMethod = "S256"
+		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.GitLab {
+		setDefaultsGitLab()
 		configureOAuthClient()
 	} else {
 		// OIDC, OpenStax, Nextcloud
@@ -266,6 +272,28 @@ func setDefaultsGitHub() {
 		if len(Cfg.TeamWhiteList) > 0 {
 			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
 		}
+	}
+	GenOAuth.CodeChallengeMethod = "S256"
+}
+
+func setDefaultsGitLab() {
+	if GenOAuth.AuthURL == "" {
+		GenOAuth.AuthURL = "https://gitlab.com/oauth/authorize"
+	}
+	if GenOAuth.TokenURL == "" {
+		GenOAuth.TokenURL = "https://gitlab.com/oauth/token"
+	}
+	if GenOAuth.UserInfoURL == "" {
+		GenOAuth.UserInfoURL = "https://gitlab.com/oauth/userinfo"
+	}
+	if GenOAuth.UserTeamURL == "" {
+		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+	}
+	if GenOAuth.UserOrgURL == "" {
+		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+	}
+	if len(GenOAuth.Scopes) == 0 {
+		GenOAuth.Scopes = []string{"openid"}
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }

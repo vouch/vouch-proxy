@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
+	"github.com/vouch/vouch-proxy/pkg/providers/gitlab"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -88,6 +89,8 @@ func getProvider() Provider {
 		return openid.Provider{}
 	case cfg.Providers.Alibaba:
 		return alibaba.Provider{}
+	case cfg.Providers.GitLab:
+		return gitlab.Provider{}
 	default:
 		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
 		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
