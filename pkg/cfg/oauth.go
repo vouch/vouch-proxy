@@ -286,12 +286,6 @@ func setDefaultsGitLab() {
 	if GenOAuth.UserInfoURL == "" {
 		GenOAuth.UserInfoURL = "https://gitlab.com/oauth/userinfo"
 	}
-	if GenOAuth.UserTeamURL == "" {
-		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
-	}
-	if GenOAuth.UserOrgURL == "" {
-		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
-	}
 	if len(GenOAuth.Scopes) == 0 {
 		GenOAuth.Scopes = []string{"openid"}
 	}
