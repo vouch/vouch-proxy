@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
+- Add provider for GitLab, and support for using `teamWhiteList` to restrict access based on GitLab group/repository access.
 
 ## v0.37.0
 
