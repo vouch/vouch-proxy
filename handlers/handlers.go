@@ -11,7 +11,6 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package handlers
 
 import (
-	"github.com/vouch/vouch-proxy/pkg/providers/gitlab"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -25,6 +24,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/providers/azure"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/providers/github"
+	"github.com/vouch/vouch-proxy/pkg/providers/gitlab"
 	"github.com/vouch/vouch-proxy/pkg/providers/google"
 	"github.com/vouch/vouch-proxy/pkg/providers/homeassistant"
 	"github.com/vouch/vouch-proxy/pkg/providers/indieauth"
