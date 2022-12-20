@@ -32,3 +32,9 @@ oauth:
   provider: gitlab
   client_id: xxxxxxxxxxxxxxxxxxxx
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  callback_url:  http://vouch.yourdomain.com:9090/auth
+
+  # if running a self-hosted instance of GitLab, set the following urls to point to the correct domain
+  # auth_url: https://{yourGitLabDomain}/oauth/authorize
+  # token_url: https://{yourGitLabDomain}/oauth/token
+  # user_info_url: https://{yourGitLabDomain}/oauth/userinfo
