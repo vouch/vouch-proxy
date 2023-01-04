@@ -64,6 +64,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		return err
 	}
 	if cfg.Cfg.TeamWhiteListClaim != "" {
+		log.Infof("TeamWhiteListClaim is %+v", cfg.Cfg.TeamWhiteListClaim)
 		m := f.(map[string]interface{})
 		for k := range m {
 			log.Infof("checking claim %s", k)
@@ -71,7 +72,9 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 				/*for _, membership := range m[k].([]interface{}) {
 					user.TeamMemberships = append(user.TeamMemberships, membership.(string))
 				}*/
+				log.Infof("claim values of %+v is %+v, converted to %+v", k, m[k], m[k].(string))
 				user.TeamMemberships = append(user.TeamMemberships, m[k].(string))
+				break
 			}
 		}
 		log.Infof("teammemberships : %+v", user.TeamMemberships)

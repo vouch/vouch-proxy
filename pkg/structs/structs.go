@@ -148,7 +148,7 @@ type Contact struct {
 	Verified bool   `json:"is_verified"`
 }
 
-//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+// OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
 type OpenStaxUser struct {
 	User
 	Contacts []Contact `json:"contact_infos"`
