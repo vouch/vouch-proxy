@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- [Support reading secrets from a separate file](https://github.com/vouch/vouch-proxy/pull/487)
+
 ## v0.37.0
 
 - [allow configurable Write, Read and Idle timeouts for the http server](https://github.com/vouch/vouch-proxy/pull/468)
