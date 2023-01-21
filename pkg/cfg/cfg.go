@@ -41,6 +41,7 @@ import (
 // in certain situations you'll need to add both a `mapstructure` tag used by viper
 // as well as a `envconfig` tag used by https://github.com/kelseyhightower/envconfig
 // though most of the time envconfig will use the struct key's name: VOUCH_PORT VOUCH_JWT_MAXAGE
+// default values should be set in .defaults.yml
 type Config struct {
 	LogLevel      string   `mapstructure:"logLevel"`
 	Listen        string   `mapstructure:"listen"`

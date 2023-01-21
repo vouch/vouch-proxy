@@ -243,7 +243,7 @@ func listen() (lis net.Listener, cleanupFn func(), err error) {
 		return nil, nil, fmt.Errorf("listen %s: %w", socketPath, err)
 	}
 
-	mode := fs.FileMode(cfg.Cfg.SocketMode)
+	mode := fs.FileMode(cfg.Cfg.SocketMode) // defaults to 0660 - see .defaults.yml
 	if err = os.Chmod(socketPath, mode); err != nil {
 		return nil, nil, fmt.Errorf("chmod socket file %s %#o", socketPath, mode)
 	}
