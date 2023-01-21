@@ -467,7 +467,6 @@ TLDR:
   - and follow the instructions at the end to redact your Nginx config
 - all of those go into a [gist](https://gist.github.com/)
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
-- or visit our IRC channel [#vouch](irc.libera.chat/#vouch) on libera.chat
 
 A bug report can be generated from a docker environment using the `quay.io/vouch/vouch-proxy:alpine` image...
 
