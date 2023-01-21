@@ -9,6 +9,7 @@ vouch:
   testing: false
   listen: 0.0.0.0
   port: 9090
+  socket_mode: 0660 
   # document_root:
   # domains:
   allowAllUsers: false
@@ -18,7 +19,6 @@ vouch:
   writeTimeout: 15
   readTimeout: 15
   idleTimeout: 15
-
   tls:
     # cert:
     # key:

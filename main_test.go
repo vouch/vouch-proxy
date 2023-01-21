@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 func Test_listenUds(t *testing.T) {
@@ -27,7 +28,7 @@ func Test_listenUds(t *testing.T) {
 
 	fi, err := os.Stat(socketPath)
 	assert.NoError(t, err)
-	assert.Equal(t, fs.FileMode(0777), fi.Mode().Perm())
+	assert.Equal(t, fs.FileMode(0660), fi.Mode().Perm())
 
 	assert.NotNil(t, lis)
 	assert.NoError(t, lis.Close())
