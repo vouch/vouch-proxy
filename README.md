@@ -75,7 +75,7 @@ VP can send the visitor's email, name and other information which the IdP provid
 
 ## Installation and Configuration
 
-Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L23-L33) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L81-L82) to `yourdomain.com`.
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L38-L48) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L109-L114) to `yourdomain.com`.
 
 - `cp ./config/config.yml_example_$OAUTH_PROVIDER ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), etc
@@ -467,7 +467,6 @@ TLDR:
   - and follow the instructions at the end to redact your Nginx config
 - all of those go into a [gist](https://gist.github.com/)
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
-- or visit our IRC channel [#vouch](irc.libera.chat/#vouch) on libera.chat
 
 A bug report can be generated from a docker environment using the `quay.io/vouch/vouch-proxy:alpine` image...
 

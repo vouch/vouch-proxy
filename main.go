@@ -143,8 +143,6 @@ func main() {
 	}
 
 	tls := (cfg.Cfg.TLS.Cert != "" && cfg.Cfg.TLS.Key != "")
-	logger.Info("Copyright 2020-2022 the " + cfg.Branding.FullName + " Authors")	
-	logger.Warn("This is free software with ABSOLUTELY NO WARRANTY.")
 	logger.Infow("starting "+cfg.Branding.FullName,
 		// "semver":    semver,
 		"version", version,

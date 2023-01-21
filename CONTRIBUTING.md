@@ -1,3 +1,27 @@
+# Setting up a Development Environment
+
+## Running Tests 
+
+```bash
+ export VOUCH_ROOT=`pwd` # if not using GOPATH
+ ./do.sh test
+```
+
+After running these tests manually once (which creates a test key pair), it is possible to run the tests with VSCode Test Explorer.
+
+To get it to work, we must set some environment variables in `.vscode/settings.json` which otherwise would be set by `do.sh`:
+
+```json
+{
+    "go.testEnvVars": {
+        "VOUCH_ROOT": "${workspaceFolder}",
+        "VOUCH_CONFIG": "${workspaceFolder}/config/testing/test_config.yml",
+        "TEST_PRIVATE_KEY_FILE": "${workspaceFolder}/config/testing/rsa.key",
+        "TEST_PUBLIC_KEY_FILE": "${workspaceFolder}/config/testing/rsa.pub",
+    }
+}
+```
+
 ### Contributing to Vouch Proxy by submitting a Pull Request
 
 **_I really love Vouch Proxy! I wish it did XXXX..._**
