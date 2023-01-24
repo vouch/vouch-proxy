@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	errNoJWT  = errors.New("no jwt found in request")
-	errNoUser = errors.New("no User found in jwt")
+	errNoJWT = errors.New("no jwt found in request")
+	errNoSub = errors.New("no 'sub' found in jwt")
 )
 
 // ValidateRequestHandler /validate
@@ -45,8 +45,8 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if claims.Username == "" {
-		send401or200PublicAccess(w, r, errNoUser)
+	if claims.Sub == "" {
+		send401or200PublicAccess(w, r, errNoSub)
 		return
 	}
 
@@ -59,7 +59,10 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	generateCustomClaimsHeaders(w, claims)
-	w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
+	w.Header().Add(cfg.Cfg.Headers.Sub, claims.Sub)
+	if claims.Username != "" {
+		w.Header().Add(cfg.Cfg.Headers.User, claims.Username)
+	}
 	w.Header().Add(cfg.Cfg.Headers.Success, "true")
 
 	if cfg.Cfg.Headers.AccessToken != "" && claims.PAccessToken != "" {

@@ -45,6 +45,7 @@ vouch:
     # key:
 
   headers:
+    sub: X-Vouch-Sub
     jwt: X-Vouch-Token
     user: X-Vouch-User
     success: X-Vouch-Success

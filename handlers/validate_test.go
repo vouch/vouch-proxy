@@ -28,7 +28,12 @@ import (
 
 func BenchmarkValidateRequestHandler(b *testing.B) {
 	setUp("/config/testing/handler_email.yml")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
@@ -67,7 +72,12 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	}
 
 	setUp("/config/testing/handler_email.yml")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
@@ -155,7 +165,12 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 
 	tokens := structs.PTokens{}
 
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	vpjwt, err := jwtmanager.NewVPJWT(*user, customClaims, tokens)
 	assert.NoError(t, err)
 
@@ -208,7 +223,12 @@ func TestJWTCacheHandler(t *testing.T) {
 	setUp("/config/testing/handler_logout_url.yml")
 	handler := jwtmanager.JWTCacheHandler(http.HandlerFunc(ValidateRequestHandler))
 
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	tokens := structs.PTokens{}
 	customClaims := structs.CustomClaims{}
 
