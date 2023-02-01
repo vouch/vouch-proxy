@@ -27,11 +27,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/user"
 	"strconv"
+	"strings"
 	"time"
 
 	// "net/http/pprof"
@@ -133,10 +136,13 @@ func configure() {
 
 func main() {
 	configure()
-	var listen = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
-	checkTCPPortAvailable(listen)
-	tls := (cfg.Cfg.TLS.Cert != "" && cfg.Cfg.TLS.Key != "")
+	listenStr := cfg.Cfg.Listen
+	if !strings.HasPrefix(cfg.Cfg.Listen, "unix:") {
+		listenStr = cfg.Cfg.Listen + ":" + strconv.Itoa(cfg.Cfg.Port)
+		checkTCPPortAvailable(listenStr)
+	}
 
+	tls := (cfg.Cfg.TLS.Cert != "" && cfg.Cfg.TLS.Key != "")
 	logger.Infow("starting "+cfg.Branding.FullName,
 		// "semver":    semver,
 		"version", version,
@@ -145,7 +151,7 @@ func main() {
 		"buildhost", host,
 		"branch", branch,
 		"semver", semver,
-		"listen", scheme[tls]+"://"+listen,
+		"listen", scheme[tls]+"://"+listenStr,
 		"tls", tls,
 		"document_root", cfg.Cfg.DocumentRoot,
 		"oauth.provider", cfg.GenOAuth.Provider)
@@ -194,20 +200,68 @@ func main() {
 
 	srv := &http.Server{
 		Handler: router,
-		Addr:    listen,
 		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		WriteTimeout: time.Duration(cfg.Cfg.WriteTimeout) * time.Second,
+		ReadTimeout:  time.Duration(cfg.Cfg.ReadTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.Cfg.IdleTimeout) * time.Second,
 		ErrorLog:     log.New(&fwdToZapWriter{fastlog}, "", 0),
 	}
 
+	lis, cleanupFn, err := listen()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer cleanupFn()
+
 	if tls {
 		srv.TLSConfig = cfg.TLSConfig(cfg.Cfg.TLS.Profile)
-		logger.Fatal(srv.ListenAndServeTLS(cfg.Cfg.TLS.Cert, cfg.Cfg.TLS.Key))
+		logger.Fatal(srv.ServeTLS(lis, cfg.Cfg.TLS.Cert, cfg.Cfg.TLS.Key))
 	} else {
-		logger.Fatal(srv.ListenAndServe())
+		logger.Fatal(srv.Serve(lis))
 	}
 
+}
+
+func listen() (lis net.Listener, cleanupFn func(), err error) {
+	if !strings.HasPrefix(cfg.Cfg.Listen, "unix:") {
+		lis, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.Cfg.Listen, cfg.Cfg.Port))
+		return lis, func() {}, err
+	}
+
+	socketPath := strings.TrimPrefix(cfg.Cfg.Listen, "unix:")
+	_, err = os.Stat(socketPath)
+	if err == nil {
+		if err = os.Remove(socketPath); err != nil {
+			return nil, nil, fmt.Errorf("remove existing socket file %s: %w", socketPath, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, nil, fmt.Errorf("stat socket file %s: %w", socketPath, err)
+	}
+
+	lis, err = net.Listen("unix", socketPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("listen %s: %w", socketPath, err)
+	}
+
+	mode := fs.FileMode(cfg.Cfg.SocketMode) // defaults to 0660 - see .defaults.yml
+	if err = os.Chmod(socketPath, mode); err != nil {
+		return nil, nil, fmt.Errorf("chmod socket file %s %#o", socketPath, mode)
+	}
+
+	if cfg.Cfg.SocketGroup != "" {
+		group, err := user.LookupGroup(cfg.Cfg.SocketGroup)
+		if err != nil {
+			return nil, nil, fmt.Errorf("lookup socket group: %s %w", cfg.Cfg.SocketGroup, err)
+		}
+		gid, err := strconv.Atoi(group.Gid)
+		if err != nil {
+			return nil, nil, fmt.Errorf("lookup socket group: invalid gid: %w", err)
+		}
+		if err := os.Chown(socketPath, -1, gid); err != nil {
+			return nil, nil, fmt.Errorf("chown socket: group: %s %w", socketPath, err)
+		}
+	}
+	return lis, func() { _ = os.Remove(socketPath) }, nil
 }
 
 func checkTCPPortAvailable(listen string) {

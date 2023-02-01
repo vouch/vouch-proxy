@@ -36,6 +36,9 @@ vouch:
 oauth:
   # create a new OAuth application at:
   # https://github.com/settings/applications/new
+  #
+  # callback_url is configured at github.com when setting up the app
+  # Set to e.g. https://vouch.yourdomain.com/auth or https://yourdomain.com/vp_in_a_path/auth
   provider: github
   client_id: xxxxxxxxxxxxxxxxxxxx
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

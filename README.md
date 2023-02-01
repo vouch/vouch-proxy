@@ -55,7 +55,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
   (Read this before submitting an issue at GitHub)
   - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
   - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
-  - [submitting a Pull Request for a new feature](#submitting-a-pull-request-for-a-new-feature)
+  - [Contributing to Vouch Proxy](#contributing)
 - [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
 - [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
 
@@ -75,7 +75,7 @@ VP can send the visitor's email, name and other information which the IdP provid
 
 ## Installation and Configuration
 
-Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L23-L33) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L81-L82) to `yourdomain.com`.
+Vouch Proxy relies on the ability to share a cookie between the Vouch Proxy server and the application it's protecting. Typically this will be done by running Vouch on a subdomain such as `vouch.yourdomain.com` with apps running at `app1.yourdomain.com` and `app2.yourdomain.com`. The protected domain is `.yourdomain.com` and the Vouch Proxy cookie must be set in this domain by setting [vouch.domains](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L38-L48) to include `yourdomain.com` or sometimes by setting [vouch.cookie.domain](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L109-L114) to `yourdomain.com`.
 
 - `cp ./config/config.yml_example_$OAUTH_PROVIDER ./config/config.yml`
 - create OAuth credentials for Vouch Proxy at [google](https://console.developers.google.com/apis/credentials) or [github](https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/), etc
@@ -87,7 +87,7 @@ The following Nginx config assumes..
 - Nginx, `vouch.yourdomain.com` and `protectedapp.yourdomain.com` are running on the same server
 - both domains are served as `https` and have valid certs (if not, change to `listen 80` and set [vouch.cookie.secure](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example#L84-L85) to `false`)
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name protectedapp.yourdomain.com;
@@ -164,7 +164,7 @@ server {
 
 If Vouch is configured behind the **same** nginx reverseproxy ([perhaps so you can configure ssl](https://github.com/vouch/vouch-proxy/issues/64#issuecomment-461085139)) be sure to pass the `Host` header properly, otherwise the JWT cookie cannot be set into the domain
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name vouch.yourdomain.com;
@@ -185,7 +185,7 @@ As of `v0.33.0` Vouch Proxy can be served within an Nginx location (path) by con
 
 This avoids the need to setup a separate domain for Vouch Proxy such as `vouch.yourdomain.com`. For example VP login will be served from `https://protectedapp.yourdomain.com/vp_in_a_path/login`
 
-```{.nginxconf}
+```nginx
 server {
     listen 443 ssl http2;
     server_name protectedapp.yourdomain.com;
@@ -356,7 +356,7 @@ If you are using kubernetes with [nginx-ingress](https://github.com/kubernetes/i
       # proxy_ssl_verify on;
 ```
 
-Helm Charts are maintained by [halkeye](https://github.com/halkeye) and are available at [https://github.com/halkeye-helm-charts/vouch](https://github.com/halkeye-helm-charts/vouch) / [https://halkeye.github.io/helm-charts/](https://halkeye.github.io/helm-charts/)
+Helm Charts are maintained by [punkle](https://github.com/punkle), [martina-if](https://github.com/martina-if) and [halkeye](https://github.com/halkeye) and are available at [https://github.com/vouch/helm-charts](https://github.com/vouch/helm-charts)
 
 ## Compiling from source and running the binary
 
@@ -467,7 +467,6 @@ TLDR:
   - and follow the instructions at the end to redact your Nginx config
 - all of those go into a [gist](https://gist.github.com/)
 - then [open a new issue](https://github.com/vouch/vouch-proxy/issues/new) in this repository
-- or visit our IRC channel [#vouch](irc.libera.chat/#vouch) on libera.chat
 
 A bug report can be generated from a docker environment using the `quay.io/vouch/vouch-proxy:alpine` image...
 
@@ -475,24 +474,9 @@ A bug report can be generated from a docker environment using the `quay.io/vouch
 docker run --name vouch_proxy -v $PWD/config:/config -v $PWD/certs:/certs -it --rm --entrypoint /do.sh quay.io/vouch/vouch-proxy:alpine bug_report yourdomain.com anotherdomain.com someothersecret
 ```
 
-### Contributing to Vouch Proxy by submitting a Pull Request
+### Contributing
 
-**_I really love Vouch Proxy! I wish it did XXXX..._**
-
-That's really wonderful and contributions are greatly appreciated. However, please search through the existing issues, both open and closed, to look for any prior work or conversation. Then please make a proposal before we all spend valuable time considering and integrating a new feature.
-
-Code contributions should..
-
-- generally be discussed beforehand in a GitHub issue
-- include unit tests and in some cases end-to-end tests
-- be formatted with `go fmt`, checked with `go vet` and other common go tools
-- accomodate configuration via `config.yml` as well as `ENVIRONMENT_VARIABLEs`.
-- not break existing setups without a clear reason (usually security related)
-- include an entry at the top of CHANGELOG.md in the **Unreleased** section
-
-For larger contributions or code related to a platform that we don't currently support we will ask you to commit to supporting the feature for an agreed upon period. Invariably someone will pop up here with a question and we want to be able to support these requests.
-
-**Thank you to all of the contributors that have provided their time and effort and thought to improving VP.**
+We'd love to have you contribute! Please refer to our [contribution guidelines](https://github.com/vouch/vouch-proxy/blob/master/CONTRIBUTING.md) for details.
 
 ## Advanced Authorization Using OpenResty
 

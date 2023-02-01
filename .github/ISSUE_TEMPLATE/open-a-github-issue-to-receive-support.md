@@ -8,13 +8,14 @@ assignees: ''
 ---
 
 **First read the README**
-Specifically ***[Troubleshooting, Support and Feature Requests](https://github.com/vouch/vouch-proxy#troubleshooting-support-and-feature-requests)***.
+Specifically ***[Troubleshooting, Support and Feature Requests](https://github.com/vouch/vouch-proxy#troubleshooting-support-and-feature-requests-read-this-before-submitting-an-issue-at-github)***.
 
-And turn on `vouch.testing` before you ask for support.
+And please turn on `vouch.testing` before you ask for support.
 
-**Use a Paste Service**
-We like [hasteb.in](https://hasteb.in/), but a [gist](https://gist.github.com/) is also acceptable
-Do not post logs and configs to this issue
+
+
+** Please DO NOT post config and logs to this issue,  use a Gist**
+We prefer a [gist](https://gist.github.com/) but any reasonable paste service is fine.
 
 **Describe the problem**
 A clear and concise description of the behavior you are observing.
