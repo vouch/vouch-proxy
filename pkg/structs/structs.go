@@ -238,5 +238,6 @@ type Site struct {
 // PTokens provider tokens (from the IdP)
 type PTokens struct {
 	PAccessToken string
+	PRefreshToken string
 	PIdToken     string
 }

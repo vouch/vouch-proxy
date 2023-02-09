@@ -65,6 +65,9 @@ func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if cfg.Cfg.Headers.AccessToken != "" && claims.PAccessToken != "" {
 		w.Header().Add(cfg.Cfg.Headers.AccessToken, claims.PAccessToken)
 	}
+	if cfg.Cfg.Headers.RefreshToken != "" && claims.PRefreshToken != "" {
+		w.Header().Add(cfg.Cfg.Headers.RefreshToken, claims.PRefreshToken)
+	}
 	if cfg.Cfg.Headers.IDToken != "" && claims.PIdToken != "" {
 		w.Header().Add(cfg.Cfg.Headers.IDToken, claims.PIdToken)
 	}

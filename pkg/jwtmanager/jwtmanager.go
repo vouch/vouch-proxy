@@ -36,6 +36,7 @@ type VouchClaims struct {
 	Username     string `json:"username"`
 	CustomClaims map[string]interface{}
 	PAccessToken string
+	PRefreshToken string
 	PIdToken     string
 	jwt.StandardClaims
 }
@@ -82,6 +83,7 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 		u.Username,
 		customClaims.Claims,
 		ptokens.PAccessToken,
+		ptokens.PRefreshToken,
 		ptokens.PIdToken,
 		StandardClaims,
 	}
@@ -92,6 +94,10 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 	// https://github.com/vouch/vouch-proxy/issues/287
 	if cfg.Cfg.Headers.AccessToken == "" {
 		claims.PAccessToken = ""
+	}
+
+	if cfg.Cfg.Headers.RefreshToken == "" {
+		claims.PRefreshToken = ""
 	}
 
 	if cfg.Cfg.Headers.IDToken == "" {
