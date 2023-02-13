@@ -60,25 +60,24 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	var f interface{}
 	err = json.Unmarshal(data, &f)
 	if err != nil {
-		log.Error("Error unmarshaling claims")
+		log.Error(err)
 		return err
 	}
 	if cfg.Cfg.TeamWhiteListClaim != "" {
-		log.Infof("TeamWhiteListClaim is %+v", cfg.Cfg.TeamWhiteListClaim)
 		m := f.(map[string]interface{})
 		for k := range m {
-			log.Infof("checking claim %s", k)
 			if k == cfg.Cfg.TeamWhiteListClaim {
-				/*for _, membership := range m[k].([]interface{}) {
-					user.TeamMemberships = append(user.TeamMemberships, membership.(string))
-				}*/
-				log.Infof("claim values of %+v is %+v, converted to %+v", k, m[k], m[k].(string))
-				user.TeamMemberships = append(user.TeamMemberships, m[k].(string))
+				claimval, ok := m[k].(string)
+				if !ok {
+					log.Error("TeamWhiteList claim sent in openID user body cannot be casted as string")
+					// continue auth with existing teammemberships for user
+				}
+
+				user.TeamMemberships = append(user.TeamMemberships, claimval)
 				break
 			}
 		}
-		log.Infof("teammemberships : %+v", user.TeamMemberships)
-		log.Debug("memberof attr checked")
+		log.Infof("team memberships present in user: %+v", user.TeamMemberships)
 	}
 	user.PrepareUserData()
 	return nil

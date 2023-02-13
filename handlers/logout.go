@@ -39,7 +39,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	var token = ""
 	if claims != nil {
 		token = claims.PIdToken
-		log.Debugf("id token : %+v", token)
 	}
 	cookie.ClearCookie(w, r)
 	log.Debug("/logout deleting session")
@@ -84,7 +83,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 			q.Add("post_logout_redirect_uri", redirectURL)
 		}
 		if token != "" {
-			log.Debug("adding id token")
 			// Optional in spec, required by some providers (Okta, for example)
 			q.Add("id_token_hint", token)
 		}

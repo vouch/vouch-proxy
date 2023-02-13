@@ -149,10 +149,9 @@ func verifyUser(u interface{}) (bool, error) {
 			}
 		}
 		log.Info("User not in userwhitelist, checking in teamWhiteList")
-		// TeamWhiteList
+		// TeamWhiteList - first match between user.teammembership and teamwhitelist in config authenticates the user
 		if len(cfg.Cfg.TeamWhiteList) != 0 {
 			for _, team := range user.TeamMemberships {
-				log.Infof("teammembership %+v", team)
 				for _, wl := range cfg.Cfg.TeamWhiteList {
 					if team == wl {
 						log.Debugf("verifyUser: Success! found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
