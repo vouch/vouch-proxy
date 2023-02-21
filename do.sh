@@ -13,7 +13,7 @@ fi
 
 IMAGE=quay.io/vouch/vouch-proxy:latest
 ALPINE=quay.io/vouch/vouch-proxy:alpine-latest
-GOIMAGE=golang:1.16
+GOIMAGE=golang:1.18
 NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
@@ -25,28 +25,24 @@ run () {
 build () {
   local VERSION=$(git describe --always --long)
   local DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # ISO-8601
-  local FQDN=$(_hostname)
+  local UQDN=$(_hostname)
   local SEMVER=$(git tag --list --sort="v:refname" | tail -n -1)
   local BRANCH=$(git rev-parse --abbrev-ref HEAD)
   local UNAME=$(uname)
-  go build -v -ldflags=" -X main.version=${VERSION} -X main.uname=${UNAME} -X main.builddt=${DT} -X main.host=${FQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
+  go build -v -ldflags=" -X main.version=${VERSION} -X main.uname=${UNAME} -X main.builddt=${DT} -X main.host=${UQDN} -X main.semver=${SEMVER} -X main.branch=${BRANCH}" .
 }
 
 _hostname() {
   local FQDN
-  local HOSTNAME_CMD
+  local UQDN
+  FQDN=$(hostname)
+  UQDN=${FQDN/.*/}
 
-  case $(uname) in
-    FreeBSD) HOSTNAME_CMD="hostname";;
-          *) HOSTNAME_CMD="hostname --fqdn"
-  esac
-
-  FQDN=$($HOSTNAME_CMD)
-  if [ -z "$FQDN" ]; then
-    >&2 echo "error: Could determine the fully qualified domain name using command $HOSTNAME_CMD"
+  if [ -z "$UQDN" ]; then
+    >&2 echo "error: Could determine the fully qualified domain name."
     return 1
   fi
-  echo $FQDN 
+  echo "$UQDN"
   return 0;
 }
 
@@ -62,7 +58,7 @@ dbuild () {
   docker build -f Dockerfile -t $IMAGE .
 }
 
-dbuildalpine () {  
+dbuildalpine () {
   docker build -f Dockerfile.alpine -t $ALPINE .
 }
 
@@ -83,10 +79,10 @@ drun () {
   fi
 
 
-  CMD="docker run --rm -i -t 
-    -p ${HTTPPORT}:${HTTPPORT} 
-    --name $NAME 
-    -v ${SDIR}/config:/config 
+  CMD="docker run --rm -i -t
+    -p ${HTTPPORT}:${HTTPPORT}
+    --name $NAME
+    -v ${SDIR}/config:/config
     $WITHCERTS
     $IMAGE $* "
 
@@ -126,7 +122,7 @@ bug_report() {
   CONFIG=config/config.yml
   REDACT=$*
 
-  if [ -z "$REDACT" ]; then 
+  if [ -z "$REDACT" ]; then
     cat <<EOF
 
     bug_report cleans the ${CONFIG} and the Vouch Proxy logs of secrets and any additional strings (usually domains and email addresses)
@@ -138,7 +134,7 @@ bug_report() {
 EOF
     exit 1;
   fi
-  echo -e "#\n# If sensitive information is still visible in the output, first try appending the string.." 
+  echo -e "#\n# If sensitive information is still visible in the output, first try appending the string.."
   echo -e "#\n#    '$0 bug_report badstring1 badstring2'\n#\n"
   echo -e "#\n# Please consider submitting a PR for the './do.sh _redact' routine if you feel that it should be improved.\n#"
   echo -e "\n-------------------------\n\n#\n# redacted Vouch Proxy ${CONFIG}\n# $(date -I)\n#\n"
@@ -244,7 +240,7 @@ test_logging() {
     let "levelcount+=1"
   done
   echo "passed"
-  
+
   echo "testing loglevel set from config file"
   levelcount=0
   for ll in ${levels[*]}; do
@@ -328,8 +324,8 @@ _print_license() {
 /*
 
 Copyright $YEAR The Vouch Proxy Authors.
-Use of this source code is governed by The MIT License (MIT) that 
-can be found in the LICENSE file. Software distributed under The 
+Use of this source code is governed by The MIT License (MIT) that
+can be found in the LICENSE file. Software distributed under The
 MIT License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -369,7 +365,7 @@ selfcert() {
   # openssl genrsa -out $SDIR/certs/server.key 2048
   openssl ecparam -genkey -name secp384r1 -out $SDIR/certs/server.key
   openssl req -new -x509 -sha256 -key $SDIR/certs/server.key -out $SDIR/certs/server.crt -days 3650
-  echo -e "created self signed certs in '$SDIR/certs'\n"  
+  echo -e "created self signed certs in '$SDIR/certs'\n"
 }
 
 usage() {
