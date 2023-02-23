@@ -66,8 +66,10 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	return nil
 }
 
-// If any TeamWhiteListClaim is mentioned in the config file, userinfo body is checked for the claim and the
-// claim values are appended to user teammemberships. Later, this user data is used for teamwhitelist check in auth.
+// appendTeamMembershipsFromCustomClaim appends teammembership values in user If
+// any TeamWhiteListClaim is mentioned in the config file, userinfo body is
+// checked for the claim and the claim values are appended to user
+// teammemberships. Later, this user data is used for teamwhitelist check in auth.
 func appendTeamMembershipsFromCustomClaim(data []byte, user *structs.User) error {
 	var f interface{}
 	err := json.Unmarshal(data, &f)
