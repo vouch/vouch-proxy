@@ -82,7 +82,7 @@ func appendTeamMembershipsFromCustomClaim(data []byte, user *structs.User) error
 				claimval, ok := m[k].(string)
 				if !ok {
 					log.Error("TeamWhiteList claim sent in openID user body cannot be casted as string")
-					// continue auth with existing teammemberships for user
+					continue // continue auth with existing teammemberships for user
 				}
 
 				user.TeamMemberships = append(user.TeamMemberships, claimval)

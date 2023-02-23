@@ -42,7 +42,7 @@ func TestGetUserInfo(t *testing.T) {
 	data = []byte(userinfobody)
 	err = appendTeamMembershipsFromCustomClaim(data, &user)
 	assert.ElementsMatchf(t, err, nil, "Expected error to be nil")
-	assert.ElementsMatchf(t, user.TeamMemberships, []string{""}, "Expected team memberships to be empty due to casting error")
+	assert.ElementsMatchf(t, user.TeamMemberships, nil, "Expected team memberships to be empty due to casting error")
 
 }
 
