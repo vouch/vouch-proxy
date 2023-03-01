@@ -43,21 +43,22 @@ import (
 // though most of the time envconfig will use the struct key's name: VOUCH_PORT VOUCH_JWT_MAXAGE
 // default values should be set in .defaults.yml
 type Config struct {
-	LogLevel      string   `mapstructure:"logLevel"`
-	Listen        string   `mapstructure:"listen"`
-	Port          int      `mapstructure:"port"`
-	SocketMode    int      `mapstructure:"socket_mode"`
-	SocketGroup   string   `mapstructure:"socket_group"`
-	DocumentRoot  string   `mapstructure:"document_root" envconfig:"document_root"`
-	WriteTimeout  int      `mapstructure:"writeTimeout"`
-	ReadTimeout   int      `mapstructure:"readTimeout"`
-	IdleTimeout   int      `mapstructure:"idleTimeout"`
-	Domains       []string `mapstructure:"domains"`
-	WhiteList     []string `mapstructure:"whitelist"`
-	TeamWhiteList []string `mapstructure:"teamWhitelist"`
-	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
-	PublicAccess  bool     `mapstructure:"publicAccess"`
-	TLS           struct {
+	LogLevel           string   `mapstructure:"logLevel"`
+	Listen             string   `mapstructure:"listen"`
+	Port               int      `mapstructure:"port"`
+	SocketMode         int      `mapstructure:"socket_mode"`
+	SocketGroup        string   `mapstructure:"socket_group"`
+	DocumentRoot       string   `mapstructure:"document_root" envconfig:"document_root"`
+	WriteTimeout       int      `mapstructure:"writeTimeout"`
+	ReadTimeout        int      `mapstructure:"readTimeout"`
+	IdleTimeout        int      `mapstructure:"idleTimeout"`
+	Domains            []string `mapstructure:"domains"`
+	WhiteList          []string `mapstructure:"whitelist"`
+	TeamWhiteList      []string `mapstructure:"teamWhitelist"`
+	TeamWhiteListClaim string   `mapstructure:"teamWhitelistclaim"` // claim in UserInfo body that is used for TeamWhitelisting. If the value for TeamWhiteListClaim matches TeamWhiteList, auth is successful.
+	AllowAllUsers      bool     `mapstructure:"allowAllUsers"`
+	PublicAccess       bool     `mapstructure:"publicAccess"`
+	TLS                struct {
 		Cert    string `mapstructure:"cert"`
 		Key     string `mapstructure:"key"`
 		Profile string `mapstructure:"profile"`

@@ -12,14 +12,13 @@ package openid
 
 import (
 	"encoding/json"
-	"golang.org/x/oauth2"
-	"io/ioutil"
-	"net/http"
-
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+	"io/ioutil"
+	"net/http"
 )
 
 // Provider provider specific functions
@@ -39,6 +38,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		return err
 	}
 	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
+
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,41 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		log.Error(err)
 		return err
 	}
+	if err = appendTeamMembershipsFromCustomClaim(data, user); err != nil {
+		log.Error(err)
+		return err
+	}
+
 	user.PrepareUserData()
+	return nil
+}
+
+// appendTeamMembershipsFromCustomClaim appends teammembership values in user. If
+// any TeamWhiteListClaim is mentioned in the config file, userinfo body is
+// checked for the claim and the claim values are appended to user
+// teammemberships. Later, this user data is used for teamwhitelist check in auth.
+func appendTeamMembershipsFromCustomClaim(data []byte, user *structs.User) error {
+	var f interface{}
+	err := json.Unmarshal(data, &f)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if cfg.Cfg.TeamWhiteListClaim != "" {
+		m := f.(map[string]interface{})
+		for k := range m {
+			if k == cfg.Cfg.TeamWhiteListClaim {
+				claimval, ok := m[k].(string)
+				if !ok {
+					log.Error("TeamWhiteList claim sent in openID user body cannot be casted as string")
+					continue // continue auth with existing teammemberships for user
+				}
+
+				user.TeamMemberships = append(user.TeamMemberships, claimval)
+				break
+			}
+		}
+		log.Debugf("team memberships present in user: %+v", user.TeamMemberships)
+	}
 	return nil
 }

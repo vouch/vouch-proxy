@@ -139,26 +139,29 @@ func verifyUser(u interface{}) (bool, error) {
 		return true, nil
 
 	// WhiteList
-	case len(cfg.Cfg.WhiteList) != 0:
-		for _, wl := range cfg.Cfg.WhiteList {
-			if user.Username == wl {
-				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
-				return true, nil
-			}
-		}
-		return false, fmt.Errorf("verifyUser: user.Username not found in WhiteList: %s", user.Username)
-
-	// TeamWhiteList
-	case len(cfg.Cfg.TeamWhiteList) != 0:
-		for _, team := range user.TeamMemberships {
-			for _, wl := range cfg.Cfg.TeamWhiteList {
-				if team == wl {
-					log.Debugf("verifyUser: Success! found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
+	case len(cfg.Cfg.WhiteList) != 0 || len(cfg.Cfg.TeamWhiteList) != 0:
+		if len(cfg.Cfg.WhiteList) != 0 {
+			for _, wl := range cfg.Cfg.WhiteList {
+				if user.Username == wl {
+					log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
 					return true, nil
 				}
 			}
 		}
-		return false, fmt.Errorf("verifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+		log.Debug("User not in userwhitelist, checking in teamWhiteList")
+		// TeamWhiteList - first match between user.teammembership and teamwhitelist in config authenticates the user
+		if len(cfg.Cfg.TeamWhiteList) != 0 {
+			for _, team := range user.TeamMemberships {
+				for _, wl := range cfg.Cfg.TeamWhiteList {
+					if team == wl {
+						log.Debugf("verifyUser: Success! found user.TeamWhiteList in TeamWhiteList: %s for user %s", wl, user.Username)
+						return true, nil
+					}
+				}
+			}
+			log.Warnf("verifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+		}
+		return false, fmt.Errorf("verifyUser: user.Username not found in WhiteList or TeamWhiteList: %s", user.Username)
 
 	// Domains
 	case len(cfg.Cfg.Domains) != 0:
