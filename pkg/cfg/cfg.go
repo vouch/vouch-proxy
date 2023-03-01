@@ -55,7 +55,7 @@ type Config struct {
 	Domains            []string `mapstructure:"domains"`
 	WhiteList          []string `mapstructure:"whitelist"`
 	TeamWhiteList      []string `mapstructure:"teamWhitelist"`
-	TeamWhiteListClaim string   `mapstructure:"teamWhitelistclaim"`
+	TeamWhiteListClaim string   `mapstructure:"teamWhitelistclaim"` // claim in UserInfo body that is used for TeamWhitelisting. If the value for TeamWhiteListClaim matches TeamWhiteList, auth is successful.
 	AllowAllUsers      bool     `mapstructure:"allowAllUsers"`
 	PublicAccess       bool     `mapstructure:"publicAccess"`
 	TLS                struct {

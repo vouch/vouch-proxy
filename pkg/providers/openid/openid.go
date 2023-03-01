@@ -91,7 +91,7 @@ func appendTeamMembershipsFromCustomClaim(data []byte, user *structs.User) error
 				break
 			}
 		}
-		log.Infof("team memberships present in user: %+v", user.TeamMemberships)
+		log.Debugf("team memberships present in user: %+v", user.TeamMemberships)
 	}
 	return nil
 }
