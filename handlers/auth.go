@@ -159,7 +159,7 @@ func verifyUser(u interface{}) (bool, error) {
 					}
 				}
 			}
-			return false, fmt.Errorf("verifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
+			log.Warnf("verifyUser: user.TeamMemberships %s not found in TeamWhiteList: %s for user %s", user.TeamMemberships, cfg.Cfg.TeamWhiteList, user.Username)
 		}
 		return false, fmt.Errorf("verifyUser: user.Username not found in WhiteList or TeamWhiteList: %s", user.Username)
 
@@ -173,7 +173,7 @@ func verifyUser(u interface{}) (bool, error) {
 
 	// nothing configured, allow everyone through
 	default:
-		log.Info("verifyUser: no domains, whitelist, teamWhitelist or AllowAllUsers configured, any successful auth to the IdP authorizes access")
+		log.Warn("verifyUser: no domains, whitelist, teamWhitelist or AllowAllUsers configured, any successful auth to the IdP authorizes access")
 		return true, nil
 	}
 }
