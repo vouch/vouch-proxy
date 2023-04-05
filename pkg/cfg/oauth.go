@@ -44,6 +44,7 @@ var (
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
 		Alibaba:       "alibaba",
+		Discord:       "discord",
 	}
 )
 
@@ -59,6 +60,7 @@ type OAuthProviders struct {
 	OpenStax      string
 	Nextcloud     string
 	Alibaba       string
+	Discord       string
 }
 
 // oauth config items endoint for access
@@ -122,7 +124,8 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud &&
-		GenOAuth.Provider != Providers.Alibaba {
+		GenOAuth.Provider != Providers.Alibaba &&
+		GenOAuth.Provider != Providers.Discord {
 		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks
@@ -187,6 +190,9 @@ func setProviderDefaults() {
 		configureOAuthClient()
 	} else if GenOAuth.Provider == Providers.IndieAuth {
 		GenOAuth.CodeChallengeMethod = "S256"
+		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.Discord {
+		setDefaultsDiscord()
 		configureOAuthClient()
 	} else {
 		// OIDC, OpenStax, Nextcloud
@@ -266,6 +272,25 @@ func setDefaultsGitHub() {
 		if len(Cfg.TeamWhiteList) > 0 {
 			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
 		}
+	}
+	GenOAuth.CodeChallengeMethod = "S256"
+}
+
+func setDefaultsDiscord() {
+	// log.Info("configuring GitHub OAuth")
+	if GenOAuth.AuthURL == "" {
+		GenOAuth.AuthURL = "https://discord.com/oauth2/authorize"
+	}
+	if GenOAuth.TokenURL == "" {
+		GenOAuth.TokenURL = "https://discord.com/api/oauth2/token"
+	}
+	if GenOAuth.UserInfoURL == "" {
+		GenOAuth.UserInfoURL = "https://discord.com/api/users/@me"
+	}
+	if len(GenOAuth.Scopes) == 0 {
+		//Required for UserInfo URL
+		//https://discord.com/developers/docs/resources/user#get-current-user
+		GenOAuth.Scopes = []string{"identify"}
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }

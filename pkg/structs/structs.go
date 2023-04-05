@@ -10,7 +10,10 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
@@ -148,7 +151,7 @@ type Contact struct {
 	Verified bool   `json:"is_verified"`
 }
 
-//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+// OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
 type OpenStaxUser struct {
 	User
 	Contacts []Contact `json:"contact_infos"`
@@ -239,4 +242,20 @@ type Site struct {
 type PTokens struct {
 	PAccessToken string
 	PIdToken     string
+}
+
+// DiscordUser deserializes values from the Discord User Object: https://discord.com/developers/docs/resources/user#user-object-user-structure
+type DiscordUser struct {
+	Id               string `json:"id"`
+	Username         string `json:"username"`
+	Discriminator    string `json:"discriminator"`
+	PreparedUsername string
+	Email            string `json:"email"`
+	Verified         bool   `json:"verified"`
+}
+
+// PrepareUserData copies the Username and Discriminator in the format that Discord guarantees to be unique
+// https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
+func (u *DiscordUser) PrepareUserData() {
+	u.PreparedUsername = fmt.Sprintf("%s#%s", u.Username, u.Discriminator)
 }
