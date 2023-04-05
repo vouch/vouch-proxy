@@ -290,7 +290,7 @@ func setDefaultsDiscord() {
 	if len(GenOAuth.Scopes) == 0 {
 		//Required for UserInfo URL
 		//https://discord.com/developers/docs/resources/user#get-current-user
-		GenOAuth.Scopes = []string{"identify"}
+		GenOAuth.Scopes = []string{"identify", "email"}
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }
