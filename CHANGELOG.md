@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+* Implement a Discord provider that uses `Username` as the username to match against in the `whiteList` config
+  * Or uses `Username#Discriminator` if the Discriminator is present
+  * Or uses ID if `discord_use_ids` is set
+
 ## v0.40.0
 
 - upgrade golang to `v1.22` from `v1.18`
