@@ -124,14 +124,13 @@ func cancelClearSetError(w http.ResponseWriter, r *http.Request, e error) {
 	log.Warn(e)
 	cookie.ClearCookie(w, r)
 	w.Header().Set(cfg.Cfg.Headers.Error, e.Error())
-	addErrandCancelRequest(r)
+	addErrAndCancelRequest(r)
 }
 
 // cfg.ErrCtx is tested by `jwtmanager.JWTCacheHandler`
-func addErrandCancelRequest(r *http.Request) {
+func addErrAndCancelRequest(r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	ctx = context.WithValue(ctx, cfg.ErrCtxKey, true)
 	*r = *r.Clone(ctx)
 	cancel() // we're done
-	return
 }
