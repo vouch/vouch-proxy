@@ -5,9 +5,9 @@
 vouch:
   domains:
     - yourdomain.com
-  # whiteList is a list of username#discriminator that will allow a login if allowAllUsers is false
+  # whiteList is a list of user ids that will allow a login if allowAllUsers is false
   whiteList:
-    - loganintech#0001
+    - 12341234123412345
 
   cookie:
     # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com)

@@ -12,7 +12,7 @@ package discord
 
 import (
 	"encoding/json"
-	"io"
+	"io/ioutil"
 	"net/http"
 
 	"golang.org/x/oauth2"
