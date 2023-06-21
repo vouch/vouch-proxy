@@ -7,7 +7,7 @@ services:
   - docker
 
 go:
-  - "1.18"
+  - "1.20"
 
 env:
   - ISTRAVIS=true
