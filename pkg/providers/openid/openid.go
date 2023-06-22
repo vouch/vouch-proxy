@@ -12,9 +12,10 @@ package openid
 
 import (
 	"encoding/json"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
+
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
@@ -25,16 +26,22 @@ import (
 // Provider provider specific functions
 type Provider struct{}
 
-var log *zap.SugaredLogger
+var (
+	log                    *zap.SugaredLogger
+	prepareTokensAndClient = common.PrepareTokensAndClient
+)
 
 // Configure see main.go configure()
 func (Provider) Configure() {
 	log = cfg.Logging.Logger
+	if prepareTokensAndClient == nil {
+		prepareTokensAndClient = common.PrepareTokensAndClient
+	}
 }
 
 // GetUserInfo provider specific call to get userinfomation
 func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
-	client, _, err := common.PrepareTokensAndClient(r, ptokens, true, opts...)
+	client, _, err := prepareTokensAndClient(r, ptokens, true, opts...)
 	if err != nil {
 		return err
 	}
@@ -57,6 +64,35 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		log.Error(err)
 		return err
 	}
+
+	if cfg.GenOAuth.UserTeamURL != "" {
+		log.Infof("OpenID teams URL: %s", cfg.GenOAuth.UserTeamURL)
+		teams, err := client.Get(cfg.GenOAuth.UserTeamURL)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := teams.Body.Close(); err != nil {
+				rerr = err
+			}
+		}()
+		teamsdata, _ := ioutil.ReadAll(teams.Body)
+		log.Infof("OpenID teams body (%v): %v", teams.StatusCode, string(teamsdata))
+
+		teamMemberships := &structs.GenericTeamMembershipList{}
+		if err := json.Unmarshal(teamsdata, teamMemberships); err != nil {
+			return err
+		}
+		for _, m := range *teamMemberships {
+			// filter to requested/whitelisted memberships only
+			for _, wl := range cfg.Cfg.TeamWhiteList {
+				if wl == m.ID {
+					user.TeamMemberships = append(user.TeamMemberships, m.ID)
+				}
+			}
+		}
+	}
+
 	user.PrepareUserData()
 	return nil
 }

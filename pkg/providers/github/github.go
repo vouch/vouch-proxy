@@ -26,7 +26,7 @@ import (
 
 // Provider provider specific functions
 type Provider struct {
-	PrepareTokensAndClient func(r *http.Request, ptokens *structs.PTokens, setProviderToken bool, opts ...oauth2.AuthCodeOption) (*http.Client, *oauth2.Token, error)
+	PrepareTokensAndClient common.PrepareTokensAndClientT
 }
 
 var log *zap.SugaredLogger

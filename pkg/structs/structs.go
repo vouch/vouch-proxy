@@ -111,6 +111,12 @@ func (u *ADFSUser) PrepareUserData() {
 	u.Username = u.UPN
 }
 
+type GenericTeamMembershipList []GenericTeamMembership
+
+type GenericTeamMembership struct {
+	ID string `json:"id"`
+}
+
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
@@ -148,7 +154,7 @@ type Contact struct {
 	Verified bool   `json:"is_verified"`
 }
 
-//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+// OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
 type OpenStaxUser struct {
 	User
 	Contacts []Contact `json:"contact_infos"`
