@@ -258,9 +258,8 @@ type DiscordUser struct {
 // PrepareUserData copies the Username and Discriminator in the format that Discord guarantees to be unique
 // https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
 func (u *DiscordUser) PrepareUserData() {
+	u.PreparedUsername = u.Username
 	if u.Discriminator != "0" {
 		u.PreparedUsername = fmt.Sprintf("%s#%s", u.Username, u.Discriminator)
-		return
 	}
-	u.PreparedUsername = u.GlobalName
 }
