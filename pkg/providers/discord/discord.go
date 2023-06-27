@@ -12,7 +12,7 @@ package discord
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -48,7 +48,10 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 			rerr = err
 		}
 	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
+	data, err := io.ReadAll(userinfo.Body)
+	if err != nil {
+		return err
+	}
 	log.Infof("Discord userinfo body: %s", string(data))
 	if err = common.MapClaims(data, customClaims); err != nil {
 		log.Error(err)
