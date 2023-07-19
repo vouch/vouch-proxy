@@ -50,7 +50,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [Running from Docker](#running-from-docker)
 - [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
 - [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
-- [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
+- [/login and /logout endpoint redirection](#login-and-logout-endpoint-redirection)
 - [Troubleshooting, Support and Feature Requests](#troubleshooting-support-and-feature-requests-read-this-before-submitting-an-issue-at-github)
   (Read this before submitting an issue at GitHub)
   - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#im-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp-googleoktagithub)
