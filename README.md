@@ -54,7 +54,7 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [Troubleshooting, Support and Feature Requests](#troubleshooting-support-and-feature-requests-read-this-before-submitting-an-issue-at-github)
   (Read this before submitting an issue at GitHub)
   - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#im-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp-googleoktagithub)
-  - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
+  - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay-i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-its-still-not-working)
   - [Contributing to Vouch Proxy](#contributing)
 - [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
 - [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
