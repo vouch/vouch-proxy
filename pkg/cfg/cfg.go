@@ -180,7 +180,7 @@ type ctxKey int
 //
 // so we process these in backwards order (defaults then config file)
 func Configure() {
-	logger.Info("Copyright 2020-2022 the " + Branding.FullName + " Authors")
+	logger.Info("Copyright 2020-2023 the " + Branding.FullName + " Authors")
 	logger.Warn(Branding.FullName + " is free software with ABSOLUTELY NO WARRANTY.")
 
 	Logging.configureFromCmdline()
