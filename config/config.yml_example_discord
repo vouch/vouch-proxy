@@ -1,13 +1,15 @@
 
 # Vouch Proxy configuration
-# bare minimum to get Vouch Proxy running with OpenID Connect (such as okta)
+# bare minimum to get Vouch Proxy running with Discord as an OpenID Provider
 
 vouch:
   domains:
     - yourdomain.com
-  # whiteList is a list of user ids that will allow a login if allowAllUsers is false
+  # whiteList is a list of usernames that will allow a login if allowAllUsers is false
   whiteList:
-    - 12341234123412345
+    - loganintech
+    # If the user still hasn't chosen a new username, the old username#discrimnator format will work
+    - LoganInTech#1203
 
   cookie:
     # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com)

@@ -255,8 +255,10 @@ type DiscordUser struct {
 	PreparedUsername string
 }
 
-// PrepareUserData copies the Username and Discriminator in the format that Discord guarantees to be unique
-// https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
+// PrepareUserData copies the Username to PreparedUsername. If the Discriminator is present that is
+// appended to the Username in the format "Username#Discriminator" to match the old format of Discord usernames
+// Previous format which is being phased out: https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
+// Details about the new username requirements: https://support.discord.com/hc/en-us/articles/12620128861463
 func (u *DiscordUser) PrepareUserData() {
 	u.PreparedUsername = u.Username
 	if u.Discriminator != "0" {
