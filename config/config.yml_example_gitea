@@ -20,10 +20,10 @@ oauth:
   # replace "gitea.yourdomain.com" with the domain your Gitea instance runs on
   # create a new OAuth application at:
   # https://gitea.yourdomain.com/user/settings/applications
-  provider: github
+  provider: oidc
   client_id: xxxxxxxxxxxxxxxxxxxx
   client_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   auth_url: https://gitea.yourdomain.com/login/oauth/authorize
   token_url: https://gitea.yourdomain.com/login/oauth/access_token
-  user_info_url: https://gitea.yourdomain.com/api/v1/user?token=
+  user_info_url: https://gitea.yourdomain.com/login/oauth/userinfo
   callback_url: https://yourdomain.com/auth
