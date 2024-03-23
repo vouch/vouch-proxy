@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.40.0
+
+- upgrade golang to `v1.22` from `v1.18`
+
 ## v0.39.0
 
 - [add support for listening on unix domain sockets](https://github.com/vouch/vouch-proxy/pull/488)
