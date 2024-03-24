@@ -25,9 +25,7 @@ import (
 )
 
 // Provider provider specific functions
-type Provider struct {
-	UseSecureIDs bool
-}
+type Provider struct{}
 
 var log *zap.SugaredLogger
 
