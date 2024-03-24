@@ -13,6 +13,8 @@ package structs
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
 
 // CustomClaims Temporary struct storing custom claims until JWT creation.
@@ -246,20 +248,28 @@ type PTokens struct {
 
 // DiscordUser deserializes values from the Discord User Object: https://discord.com/developers/docs/resources/user#user-object-user-structure
 type DiscordUser struct {
-	Id               string `json:"id"`
-	Username         string `json:"username"`
-	Discriminator    string `json:"discriminator"`
-	GlobalName       string `json:"global_name"`
-	Email            string `json:"email"`
-	Verified         bool   `json:"verified"`
+	Id            string `json:"id"`
+	Username      string `json:"username"`
+	Discriminator string `json:"discriminator"`
+	GlobalName    string `json:"global_name"`
+	Email         string `json:"email"`
+	Verified      bool   `json:"verified"`
+
 	PreparedUsername string
 }
 
-// PrepareUserData copies the Username to PreparedUsername. If the Discriminator is present that is
-// appended to the Username in the format "Username#Discriminator" to match the old format of Discord usernames
+// PrepareUserData copies the Username to PreparedUsername.
+// If the provider is configured to use IDs, the ID is copied to PreparedUsername.
+// If the Discriminator is present that is appended to the Username in the format "Username#Discriminator"
+// to match the old format of Discord usernames
 // Previous format which is being phased out: https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
 // Details about the new username requirements: https://support.discord.com/hc/en-us/articles/12620128861463
 func (u *DiscordUser) PrepareUserData() {
+	if cfg.GenOAuth.DiscordUseIDs {
+		u.PreparedUsername = u.Id
+		return
+	}
+
 	u.PreparedUsername = u.Username
 	if u.Discriminator != "0" {
 		u.PreparedUsername = fmt.Sprintf("%s#%s", u.Username, u.Discriminator)

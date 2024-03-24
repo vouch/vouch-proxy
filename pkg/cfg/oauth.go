@@ -85,6 +85,7 @@ type oauthConfig struct {
 	PreferredDomain     string              `mapstructure:"preferredDomain"`
 	AzureToken          string              `mapstructure:"azure_token" envconfig:"azure_token"`
 	CodeChallengeMethod string              `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+	DiscordUseIDs       bool                `mapstructure:"discord_use_ids" envconfig:"discord_use_ids"`
 }
 
 type oauthClaimsConfig struct {
@@ -322,7 +323,10 @@ func checkCallbackConfig(url string) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within a configured domains where the cookie will be set: either `vouch.domains` %s or `vouch.cookie.domain` %s", url, Cfg.Domains, Cfg.Cookie.Domain)
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within a configured domains where the cookie will be set: either `vouch.domains` %s or `vouch.cookie.domain` %s",
+			url,
+			Cfg.Domains,
+			Cfg.Cookie.Domain)
 	}
 
 	return nil
