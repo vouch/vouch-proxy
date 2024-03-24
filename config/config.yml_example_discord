@@ -14,7 +14,7 @@ vouch:
     - LoganInTech#1203
 
     # If discord_use_ids is set to true, you must use the user's ID
-    - 81255545020878848
+    - 12345678901234567
 
   cookie:
     # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com)
