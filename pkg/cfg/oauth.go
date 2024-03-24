@@ -85,7 +85,9 @@ type oauthConfig struct {
 	PreferredDomain     string              `mapstructure:"preferredDomain"`
 	AzureToken          string              `mapstructure:"azure_token" envconfig:"azure_token"`
 	CodeChallengeMethod string              `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
-	DiscordUseIDs       bool                `mapstructure:"discord_use_ids" envconfig:"discord_use_ids"`
+	// DiscordUseIDs defaults to false, maintaining the more common username checking behavior
+	// If set to true, match the Discord user's ID instead of their username
+	DiscordUseIDs bool `mapstructure:"discord_use_ids" envconfig:"discord_use_ids"`
 }
 
 type oauthClaimsConfig struct {
