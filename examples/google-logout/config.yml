@@ -1,0 +1,30 @@
+vouch:
+  domains:
+  - xxxxxxxxxxxxxxxxxxxxxxxx.xxx
+
+  headers:
+    # We need this token to pass along to our logout server.
+    # This unfortunately makes our Vouch cookie big, but we need it.
+    accesstoken: X-Vouch-IdP-AccessToken
+
+    claims:
+      - sub
+
+  cookie:
+    secure: true
+
+  post_logout_redirect_uris:
+    - "https://xxx.xxxxxxxxxxxx.xxx/"
+
+oauth:
+  provider: google
+  client_id: xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+  client_secret: xxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxxxxxx
+  callback_urls:
+    - https://vouch.xxxxxxxxxxxxxxxxxxxxx.xxx/auth
+  preferredDomain: xxxxxxxxxxxxxxxxxxxxxxxx.xxx 
+
+  scopes:
+    - openid
+    - profile
+    - email
