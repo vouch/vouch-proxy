@@ -33,6 +33,7 @@ const comma = ","
 
 // VouchClaims jwt Claims specific to vouch
 type VouchClaims struct {
+	Sub          string `json:"sub"`
 	Username     string `json:"username"`
 	CustomClaims map[string]interface{}
 	PAccessToken string
@@ -79,6 +80,7 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 	// User`token`
 	// u.PrepareUserData()
 	claims := VouchClaims{
+		u.Sub,
 		u.Username,
 		customClaims.Claims,
 		ptokens.PAccessToken,

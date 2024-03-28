@@ -24,6 +24,7 @@ import (
 
 var (
 	u1 = structs.User{
+		Sub:      "testsub",
 		Username: "test@testing.com",
 		Name:     "Test Name",
 	}
@@ -49,6 +50,7 @@ func init() {
 	Configure()
 
 	lc = VouchClaims{
+		u1.Sub,
 		u1.Username,
 		customClaims.Claims,
 		t1.PAccessToken,
