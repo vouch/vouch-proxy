@@ -36,6 +36,7 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProvid
 		return nil, nil, err
 	}
 	ptokens.PAccessToken = providerToken.AccessToken
+	ptokens.PRefreshToken = providerToken.RefreshToken
 
 	if setProviderToken {
 		if providerToken.Extra("id_token") != nil {
