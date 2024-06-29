@@ -11,7 +11,9 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package homeassistant
 
 import (
+	"encoding/json"
 	"golang.org/x/oauth2"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -33,12 +35,27 @@ func (Provider) Configure() {
 // GetUserInfo provider specific call to get userinfomation
 // More info: https://developers.home-assistant.io/docs/en/auth_api.html
 func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
-	_, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false, opts...)
+	client, providerToken, err := common.PrepareTokensAndClient(r, ptokens, false, opts...)
 	if err != nil {
 		return err
 	}
 	ptokens.PAccessToken = providerToken.Extra("access_token").(string)
-	// Home assistant does not provide an API to query username, so we statically set it to "homeassistant"
-	user.Username = "homeassistant"
+	userinfo, err := client.Get(cfg.GenOAuth.UserInfoURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := userinfo.Body.Close(); err != nil {
+			rerr = err
+		}
+	}()
+	data, _ := ioutil.ReadAll(userinfo.Body)
+	log.Infof("HA userinfo body: %s", string(data))
+	haUser := structs.User{}
+	if err = json.Unmarshal(data, &haUser); err != nil {
+		log.Error(err)
+		return err
+	}
+	user.Username = haUser.Username
 	return nil
 }
