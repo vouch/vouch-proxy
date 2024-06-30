@@ -35,7 +35,11 @@ func (Provider) Configure() {
 
 type AuthMessage struct {
 	Type  string `json:"type"`
-	Token string `json:"auth_token"`
+	Token string `json:"access_token"`
+}
+
+type AuthResponse struct {
+	Type string `json:"type"`
 }
 
 type RequestMessage struct {
@@ -44,8 +48,9 @@ type RequestMessage struct {
 }
 
 type ResponseMessage struct {
-	Id     int                       `json:"id"`
-	Result structs.HomeAssistantUser `json:"result"`
+	Id      int                       `json:"id"`
+	Success bool                      `json:"success"`
+	Result  structs.HomeAssistantUser `json:"result"`
 }
 
 // GetUserInfo provider specific call to get userinfomation
@@ -58,12 +63,18 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	}
 	ptokens.PAccessToken = providerToken.Extra("access_token").(string)
 
-	wsURL := cfg.GenOAuth.UserInfoURL
-	client, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	client, _, err := websocket.DefaultDialer.Dial(cfg.GenOAuth.UserInfoURL, nil)
 	if err != nil {
+		log.Errorf("error dialing HA websocket: %v", err)
 		return err
 	}
 	defer client.Close()
+
+	_, _, err = client.ReadMessage()
+	if err != nil {
+		log.Errorf("error reading HA init message: %v", err)
+		return err
+	}
 
 	authMessage := AuthMessage{
 		Type:  "auth",
@@ -72,8 +83,16 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	if err := client.WriteJSON(authMessage); err != nil {
 		return err
 	}
-	_, _, err = client.ReadMessage()
+	_, authResponseData, err := client.ReadMessage()
 	if err != nil {
+		return err
+	}
+	var authResponse AuthResponse
+	if err := json.Unmarshal(authResponseData, &authResponse); err != nil {
+		return err
+	}
+	if authResponse.Type != "auth_ok" {
+		log.Errorf("error authenticating with HA: %s", authResponseData)
 		return err
 	}
 
@@ -89,8 +108,16 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		return err
 	}
 	log.Infof("HA userinfo body: %s", string(responseMessage))
+	if err = common.MapClaims(responseMessage, customClaims); err != nil {
+		log.Error(err)
+		return err
+	}
 	var data ResponseMessage
 	if err := json.Unmarshal(responseMessage, &data); err != nil {
+		return err
+	}
+	if !data.Success {
+		log.Errorf("error getting user info from HA: %s", responseMessage)
 		return err
 	}
 	data.Result.PrepareUserData()
