@@ -130,6 +130,17 @@ func (u *GitHubUser) PrepareUserData() {
 	u.Username = u.Login
 }
 
+// HomeAssistantUser
+type HomeAssistantUser struct {
+	User
+	IsAdmin bool `json:"is_admin"`
+	IsOwner bool `json:"is_owner"`
+}
+
+func (u *HomeAssistantUser) PrepareUserData() {
+	u.Username = u.Name
+}
+
 // IndieAuthUser see indieauth.net
 type IndieAuthUser struct {
 	User
@@ -148,7 +159,7 @@ type Contact struct {
 	Verified bool   `json:"is_verified"`
 }
 
-//OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
+// OpenStaxUser is a retrieved and authenticated user from OpenStax Accounts
 type OpenStaxUser struct {
 	User
 	Contacts []Contact `json:"contact_infos"`
