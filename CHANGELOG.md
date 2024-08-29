@@ -6,7 +6,7 @@ Coming soon! Please document any work in progress here as part of your PR. It wi
 
 ## v0.40.0
 
-- upgrade golang to `v1.22` from `v1.18`
+- upgrade golang to `v1.23` from `v1.22`
 
 ## v0.39.0
 

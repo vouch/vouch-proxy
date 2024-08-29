@@ -13,7 +13,7 @@ fi
 
 IMAGE=quay.io/vouch/vouch-proxy:latest
 ALPINE=quay.io/vouch/vouch-proxy:alpine-latest
-GOIMAGE=golang:1.22
+GOIMAGE=golang:1.23
 NAME=vouch-proxy
 HTTPPORT=9090
 GODOC_PORT=5050
