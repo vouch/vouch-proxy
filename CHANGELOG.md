@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.41.0
+
 - upgrade golang to `v1.23` from `v1.22`
 
 ## v0.40.0
