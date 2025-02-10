@@ -32,6 +32,25 @@ func (Provider) Configure() {
 	log = cfg.Logging.Logger
 }
 
+func GenerateTeamsOfUser(customClaims *structs.CustomClaims, claimName string) map[string]bool {
+	teamOutput := make(map[string]bool)
+	if val, ok := customClaims.Claims[claimName]; ok {
+
+		customClaimsSlice := val.([]interface{})
+
+		for _, teamValue := range customClaimsSlice {
+			team, isMyType := teamValue.(string)
+			if isMyType {
+				teamOutput[team] = true
+			}
+		}
+
+		return teamOutput
+	}
+	log.Debugf("Claim %s missing from UserInfo response. Make sure you include the correct scope", claimName)
+	return teamOutput
+}
+
 // GetUserInfo provider specific call to get userinfomation
 func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *structs.CustomClaims, ptokens *structs.PTokens, opts ...oauth2.AuthCodeOption) (rerr error) {
 	client, _, err := common.PrepareTokensAndClient(r, ptokens, true, opts...)
@@ -58,5 +77,17 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		return err
 	}
 	user.PrepareUserData()
+
+	if len(cfg.Cfg.TeamWhiteList) != 0 && len(cfg.GenOAuth.TeamWhiteListClaim) != 0 {
+		allTeamsOfUser := GenerateTeamsOfUser(customClaims, cfg.GenOAuth.TeamWhiteListClaim)
+
+		for _, whiteListedTeam := range cfg.Cfg.TeamWhiteList {
+			if allTeamsOfUser[whiteListedTeam] {
+				user.TeamMemberships = append(user.TeamMemberships, whiteListedTeam)
+			}
+		}
+	}
+	log.Debug("getUserInfoFromOAuth")
+	log.Debug(user)
 	return nil
 }
