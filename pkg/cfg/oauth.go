@@ -83,6 +83,7 @@ type oauthConfig struct {
 	PreferredDomain     string              `mapstructure:"preferredDomain"`
 	AzureToken          string              `mapstructure:"azure_token" envconfig:"azure_token"`
 	CodeChallengeMethod string              `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+	TeamWhiteListClaim  string              `mapstructure:"team_whitelist_claim" envconfig:"team_whitelist_claim"`
 }
 
 type oauthClaimsConfig struct {
