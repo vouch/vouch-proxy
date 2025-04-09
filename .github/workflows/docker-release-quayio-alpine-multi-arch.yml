@@ -1,4 +1,4 @@
-name: Publish Docker image to Quay.io using Dockerfile.alpine
+name: Publish multi-arch Docker image to Quay.io using Dockerfile.alpine
 
 on:
   push:
