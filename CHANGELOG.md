@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.42.0
+
+- switch to viper mapstructure because it's needed starting from viper v1.20, https://github.com/spf13/viper/blob/master/UPGRADE.md#v120x
+
 ## v0.41.0
 
 - upgrade golang to `v1.23` from `v1.22`
