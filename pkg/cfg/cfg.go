@@ -28,7 +28,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
 	"go.uber.org/zap"
@@ -374,8 +374,8 @@ func fixConfigOptions() {
 }
 
 // use viper and mapstructure check to see if
-// https://pkg.go.dev/github.com/spf13/viper@v1.6.3?tab=doc#Unmarshal
-// https://pkg.go.dev/github.com/mitchellh/mapstructure?tab=doc#DecoderConfig
+// https://pkg.go.dev/github.com/spf13/viper@v1.20.1?tab=doc#Unmarshal
+// https://github.com/go-viper/mapstructure
 func checkConfigFileWellFormed() error {
 	opt := func(dc *mapstructure.DecoderConfig) {
 		dc.ErrorUnused = true
