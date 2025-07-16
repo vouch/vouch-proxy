@@ -35,3 +35,6 @@ oauth:
   callback_url: https://vouch.yourdomain.com/auth
   auth_url: https://homeassistant.yourdomain.com:port/auth/authorize
   token_url: https://homeassistant.yourdomain.com:port/auth/token
+  user_info_url: ws://homeassistant.yourdomain.com:port/api/websocket
+  # or if https:
+  #user_info_url: wss://homeassistant.yourdomain.com:port/api/websocket
