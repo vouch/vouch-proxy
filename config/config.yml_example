@@ -67,6 +67,8 @@ vouch:
 
   # whiteList (optional) allows only the listed usernames - VOUCH_WHITELIST
   # usernames are usually email addresses (google, most oidc providers) or login/username for github and github enterprise
+  # if a user can change their info including email address this might be a bad idea
+  # see https://github.com/vouch/vouch-proxy/issues/309 and https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability
   whiteList:
   - bob@yourdomain.com
   - alice@yourdomain.com

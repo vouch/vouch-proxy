@@ -24,18 +24,12 @@ type UserI interface {
 
 // User is inherited.
 type User struct {
-	// TODO: set Provider here so that we can pass it to db
-	// populated by db (via mapstructure) or from provider (via json)
-	// Provider   string `json:"provider",mapstructure:"provider"`
-	Username   string `json:"username" mapstructure:"username"`
-	Name       string `json:"name" mapstructure:"name"`
-	Email      string `json:"email" mapstructure:"email"`
-	CreatedOn  int64  `json:"createdon"`
-	LastUpdate int64  `json:"lastupdate"`
-	// don't populate ID from json https://github.com/vouch/vouch-proxy/issues/185
-	ID int `json:"-" mapstructure:"id"`
-	// jwt.StandardClaims
-
+	Sub             string `json:"sub"`
+	Username        string `json:"username"`
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	CreatedOn       int64  `json:"createdon"`
+	LastUpdate      int64  `json:"lastupdate"`
 	TeamMemberships []string
 }
 
@@ -44,12 +38,20 @@ func (u *User) PrepareUserData() {
 	if u.Username == "" {
 		u.Username = u.Email
 	}
+	if u.Sub == "" {
+		// TODO: SECURITY VULNERABILITY: Using Username for Sub is dangerous if the provider allows the
+		// user to change their username. It is particularly dangerous if the provider does not set
+		// Username because it would likely be trivial for an attacker to impersonate another user by
+		// temporarily changing their email address to the victim's email address. It would be better to
+		// automatically fail authentication if Sub is empty and force all provider integrations to
+		// provide a stable identifier.
+		u.Sub = u.Username
+	}
 }
 
 // AzureUser is a retrieved and authenticated user from Azure AD
 type AzureUser struct {
 	User
-	Sub               string `json:"sub"`
 	UPN               string `json:"upn"`
 	PreferredUsername string `json:"preferred_username"`
 }
@@ -72,32 +74,9 @@ func (u *AzureUser) PrepareUserData() {
 	}
 }
 
-// GoogleUser is a retrieved and authentiacted user from Google.
-// unused!
-// TODO: see if these should be pointers to the *User object as per
-// https://golang.org/doc/effective_go.html#embedding
-type GoogleUser struct {
-	User
-	Sub           string `json:"sub"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Profile       string `json:"profile"`
-	Picture       string `json:"picture"`
-	EmailVerified bool   `json:"email_verified"`
-	Gender        string `json:"gender"`
-	HostDomain    string `json:"hd"`
-	// jwt.StandardClaims
-}
-
-// PrepareUserData implement PersonalData interface
-func (u *GoogleUser) PrepareUserData() {
-	u.Username = u.Email
-}
-
 // ADFSUser Active Directory user record
 type ADFSUser struct {
 	User
-	Sub string `json:"sub"`
 	UPN string `json:"upn"`
 	// UniqueName string `json:"unique_name"`
 	// PwdExp     string `json:"pwd_exp"`
@@ -114,6 +93,7 @@ func (u *ADFSUser) PrepareUserData() {
 // GitHubUser is a retrieved and authentiacted user from GitHub.
 type GitHubUser struct {
 	User
+	Id      int    `json:"id"`
 	Login   string `json:"login"`
 	Picture string `json:"avatar_url"`
 	// jwt.StandardClaims
@@ -126,6 +106,8 @@ type GitHubTeamMembershipState struct {
 
 // PrepareUserData implement PersonalData interface
 func (u *GitHubUser) PrepareUserData() {
+	// Sub is populated from Id, not Login, because GitHub allows users to change their login.
+	u.Sub = strconv.Itoa(u.Id)
 	// always use the u.Login as the u.Username
 	u.Username = u.Login
 }
@@ -198,11 +180,10 @@ type AlibabaUser struct {
 
 // PrepareUserData implement PersonalData interface
 func (u *AlibabaUser) PrepareUserData() {
+	u.Sub = u.Data.Sub
 	u.Username = u.Data.Username
 	u.Name = u.Data.Nickname
 	u.Email = u.Data.Email
-	id, _ := strconv.Atoi(u.Data.ID)
-	u.ID = id
 }
 
 // AliData `data` subobject of Alibaba User response
@@ -212,9 +193,6 @@ type AliData struct {
 	Username string `json:"username"`
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
-	ID       string `json:"ou_id"`
-	Phone    string `json:"phone_number"`
-	OuName   string `json:"ou_name"`
 }
 
 // Team has members and provides acess to sites

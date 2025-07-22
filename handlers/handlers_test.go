@@ -45,7 +45,12 @@ func setUp(configFile string) {
 
 func TestVerifyUserPositiveUserInWhiteList(t *testing.T) {
 	setUp("/config/testing/handler_whitelist.yml")
-	user := &structs.User{Username: "test@example.com", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "test@example.com",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
@@ -54,7 +59,12 @@ func TestVerifyUserPositiveUserInWhiteList(t *testing.T) {
 func TestVerifyUserPositiveAllowAllUsers(t *testing.T) {
 	setUp("/config/testing/handler_allowallusers.yml")
 
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 
 	ok, err := verifyUser(*user)
 	assert.True(t, ok)
@@ -63,7 +73,12 @@ func TestVerifyUserPositiveAllowAllUsers(t *testing.T) {
 
 func TestVerifyUserPositiveByEmail(t *testing.T) {
 	setUp("/config/testing/handler_email.yml")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	ok, err := verifyUser(*user)
 	assert.True(t, ok)
 	assert.Nil(t, err)
@@ -73,7 +88,12 @@ func TestVerifyUserPositiveByTeam(t *testing.T) {
 	setUp("/config/testing/handler_teams.yml")
 
 	// cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "org1/team2", "org1/team1")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	user.TeamMemberships = append(user.TeamMemberships, "org1/team3")
 	user.TeamMemberships = append(user.TeamMemberships, "org1/team1")
 	ok, err := verifyUser(*user)
@@ -83,7 +103,12 @@ func TestVerifyUserPositiveByTeam(t *testing.T) {
 
 func TestVerifyUserNegativeByTeam(t *testing.T) {
 	setUp("/config/testing/handler_teams.yml")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	// cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "org1/team1")
 
 	ok, err := verifyUser(*user)
@@ -94,7 +119,12 @@ func TestVerifyUserNegativeByTeam(t *testing.T) {
 func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
 	setUp("/config/testing/handler_nodomains.yml")
 
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	cfg.Cfg.Domains = make([]string, 0)
 	ok, err := verifyUser(*user)
 
@@ -104,7 +134,12 @@ func TestVerifyUserPositiveNoDomainsConfigured(t *testing.T) {
 
 func TestVerifyUserNegative(t *testing.T) {
 	setUp("/config/testing/test_config.yml")
-	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}
+	user := &structs.User{
+		Sub:      "testsub",
+		Username: "testuser",
+		Email:    "test@example.com",
+		Name:     "Test Name",
+	}
 	ok, err := verifyUser(*user)
 
 	assert.False(t, ok)
@@ -115,6 +150,7 @@ func TestVerifyUserNegative(t *testing.T) {
 // it should live there but circular imports are resolved if it lives here
 var (
 	u1 = structs.User{
+		Sub:      "testsub",
 		Username: "test@testing.com",
 		Name:     "Test Name",
 	}
@@ -140,6 +176,7 @@ func init() {
 	// log.SetLevel(log.DebugLevel)
 
 	lc = jwtmanager.VouchClaims{
+		Sub:            u1.Sub,
 		Username:       u1.Username,
 		CustomClaims:   customClaims.Claims,
 		PAccessToken:   t1.PAccessToken,

@@ -11,7 +11,6 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package github
 
 import (
-	"encoding/json"
 	"net/http"
 	"regexp"
 	"testing"
@@ -166,18 +165,17 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 func TestGetUserInfo(t *testing.T) {
 	setUp()
 
-	userInfoContent, _ := json.Marshal(structs.GitHubUser{
-		User: structs.User{
-			Username:   "test",
-			CreatedOn:  123,
-			Email:      "email@example.com",
-			ID:         1,
-			LastUpdate: 123,
-			Name:       "name",
-		},
-		Login:   "myusername",
-		Picture: "avatar-url",
-	})
+	// Use JSON directly (instead of populating a struct and converting to JSON) to reduce the chances
+	// of a mismatch between what GitHub provides and what is expected.
+	userInfoContent := []byte(`
+		{
+			"avatar_url": "avatar-url",
+			"email": "email@example.com",
+			"id": 123456789,
+			"login": "myusername",
+			"name": "name"
+		}
+	`)
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
 
 	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myOtherOrg", "myorg/myteam")
@@ -191,6 +189,7 @@ func TestGetUserInfo(t *testing.T) {
 	err := provider.GetUserInfo(nil, user, &structs.CustomClaims{}, &structs.PTokens{})
 
 	assert.Nil(t, err)
+	assert.Equal(t, "123456789", user.Sub)
 	assert.Equal(t, "myusername", user.Username)
 	assert.Equal(t, []string{"myOtherOrg", "myorg/myteam"}, user.TeamMemberships)
 

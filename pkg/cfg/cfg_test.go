@@ -130,8 +130,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 	t.Cleanup(cleanupEnv)
 	// each of these env vars holds a..
 	// string
-	// get all the values
-	senv := []string{"VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT",
+	senv := []string{"VOUCH_LISTEN", "VOUCH_JWT_ISSUER", "VOUCH_JWT_SECRET", "VOUCH_HEADERS_JWT", "VOUCH_HEADERS_SUB",
 		"VOUCH_HEADERS_USER", "VOUCH_HEADERS_QUERYSTRING", "VOUCH_HEADERS_REDIRECT", "VOUCH_HEADERS_SUCCESS", "VOUCH_HEADERS_ERROR",
 		"VOUCH_HEADERS_CLAIMHEADER", "VOUCH_HEADERS_ACCESSTOKEN", "VOUCH_HEADERS_IDTOKEN", "VOUCH_COOKIE_NAME", "VOUCH_COOKIE_DOMAIN",
 		"VOUCH_COOKIE_SAMESITE", "VOUCH_TESTURL", "VOUCH_SESSION_NAME", "VOUCH_SESSION_KEY", "VOUCH_DOCUMENT_ROOT", "VOUCH_SOCKETGROUP"}
@@ -169,7 +168,7 @@ func Test_configureFromEnvCfg(t *testing.T) {
 
 	// run the thing
 	configureFromEnv()
-	scfg := []string{Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT,
+	scfg := []string{Cfg.Listen, Cfg.JWT.Issuer, Cfg.JWT.Secret, Cfg.Headers.JWT, Cfg.Headers.Sub,
 		Cfg.Headers.User, Cfg.Headers.QueryString, Cfg.Headers.Redirect, Cfg.Headers.Success, Cfg.Headers.Error,
 		Cfg.Headers.ClaimHeader, Cfg.Headers.AccessToken, Cfg.Headers.IDToken, Cfg.Cookie.Name, Cfg.Cookie.Domain,
 		Cfg.Cookie.SameSite, Cfg.TestURL, Cfg.Session.Name, Cfg.Session.Key, Cfg.DocumentRoot, Cfg.SocketGroup,
