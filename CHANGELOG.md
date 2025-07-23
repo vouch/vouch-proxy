@@ -6,7 +6,7 @@ Coming soon! Please document any work in progress here as part of your PR. It wi
 
 ## v0.42.0
 
-- [fix auth to github](https://github.com/vouch/vouch-proxy/pull/600)
+- [fix auth to github](https://github.com/vouch/vouch-proxy/pull/601)
 - cleanup of minor issues flagged by gostaticcheck
 
 ## v0.41.0
