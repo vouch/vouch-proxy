@@ -29,6 +29,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
