@@ -181,6 +181,15 @@ coveragereport() {
 }
 
 test() {
+  export SKIPPERFTEST=true;
+  _tests
+}
+
+test_perf() {
+  _tests
+}
+
+_tests() {
   if [ -z "$VOUCH_CONFIG" ]; then
     export VOUCH_CONFIG="$SDIR/config/testing/test_config.yml"
   fi
@@ -382,7 +391,8 @@ usage() {
      $0 drun [args]                        - run docker container
      $0 dbuildalpine                       - build docker container for alpine
      $0 drunalpine [args]                  - run docker container for alpine
-     $0 test [./pkg_test.go]               - run go tests (defaults to all tests)
+     $0 test [./pkg_test.go]               - run go tests (defaults to NOT run performance tests)
+     $0 test_perf                          - run go tests including performance tests
      $0 test_logging                       - test the logging output
      $0 coverage                           - coverage test
      $0 coveragereport                     - coverage report published to .cover/coverage.html
@@ -421,6 +431,7 @@ case "$ARG" in
    |'stats' \
    |'usage' \
    |'bug_report' \
+   |'test_perf' \
    |'test_logging' \
    |'license' \
    |'profile' \
