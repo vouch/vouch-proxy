@@ -12,9 +12,10 @@ package openstax
 
 import (
 	"encoding/json"
-	"golang.org/x/oauth2"
-	"io/ioutil"
+	"io"
 	"net/http"
+
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
@@ -47,7 +48,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 			rerr = err
 		}
 	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
+	data, _ := io.ReadAll(userinfo.Body)
 	log.Infof("OpenStax userinfo body: %s", string(data))
 	if err = common.MapClaims(data, customClaims); err != nil {
 		log.Error(err)

@@ -14,7 +14,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -81,7 +81,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		}
 	}()
 
-	data, _ := ioutil.ReadAll(userinfo.Body)
+	data, _ := io.ReadAll(userinfo.Body)
 	tokenRes := adfsTokenRes{}
 
 	if err := json.Unmarshal(data, &tokenRes); err != nil {

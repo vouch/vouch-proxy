@@ -13,7 +13,7 @@ package github
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -51,7 +51,7 @@ func (me Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims
 			rerr = err
 		}
 	}()
-	data, _ := ioutil.ReadAll(userinfo.Body)
+	data, _ := io.ReadAll(userinfo.Body)
 	log.Infof("github userinfo body: %s", string(data))
 	if err = common.MapClaims(data, customClaims); err != nil {
 		log.Error(err)
@@ -130,6 +130,9 @@ func getOrgMembershipStateFromGitHub(client *http.Client, user *structs.User, or
 		location := orgMembershipResp.Header.Get("Location")
 		if location != "" {
 			orgMembershipResp, err = client.Get(location)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	}
 
@@ -158,7 +161,7 @@ func getTeamMembershipStateFromGitHub(client *http.Client, user *structs.User, o
 		}
 	}()
 	if membershipStateResp.StatusCode == 200 {
-		data, _ := ioutil.ReadAll(membershipStateResp.Body)
+		data, _ := io.ReadAll(membershipStateResp.Body)
 		log.Infof("github team membership body: ", string(data))
 		ghTeamState := structs.GitHubTeamMembershipState{}
 		if err = json.Unmarshal(data, &ghTeamState); err != nil {

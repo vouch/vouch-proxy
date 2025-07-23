@@ -16,8 +16,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
@@ -26,9 +26,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
 	"go.uber.org/zap"
@@ -633,7 +633,7 @@ func DecryptionKey() (interface{}, error) {
 		return nil, fmt.Errorf("error opening Key %s: %s", Cfg.JWT.PublicKeyFile, err)
 	}
 
-	keyBytes, err := ioutil.ReadAll(f)
+	keyBytes, err := io.ReadAll(f)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Key: %s", err)
 	}
@@ -666,7 +666,7 @@ func SigningKey() (interface{}, error) {
 		return nil, fmt.Errorf("error opening RSA Key %s: %s", Cfg.JWT.PrivateKeyFile, err)
 	}
 
-	keyBytes, err := ioutil.ReadAll(f)
+	keyBytes, err := io.ReadAll(f)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Key: %s", err)
 	}

@@ -56,10 +56,7 @@ func IsUnderManagement(email string) bool {
 	}
 
 	match := Matches(split[1])
-	if match != "" {
-		return true
-	}
-	return false
+	return match != ""
 }
 
 // ByLengthDesc sort from
