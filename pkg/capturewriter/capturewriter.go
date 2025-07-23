@@ -22,12 +22,12 @@ import (
 // and then pull it out later for logging
 // https://play.golang.org/p/wPHaX9DH-Ik
 
-var logger *zap.SugaredLogger
+// var logger *zap.SugaredLogger
 var log *zap.Logger
 
 // Configure see main.go configure()
 func Configure() {
-	logger = cfg.Logging.Logger
+	// logger = cfg.Logging.Logger
 	log = cfg.Logging.FastLogger
 }
 

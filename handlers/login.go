@@ -29,7 +29,7 @@ import (
 )
 
 // see https://github.com/vouch/vouch-proxy/issues/282
-var errTooManyRedirects = errors.New("Too many unsuccessful authorization attempts for the requested URL")
+var errTooManyRedirects = errors.New("too many unsuccessful authorization attempts for the requested URL")
 
 const failCountLimit = 6
 
@@ -204,7 +204,7 @@ func getValidRequestedURL(r *http.Request) (string, error) {
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Not a valid login URL: %w %s", errInvalidURL, err)
+		return "", fmt.Errorf("not a valid login URL: %w %s", errInvalidURL, err)
 	}
 
 	if u == nil || u.String() == "" {
@@ -301,10 +301,9 @@ func appendCodeChallenge(session sessions.Session) {
 	switch strings.ToUpper(cfg.GenOAuth.CodeChallengeMethod) {
 	case "S256":
 		codeChallenge = CodeVerifier.CodeChallengeS256()
-		break
 	case "PLAIN":
-		codeChallenge = CodeVerifier.CodeChallengePlain()
 		// TODO support plain text code challenge
+		//codeChallenge = CodeVerifier.CodeChallengePlain()
 		log.Fatal("plain code challenge method is not supported")
 		return
 	default:

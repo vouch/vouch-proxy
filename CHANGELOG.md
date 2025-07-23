@@ -8,6 +8,19 @@ Coming soon! Please document any work in progress here as part of your PR. It wi
   - Or uses `Username#Discriminator` if the Discriminator is present
   - Or uses ID if `discord_use_ids` is set
 
+## v0.43.0
+
+- support multi-platform / multi-arch builds for published Docker images including `linux/amd64` and `linux/arm64`
+
+## v0.42.0
+
+- [fix auth to github](https://github.com/vouch/vouch-proxy/pull/601)
+- cleanup of minor issues flagged by gostaticcheck
+
+## v0.41.0
+
+- upgrade golang to `v1.23` from `v1.22`
+
 ## v0.40.0
 
 - upgrade golang to `v1.22` from `v1.18`

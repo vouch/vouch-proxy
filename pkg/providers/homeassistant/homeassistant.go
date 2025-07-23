@@ -11,23 +11,22 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package homeassistant
 
 import (
-	"golang.org/x/oauth2"
 	"net/http"
 
-	"github.com/vouch/vouch-proxy/pkg/cfg"
+	"golang.org/x/oauth2"
+
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-	"go.uber.org/zap"
 )
 
 // Provider provider specific functions
 type Provider struct{}
 
-var log *zap.SugaredLogger
+// var log *zap.SugaredLogger
 
 // Configure see main.go configure()
 func (Provider) Configure() {
-	log = cfg.Logging.Logger
+	// log = cfg.Logging.Logger
 }
 
 // GetUserInfo provider specific call to get userinfomation

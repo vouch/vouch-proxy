@@ -259,13 +259,13 @@ func setDefaultsGitHub() {
 		GenOAuth.TokenURL = github.Endpoint.TokenURL
 	}
 	if GenOAuth.UserInfoURL == "" {
-		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
+		GenOAuth.UserInfoURL = "https://api.github.com/user"
 	}
 	if GenOAuth.UserTeamURL == "" {
-		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username"
 	}
 	if GenOAuth.UserOrgURL == "" {
-		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username"
 	}
 	if len(GenOAuth.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63

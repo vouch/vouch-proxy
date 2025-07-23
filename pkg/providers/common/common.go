@@ -68,7 +68,7 @@ func MapClaims(claims []byte, customClaims *structs.CustomClaims) error {
 				found = true
 			}
 		}
-		if found == false {
+		if !found {
 			delete(m, k)
 		}
 	}

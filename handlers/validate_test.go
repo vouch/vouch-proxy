@@ -65,6 +65,9 @@ func TestValidateRequestHandlerPerf(t *testing.T) {
 	if _, ok := os.LookupEnv("ISTRAVIS"); ok {
 		t.Skip("travis doesn't like perf tests, skipping")
 	}
+	if _, ok := os.LookupEnv("SKIPPERFTEST"); ok {
+		t.Skip("skipping performance tests")
+	}
 
 	setUp("/config/testing/handler_email.yml")
 	user := &structs.User{Username: "testuser", Email: "test@example.com", Name: "Test Name"}

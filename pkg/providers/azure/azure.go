@@ -14,9 +14,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
+
+	"golang.org/x/oauth2"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
@@ -53,7 +54,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	} else if cfg.GenOAuth.AzureToken == "id_token" {
 		tokenParts = strings.Split(ptokens.PIdToken, ".")
 	} else {
-		err = fmt.Errorf("Azure Token not access_token or id_token")
+		err = fmt.Errorf("azure Token not access_token or id_token")
 		log.Error(err)
 		return err
 	}

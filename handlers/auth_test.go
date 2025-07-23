@@ -50,6 +50,9 @@ func TestCallbackHandlerDocumentRoot(t *testing.T) {
 			// grab the state from the session cookie to
 			session, err := sessstore.Get(reqLogin, cfg.Cfg.Session.Name)
 			state := session.Values["state"].(string)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			// now mimic an IdP returning the state variable back to us
 			reqAuth, err := http.NewRequest("GET", cfg.Cfg.DocumentRoot+"/auth?state="+state, nil)

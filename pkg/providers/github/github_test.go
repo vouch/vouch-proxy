@@ -105,7 +105,7 @@ func TestGetTeamMembershipStateFromGitHubActive(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"active\"}"))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1")
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
@@ -115,7 +115,7 @@ func TestGetTeamMembershipStateFromGitHubInactive(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusOK, map[string]string{}, []byte("{\"state\": \"inactive\"}"))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1")
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -125,7 +125,7 @@ func TestGetTeamMembershipStateFromGitHubNotAMember(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1", token)
+	isMember, err := getTeamMembershipStateFromGitHub(client, user, "org1", "team1")
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
@@ -135,12 +135,12 @@ func TestGetOrgMembershipStateFromGitHubNotFound(t *testing.T) {
 	setUp()
 	mockResponse(regexMatcher(".*"), http.StatusNotFound, map[string]string{}, []byte(""))
 
-	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg")
 
 	assert.Nil(t, err)
 	assert.False(t, isMember)
 
-	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username
 	assertURLCalled(t, expectedOrgMembershipURL)
 }
 
@@ -151,12 +151,12 @@ func TestGetOrgMembershipStateFromGitHubNoOrgAccess(t *testing.T) {
 	mockResponse(regexMatcher(".*orgs/myorg/members.*"), http.StatusFound, map[string]string{"Location": location}, []byte(""))
 	mockResponse(regexMatcher(".*orgs/myorg/public_members.*"), http.StatusNoContent, map[string]string{}, []byte(""))
 
-	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg", token)
+	isMember, err := getOrgMembershipStateFromGitHub(client, user, "myorg")
 
 	assert.Nil(t, err)
 	assert.True(t, isMember)
 
-	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username + "?access_token=" + token.AccessToken
+	expectedOrgMembershipURL := "https://api.github.com/orgs/myorg/members/" + user.Username
 	assertURLCalled(t, expectedOrgMembershipURL)
 
 	expectedOrgPublicMembershipURL := "https://api.github.com/orgs/myorg/public_members/" + user.Username
@@ -178,7 +178,7 @@ func TestGetUserInfo(t *testing.T) {
 		Login:   "myusername",
 		Picture: "avatar-url",
 	})
-	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL+token.AccessToken), http.StatusOK, map[string]string{}, userInfoContent)
+	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL), http.StatusOK, map[string]string{}, userInfoContent)
 
 	cfg.Cfg.TeamWhiteList = append(cfg.Cfg.TeamWhiteList, "myOtherOrg", "myorg/myteam")
 
@@ -194,6 +194,6 @@ func TestGetUserInfo(t *testing.T) {
 	assert.Equal(t, "myusername", user.Username)
 	assert.Equal(t, []string{"myOtherOrg", "myorg/myteam"}, user.TeamMemberships)
 
-	expectedTeamMembershipURL := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername?access_token=" + token.AccessToken
+	expectedTeamMembershipURL := "https://api.github.com/orgs/myorg/teams/myteam/memberships/myusername"
 	assertURLCalled(t, expectedTeamMembershipURL)
 }
