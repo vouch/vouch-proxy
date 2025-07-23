@@ -12,6 +12,7 @@ package discord
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -58,13 +59,27 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 		log.Error(err)
 		return err
 	}
-	discordUser := structs.DiscordUser{}
-	if err = json.Unmarshal(data, &discordUser); err != nil {
+	dUser := structs.DiscordUser{}
+	if err = json.Unmarshal(data, &dUser); err != nil {
 		log.Error(err)
 		return err
 	}
-	discordUser.PrepareUserData()
-	user.Username = discordUser.PreparedUsername
-	user.Email = discordUser.Email
+
+	// If the provider is configured to use IDs, the ID is copied to PreparedUsername.
+	if cfg.GenOAuth.DiscordUseIDs {
+		user.Username = dUser.Id
+	} else {
+		user.Username = dUser.Username
+
+		// If the Discriminator is present that is appended to the Username in the format "Username#Discriminator"
+		// to match the old format of Discord usernames
+		// Previous format which is being phased out: https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
+		// Details about the new username requirements: https://support.discord.com/hc/en-us/articles/12620128861463
+		if dUser.Discriminator != "0" {
+			user.Username = fmt.Sprintf("%s#%s", dUser.Username, dUser.Discriminator)
+		}
+	}
+	user.Email = dUser.Email
+
 	return nil
 }
