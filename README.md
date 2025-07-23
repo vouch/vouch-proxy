@@ -24,7 +24,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [Discord](https://github.com/eltariel/foundry-docker-nginx-vouch)
 - [SecureAuth](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_secureauth)
 - [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
-- Keycloak
+- [Keycloak](config/config.yml_example_keycloak)
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
