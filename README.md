@@ -30,6 +30,7 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
 - [Ory Hydra](https://github.com/vouch/vouch-proxy/issues/288)
 - [Nextcloud](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html)
+- [Pocket ID](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_pocket-id)
 - most other OpenID Connect (OIDC) providers
 
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
