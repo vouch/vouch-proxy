@@ -4,6 +4,11 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.42.0
+
+- [fix auth to github](https://github.com/vouch/vouch-proxy/pull/600)
+- cleanup of minor issues flagged by gostaticcheck
+
 ## v0.41.0
 
 - upgrade golang to `v1.23` from `v1.22`
