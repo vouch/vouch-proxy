@@ -3,6 +3,8 @@ vouch-proxy
 main
 config/config.yml
 config/*config.yml
+config/config.yml_*
+!config/config.yml_example_pocket-id
 config/google_config.json
 config/secret
 !config/testing/*
