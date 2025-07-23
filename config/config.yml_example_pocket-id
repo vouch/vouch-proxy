@@ -2,6 +2,10 @@
 # Vouch Proxy configuration
 # bare minimum to get Vouch Proxy running with pocket-id
 
+# Pocket ID
+# https://pocket-id.org
+# https://github.com/pocket-id/pocket-id
+
 vouch:
   # domains:
   # valid domains that the jwt cookies can be set into
