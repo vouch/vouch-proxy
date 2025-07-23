@@ -146,6 +146,8 @@ func oauthBasicTest() error {
 	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.Azure && GenOAuth.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL, and Azure does not actively use it
 		return errors.New("configuration error: oauth.user_info_url not found")
+	case GenOAuth.Provider != Providers.Discord && GenOAuth.DiscordUseIDs:
+		return errors.New("configuration error: discord_use_ids is true but oauth.provider is not 'discord'")
 	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	case GenOAuth.Provider == Providers.Azure || GenOAuth.Provider == Providers.ADFS || GenOAuth.Provider == Providers.Nextcloud || GenOAuth.Provider == Providers.OIDC:
