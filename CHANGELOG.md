@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.43.0
+
+- support multi-platform / multi-arch builds for published Docker images including `linux/amd64` and `linux/arm64`
+
 ## v0.42.0
 
 - [fix auth to github](https://github.com/vouch/vouch-proxy/pull/601)

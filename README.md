@@ -333,6 +333,8 @@ an `alpine` based container built from `Dockerfile.alpine`
 - `quay.io/vouch/vouch-proxy:alpine-latest`
 - `quay.io/vouch/vouch-proxy:alpine-x.y.z`
 
+As of `v0.43.0` both of these images are [Multi-platform builds](https://docs.docker.com/build/building/multi-platform/) supporting `linux/amd64` and `linux/arm64`.
+
 Vouch Proxy `arm` images are available on [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/)
 
 - `voucher/vouch-proxy:latest-arm`
