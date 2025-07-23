@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
