@@ -4,9 +4,15 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.45.0
+
 - Implement a Discord provider that uses `Username` as the username to match against in the `whiteList` config
   - Or uses `Username#Discriminator` if the Discriminator is present
   - Or uses ID if `discord_use_ids` is set
+
+## v0.44.0
+
+- migrate to github.com/golang-jwt/jwt/v4
 
 ## v0.43.0
 
