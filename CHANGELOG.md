@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.44.0
+
+- migrate to github.com/golang-jwt/jwt/v4
+
 ## v0.43.0
 
 - support multi-platform / multi-arch builds for published Docker images including `linux/amd64` and `linux/arm64`

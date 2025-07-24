@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/spf13/viper"
 	securerandom "github.com/theckman/go-securerandom"
