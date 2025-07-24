@@ -6,6 +6,7 @@ toolchain go1.23.2
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.7.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/julienschmidt/httprouter v1.3.0
