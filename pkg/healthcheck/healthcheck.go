@@ -13,7 +13,7 @@ package healthcheck
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 
@@ -46,7 +46,7 @@ func healthcheck() {
 	// #nosec - turn off gosec checking which flags `http.Get(url)`
 	resp, err := http.Get(url)
 	if err == nil {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err == nil {
 			var result map[string]interface{}

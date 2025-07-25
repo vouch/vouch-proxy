@@ -1,0 +1,39 @@
+
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with Keycloak
+
+vouch:
+  domains:
+  - yourdomain.com
+
+  # - OR -
+  # instead of setting specific domains you may prefer to allow all users...
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at the configured provider
+  # and set vouch.cookie.domain to the domain you wish to protect
+  # allowAllUsers: true
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com) 
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
+
+oauth:
+  # Generic OpenID Connect
+  # for Keycloak
+  provider: oidc
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  auth_url: https://{yourKeycloakDomain}/realms/{yourKeycloakRealm}/protocol/openid-connect/auth
+  token_url: https://{yourKeycloakDomain}/realms/{yourKeycloakRealm}/protocol/openid-connect/token
+  user_info_url: https://{yourKeycloakDomain}/realms/{yourKeycloakRealm}/protocol/openid-connect/userinfo
+  scopes:
+    - openid
+    - email
+    - profile
+  callback_url: http://vouch.yourdomain.com:9090/auth
+  # you can get values of of auth_url, token_url and user_info_url from https://{yourKeycloakDomain}/realms/{yourKeycloakRealm}/.well-known/openid-configuration
+  # When configuring client in Keycloak, you should use following values
+  ## valid redirect: http://vouch.yourdomain.com:9090/auth
+  ## valid logout: http://vouch.yourdomain.com:9090/logout
+  ## web origin: http://vouch.yourdomain.com:9090

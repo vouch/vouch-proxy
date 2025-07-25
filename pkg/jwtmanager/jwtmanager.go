@@ -16,12 +16,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -110,12 +110,12 @@ func NewVPJWT(u structs.User, customClaims structs.CustomClaims, ptokens structs
 
 	ss, err := token.SignedString(key)
 	if ss == "" || err != nil {
-		return "", fmt.Errorf("New JWT: signed token error: %s", err)
+		return "", fmt.Errorf("new JWT: signed token error: %s", err)
 	}
 	if cfg.Cfg.JWT.Compress {
 		ss, err = compressAndEncodeTokenString(ss)
 		if ss == "" || err != nil {
-			return "", fmt.Errorf("New JWT: compressed token error: %w", err)
+			return "", fmt.Errorf("new JWT: compressed token error: %w", err)
 		}
 	}
 	return ss, nil
@@ -149,7 +149,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod) {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return key, nil
@@ -196,7 +196,7 @@ func decodeAndDecompressTokenString(encgzipss string) string {
 	if err := zr.Close(); err != nil {
 		log.Debugf("Error decoding token: %v", err)
 	}
-	ss, _ := ioutil.ReadAll(zr)
+	ss, _ := io.ReadAll(zr)
 	return string(ss)
 }
 

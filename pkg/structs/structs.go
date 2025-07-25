@@ -10,7 +10,9 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 package structs
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // CustomClaims Temporary struct storing custom claims until JWT creation.
 type CustomClaims struct {
@@ -250,4 +252,16 @@ type Site struct {
 type PTokens struct {
 	PAccessToken string
 	PIdToken     string
+}
+
+// DiscordUser deserializes values from the Discord User Object: https://discord.com/developers/docs/resources/user#user-object-user-structure
+type DiscordUser struct {
+	Id            string `json:"id"`
+	Username      string `json:"username"`
+	Discriminator string `json:"discriminator"`
+	GlobalName    string `json:"global_name"`
+	Email         string `json:"email"`
+	Verified      bool   `json:"verified"`
+
+	PreparedUsername string
 }

@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/vouch/vouch-proxy/pkg/providers/discord"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
@@ -88,6 +89,8 @@ func getProvider() Provider {
 		return openid.Provider{}
 	case cfg.Providers.Alibaba:
 		return alibaba.Provider{}
+	case cfg.Providers.Discord:
+		return discord.Provider{}
 	default:
 		// shouldn't ever reach this since cfg checks for a properly configure `oauth.provider`
 		log.Fatal("oauth.provider appears to be misconfigured, please check your config")
