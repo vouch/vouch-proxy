@@ -186,7 +186,7 @@ func SameSite() http.SameSite {
 		case "strict":
 			sameSite = http.SameSiteStrictMode
 		case "none":
-			if cfg.Cfg.Cookie.Secure == false {
+			if !cfg.Cfg.Cookie.Secure {
 				log.Error("SameSite cookie attribute with sameSite=none should also be specified with secure=true.")
 			}
 			sameSite = http.SameSiteNoneMode

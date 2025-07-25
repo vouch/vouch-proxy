@@ -8,19 +8,21 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 
 */
 
-package google
+package discord
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"golang.org/x/oauth2"
 
+	"go.uber.org/zap"
+
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/providers/common"
 	"github.com/vouch/vouch-proxy/pkg/structs"
-	"go.uber.org/zap"
 )
 
 // Provider provider specific functions
@@ -48,17 +50,36 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 			rerr = err
 		}
 	}()
-	data, _ := io.ReadAll(userinfo.Body)
-	log.Infof("google userinfo body: ", string(data))
+	data, err := io.ReadAll(userinfo.Body)
+	if err != nil {
+		return err
+	}
+	log.Infof("Discord userinfo body: %s", string(data))
 	if err = common.MapClaims(data, customClaims); err != nil {
 		log.Error(err)
 		return err
 	}
-	if err = json.Unmarshal(data, user); err != nil {
+	dUser := structs.DiscordUser{}
+	if err = json.Unmarshal(data, &dUser); err != nil {
 		log.Error(err)
 		return err
 	}
-	user.PrepareUserData()
+
+	// If the provider is configured to use IDs, the ID is copied to PreparedUsername.
+	if cfg.GenOAuth.DiscordUseIDs {
+		user.Username = dUser.Id
+	} else {
+		user.Username = dUser.Username
+
+		// If the Discriminator is present that is appended to the Username in the format "Username#Discriminator"
+		// to match the old format of Discord usernames
+		// Previous format which is being phased out: https://support.discord.com/hc/en-us/articles/4407571667351-Law-Enforcement-Guidelines Subheading "How to find usernames and discriminators"
+		// Details about the new username requirements: https://support.discord.com/hc/en-us/articles/12620128861463
+		if dUser.Discriminator != "0" {
+			user.Username = fmt.Sprintf("%s#%s", dUser.Username, dUser.Discriminator)
+		}
+	}
+	user.Email = dUser.Email
 
 	return nil
 }

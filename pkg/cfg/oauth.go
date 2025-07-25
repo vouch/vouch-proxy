@@ -44,6 +44,7 @@ var (
 		OpenStax:      "openstax",
 		Nextcloud:     "nextcloud",
 		Alibaba:       "alibaba",
+		Discord:       "discord",
 	}
 )
 
@@ -59,6 +60,7 @@ type OAuthProviders struct {
 	OpenStax      string
 	Nextcloud     string
 	Alibaba       string
+	Discord       string
 }
 
 // oauth config items endoint for access
@@ -83,6 +85,9 @@ type oauthConfig struct {
 	PreferredDomain     string              `mapstructure:"preferredDomain"`
 	AzureToken          string              `mapstructure:"azure_token" envconfig:"azure_token"`
 	CodeChallengeMethod string              `mapstructure:"code_challenge_method" envconfig:"code_challenge_method"`
+	// DiscordUseIDs defaults to false, maintaining the more common username checking behavior
+	// If set to true, match the Discord user's ID instead of their username
+	DiscordUseIDs bool `mapstructure:"discord_use_ids" envconfig:"discord_use_ids"`
 }
 
 type oauthClaimsConfig struct {
@@ -122,7 +127,8 @@ func oauthBasicTest() error {
 		GenOAuth.Provider != Providers.OIDC &&
 		GenOAuth.Provider != Providers.OpenStax &&
 		GenOAuth.Provider != Providers.Nextcloud &&
-		GenOAuth.Provider != Providers.Alibaba {
+		GenOAuth.Provider != Providers.Alibaba &&
+		GenOAuth.Provider != Providers.Discord {
 		return errors.New("configuration error: Unknown oauth provider: " + GenOAuth.Provider)
 	}
 	// OAuthconfig Checks
@@ -140,6 +146,8 @@ func oauthBasicTest() error {
 	case GenOAuth.Provider != Providers.Google && GenOAuth.Provider != Providers.IndieAuth && GenOAuth.Provider != Providers.HomeAssistant && GenOAuth.Provider != Providers.ADFS && GenOAuth.Provider != Providers.Azure && GenOAuth.UserInfoURL == "":
 		// everyone except IndieAuth, Google and ADFS has an userInfoURL, and Azure does not actively use it
 		return errors.New("configuration error: oauth.user_info_url not found")
+	case GenOAuth.Provider != Providers.Discord && GenOAuth.DiscordUseIDs:
+		return errors.New("configuration error: discord_use_ids is true but oauth.provider is not 'discord'")
 	case GenOAuth.CodeChallengeMethod != "" && (GenOAuth.CodeChallengeMethod != "plain" && GenOAuth.CodeChallengeMethod != "S256"):
 		return errors.New("configuration error: oauth.code_challenge_method must be either 'S256' or 'plain'")
 	case GenOAuth.Provider == Providers.Azure || GenOAuth.Provider == Providers.ADFS || GenOAuth.Provider == Providers.Nextcloud || GenOAuth.Provider == Providers.OIDC:
@@ -187,6 +195,9 @@ func setProviderDefaults() {
 		configureOAuthClient()
 	} else if GenOAuth.Provider == Providers.IndieAuth {
 		GenOAuth.CodeChallengeMethod = "S256"
+		configureOAuthClient()
+	} else if GenOAuth.Provider == Providers.Discord {
+		setDefaultsDiscord()
 		configureOAuthClient()
 	} else {
 		// OIDC, OpenStax, Nextcloud
@@ -250,13 +261,13 @@ func setDefaultsGitHub() {
 		GenOAuth.TokenURL = github.Endpoint.TokenURL
 	}
 	if GenOAuth.UserInfoURL == "" {
-		GenOAuth.UserInfoURL = "https://api.github.com/user?access_token="
+		GenOAuth.UserInfoURL = "https://api.github.com/user"
 	}
 	if GenOAuth.UserTeamURL == "" {
-		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username?access_token="
+		GenOAuth.UserTeamURL = "https://api.github.com/orgs/:org_id/teams/:team_slug/memberships/:username"
 	}
 	if GenOAuth.UserOrgURL == "" {
-		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username?access_token="
+		GenOAuth.UserOrgURL = "https://api.github.com/orgs/:org_id/members/:username"
 	}
 	if len(GenOAuth.Scopes) == 0 {
 		// https://github.com/vouch/vouch-proxy/issues/63
@@ -266,6 +277,25 @@ func setDefaultsGitHub() {
 		if len(Cfg.TeamWhiteList) > 0 {
 			GenOAuth.Scopes = append(GenOAuth.Scopes, "read:org")
 		}
+	}
+	GenOAuth.CodeChallengeMethod = "S256"
+}
+
+func setDefaultsDiscord() {
+	// log.Info("configuring GitHub OAuth")
+	if GenOAuth.AuthURL == "" {
+		GenOAuth.AuthURL = "https://discord.com/oauth2/authorize"
+	}
+	if GenOAuth.TokenURL == "" {
+		GenOAuth.TokenURL = "https://discord.com/api/oauth2/token"
+	}
+	if GenOAuth.UserInfoURL == "" {
+		GenOAuth.UserInfoURL = "https://discord.com/api/users/@me"
+	}
+	if len(GenOAuth.Scopes) == 0 {
+		//Required for UserInfo URL
+		//https://discord.com/developers/docs/resources/user#get-current-user
+		GenOAuth.Scopes = []string{"identify", "email"}
 	}
 	GenOAuth.CodeChallengeMethod = "S256"
 }
@@ -297,7 +327,10 @@ func checkCallbackConfig(url string) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within a configured domains where the cookie will be set: either `vouch.domains` %s or `vouch.cookie.domain` %s", url, Cfg.Domains, Cfg.Cookie.Domain)
+		return fmt.Errorf("configuration error: oauth.callback_url (%s) must be within a configured domains where the cookie will be set: either `vouch.domains` %s or `vouch.cookie.domain` %s",
+			url,
+			Cfg.Domains,
+			Cfg.Cookie.Domain)
 	}
 
 	return nil

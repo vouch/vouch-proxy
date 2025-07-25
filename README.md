@@ -21,15 +21,16 @@ Vouch Proxy supports many OAuth and OIDC login providers and can enforce authent
 - [Alibaba / Aliyun iDaas](https://github.com/vouch/vouch-proxy/issues/344)
 - [AWS Cognito](https://github.com/vouch/vouch-proxy/issues/105)
 - [Twitch](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_twitch)
-- [Discord](https://github.com/eltariel/foundry-docker-nginx-vouch)
+- [Discord](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_discord)
 - [SecureAuth](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_secureauth)
 - [Gitea](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_gitea)
-- Keycloak
+- [Keycloak](config/config.yml_example_keycloak)
 - [OAuth2 Server Library for PHP](https://github.com/vouch/vouch-proxy/issues/99)
 - [HomeAssistant](https://developers.home-assistant.io/docs/en/auth_api.html)
 - [OpenStax](https://github.com/vouch/vouch-proxy/pull/141)
 - [Ory Hydra](https://github.com/vouch/vouch-proxy/issues/288)
 - [Nextcloud](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html)
+- [Pocket ID](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example_pocket-id)
 - most other OpenID Connect (OIDC) providers
 
 Please do let us know when you have deployed Vouch Proxy with your preffered IdP or library so we can update the list.
@@ -50,11 +51,11 @@ If Vouch is running on the same host as the Nginx reverse proxy the response tim
 - [Running from Docker](#running-from-docker)
 - [Kubernetes Nginx Ingress](#kubernetes-nginx-ingress)
 - [Compiling from source and running the binary](#compiling-from-source-and-running-the-binary)
-- [/login and /logout endpoint redirection](#-login-and--logout-endpoint-redirection)
+- [/login and /logout endpoint redirection](#login-and-logout-endpoint-redirection)
 - [Troubleshooting, Support and Feature Requests](#troubleshooting-support-and-feature-requests-read-this-before-submitting-an-issue-at-github)
   (Read this before submitting an issue at GitHub)
-  - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#i-m-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp--google-okta-github--)
-  - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay--i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-it-s-still-not-working)
+  - [I'm getting an infinite redirect loop which returns me to my IdP (Google/Okta/GitHub/...)](#im-getting-an-infinite-redirect-loop-which-returns-me-to-my-idp-googleoktagithub)
+  - [Okay, I looked at the issues and have tried some things with my configs but it's still not working](#okay-i-looked-at-the-issues-and-have-tried-some-things-with-my-configs-but-its-still-not-working)
   - [Contributing to Vouch Proxy](#contributing)
 - [Advanced Authorization Using OpenResty](#advanced-authorization-using-openresty)
 - [The flow of login and authentication using Google Oauth](#the-flow-of-login-and-authentication-using-google-oauth)
@@ -145,7 +146,7 @@ server {
       # forward authorized requests to your service protectedapp.yourdomain.com
       proxy_pass http://127.0.0.1:8080;
       # you may need to set these variables in this block as per https://github.com/vouch/vouch-proxy/issues/26#issuecomment-425215810
-      #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user
+      #    auth_request_set $auth_resp_x_vouch_user $upstream_http_x_vouch_user;
       #    auth_request_set $auth_resp_x_vouch_idp_claims_groups $upstream_http_x_vouch_idp_claims_groups;
       #    auth_request_set $auth_resp_x_vouch_idp_claims_given_name $upstream_http_x_vouch_idp_claims_given_name;
 
@@ -251,7 +252,7 @@ The variable `VOUCH_CONFIG` can be used to set an alternate location for the con
 All Vouch Proxy configuration items are documented in [config/config.yml_example](https://github.com/vouch/vouch-proxy/blob/master/config/config.yml_example)
 
 - [Cacheing of the Vouch Proxy `/validate` response in Nginx](https://github.com/vouch/vouch-proxy/issues/76#issuecomment-464028743)
-- [Handleing `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
+- [Handling `OPTIONS` requests when protecting an API with Vouch Proxy](https://github.com/vouch/vouch-proxy/issues/216)
 - [Validation by GitHub Team or GitHub Org](https://github.com/vouch/vouch-proxy/pull/205)
 - [Running VP on a Raspberry Pi using the ARM based Docker image](https://github.com/vouch/vouch-proxy/pull/247)
 - [Kubernetes architecture post ingress](https://github.com/vouch/vouch-proxy/pull/263#issuecomment-628297832)
@@ -331,6 +332,8 @@ an `alpine` based container built from `Dockerfile.alpine`
 
 - `quay.io/vouch/vouch-proxy:alpine-latest`
 - `quay.io/vouch/vouch-proxy:alpine-x.y.z`
+
+As of `v0.43.0` both of these images are [Multi-platform builds](https://docs.docker.com/build/building/multi-platform/) supporting `linux/amd64` and `linux/arm64`.
 
 Vouch Proxy `arm` images are available on [Docker Hub](https://hub.docker.com/r/voucher/vouch-proxy/)
 

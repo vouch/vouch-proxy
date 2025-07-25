@@ -11,13 +11,13 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package cfg
 
 import (
-	"io/ioutil"
+	"os"
 
 	securerandom "github.com/theckman/go-securerandom"
 )
 
 func getOrGenerateJWTSecret() string {
-	b, err := ioutil.ReadFile(secretFile)
+	b, err := os.ReadFile(secretFile)
 	if err == nil {
 		log.Info("jwt.secret read from " + secretFile)
 	} else {
@@ -33,7 +33,7 @@ func getOrGenerateJWTSecret() string {
 			log.Fatal(err)
 		}
 		b = []byte(rstr)
-		err = ioutil.WriteFile(secretFile, b, 0600)
+		err = os.WriteFile(secretFile, b, 0600)
 		if err != nil {
 			log.Error(err)
 			logSysInfo()

@@ -1,0 +1,34 @@
+
+# Vouch Proxy configuration
+# bare minimum to get Vouch Proxy running with Discord as an OpenID Provider
+
+
+vouch:
+  domains:
+    - yourdomain.com
+
+  # whiteList is a list of usernames that will allow a login if allowAllUsers is false
+  whiteList:
+    # The default behavior matches the Discord user's username
+    - loganintech
+
+    # If the user still hasn't chosen a new username, the old username#discrimnator format will work
+    - LoganInTech#1203
+
+    # If discord_use_ids is set to true, you must use the user's ID
+    - 12345678901234567
+
+  cookie:
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com)
+    secure: false
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    # domain: yourdomain.com
+
+# https://discord.com/developers/docs/topics/oauth2
+oauth:
+  provider: discord
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxx
+  callback_url: http://vouch.yourdomain.com:9090/auth
+  ## Uncomment this to match users based on their Discord ID
+  # discord_use_ids: true
