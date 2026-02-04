@@ -1,6 +1,6 @@
 # quay.io/vouch/vouch-proxy
 # https://github.com/vouch/vouch-proxy
-FROM golang:1.23 AS builder
+FROM golang:1.24 AS builder
 
 ARG UID=999
 ARG GID=999
