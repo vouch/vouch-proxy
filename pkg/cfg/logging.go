@@ -103,7 +103,11 @@ func (logging) configure() {
 	}
 
 	// then we weren't configured via command line, check the config file
-	if !viper.IsSet(Branding.LCName + ".logLevel") {
+	// or the matching env var. envconfig writes to Cfg.LogLevel directly
+	// instead of going through viper, so viper.IsSet on its own wasn't
+	// enough to detect that the user had asked for a specific level via
+	// e.g. VOUCH_LOGLEVEL. See #540.
+	if !viper.IsSet(Branding.LCName+".logLevel") && os.Getenv(Branding.UCName+"_LOGLEVEL") == "" {
 		// then we weren't configured via the config file, set the default
 		Cfg.LogLevel = Logging.DefaultLogLevel.String()
 	}
