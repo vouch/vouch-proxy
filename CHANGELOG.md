@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.48.0
+
+- improve checks of the number of parts of multipart cookies
+
 ## v0.47.2
 
 - fix [#608](https://github.com/vouch/vouch-proxy/issues/608) accomodating golang-jwt/jwt/v5 audience string format - HT @macourteau
