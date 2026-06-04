@@ -26,6 +26,7 @@ import (
 )
 
 const maxCookieSize = 4000
+const maxCookieParts = 32
 
 var log *zap.SugaredLogger
 var sameSite http.SameSite
@@ -42,7 +43,6 @@ func SetCookie(w http.ResponseWriter, r *http.Request, val string) {
 }
 
 func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
-	cookieName := cfg.Cfg.Cookie.Name
 	// foreach domain
 	domain := domains.Matches(r.Host)
 	// Allow overriding the cookie domain in the config file
@@ -51,6 +51,7 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 	}
 	log.Debugf("setting the cookie domain to %v", domain)
 
+	// create the cookie and then test to see if it's too big
 	cookie := http.Cookie{
 		Name:     cfg.Cfg.Cookie.Name,
 		Value:    val,
@@ -62,54 +63,38 @@ func setCookie(w http.ResponseWriter, r *http.Request, val string, maxAge int) {
 		SameSite: sameSite,
 	}
 	cookieSize := len(cookie.String())
-	cookie.Value = ""
-	emptyCookieSize := len(cookie.String())
 	// Cookies have a max size of 4096 bytes, but to support most browsers, we should stay below 4000 bytes
 	// https://tools.ietf.org/html/rfc6265#section-6.1
 	// http://browsercookielimits.squawky.net/
 	if cookieSize > maxCookieSize {
 		// https://www.lifewire.com/cookie-limit-per-domain-3466809
 		log.Warnf("cookie size: %d.  cookie sizes over ~4093 bytes(depending on the browser and platform) have shown to cause issues or simply aren't supported.", cookieSize)
+		emptyCookie := cookie
+		emptyCookie.Value = ""
+		emptyCookieSize := len(emptyCookie.String())
 		cookieParts := splitCookie(val, maxCookieSize-emptyCookieSize)
 		for i, cookiePart := range cookieParts {
 			// Cookies are named 1of3, 2of3, 3of3
-			cookieName = fmt.Sprintf("%s_%dof%d", cfg.Cfg.Cookie.Name, i+1, len(cookieParts))
-			http.SetCookie(w, &http.Cookie{
-				Name:     cookieName,
-				Value:    cookiePart,
-				Path:     "/",
-				Domain:   domain,
-				MaxAge:   maxAge,
-				Secure:   cfg.Cfg.Cookie.Secure,
-				HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
-				SameSite: sameSite,
-			})
+			cookie.Name = fmt.Sprintf("%s_%dof%d", cfg.Cfg.Cookie.Name, i+1, len(cookieParts))
+			cookie.Value = cookiePart
+			http.SetCookie(w, &cookie)
 		}
 	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieName,
-			Value:    val,
-			Path:     "/",
-			Domain:   domain,
-			MaxAge:   maxAge,
-			Secure:   cfg.Cfg.Cookie.Secure,
-			HttpOnly: cfg.Cfg.Cookie.HTTPOnly,
-			SameSite: sameSite,
-		})
+		http.SetCookie(w, &cookie)
 	}
 }
 
 // Cookie get the vouch jwt cookie
 func Cookie(r *http.Request) (string, error) {
 
-	cookieParts := make([]string, 0)
+	var cookieParts []string
 	var numParts = -1
 
 	var err error
 	cookies := r.Cookies()
 	// Get the remaining parts
 	// search for cookie parts in order
-	// this is the hotpath so we're trying to only walk once
+	// this is the hot path so we're trying to only walk once
 	for _, cookie := range cookies {
 		if cookie.Name == cfg.Cfg.Cookie.Name {
 			return cookie.Value, nil
@@ -126,12 +111,18 @@ func Cookie(r *http.Request) (string, error) {
 				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
 					return "", fmt.Errorf("multipart cookie fail: %s", err)
 				}
+				if numParts < 1 || numParts > maxCookieParts {
+					return "", fmt.Errorf("multipart cookie fail: invalid part count %s", xOFy)
+				}
 				log.Debugf("make cookieParts of size %d", numParts)
 				cookieParts = make([]string, numParts)
 			}
 			var i int
 			if i, err = strconv.Atoi(xyArray[0]); err != nil {
 				return "", fmt.Errorf("multipart cookie fail: %s", err)
+			}
+			if i > numParts {
+				return "", fmt.Errorf("multipart cookie fail: invalid part count %s", xOFy)
 			}
 			cookieParts[i-1] = cookie.Value
 		}
