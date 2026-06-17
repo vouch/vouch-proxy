@@ -33,10 +33,11 @@ import (
 type Provider struct{}
 
 type adfsTokenRes struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	IDToken     string `json:"id_token"`
-	ExpiresIn   int64  `json:"expires_in"` // relative seconds from now
+	AccessToken   string `json:"access_token"`
+	TokenType     string `json:"token_type"`
+	RefreshToken  string `json:"refresh_token"`
+	IDToken       string `json:"id_token"`
+	ExpiresIn     int64  `json:"expires_in"` // relative seconds from now
 }
 
 var log *zap.SugaredLogger
@@ -89,6 +90,7 @@ func (Provider) GetUserInfo(r *http.Request, user *structs.User, customClaims *s
 	}
 
 	ptokens.PAccessToken = string(tokenRes.AccessToken)
+	ptokens.PRefreshToken = string(tokenRes.RefreshToken)
 	ptokens.PIdToken = string(tokenRes.IDToken)
 
 	s := strings.Split(tokenRes.IDToken, ".")
