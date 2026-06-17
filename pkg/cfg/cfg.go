@@ -57,10 +57,13 @@ type Config struct {
 	TeamWhiteList []string `mapstructure:"teamWhitelist"`
 	AllowAllUsers bool     `mapstructure:"allowAllUsers"`
 	PublicAccess  bool     `mapstructure:"publicAccess"`
+	IPWhiteList   []string `mapstructure:"ipWhitelist"`
 	TLS           struct {
-		Cert    string `mapstructure:"cert"`
-		Key     string `mapstructure:"key"`
-		Profile string `mapstructure:"profile"`
+		Cert           string `mapstructure:"cert"`
+		Key            string `mapstructure:"key"`
+		Profile        string `mapstructure:"profile"`
+		ClientCertFile string `mapstructure:"clientCertFile"`
+		ClientKeyFile  string `mapstructure:"clientKeyFile"`
 	}
 	JWT struct {
 		SigningMethod  string `mapstructure:"signing_method"`

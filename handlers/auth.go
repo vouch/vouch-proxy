@@ -82,7 +82,6 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 			oauth2.SetAuthURLParam("code_verifier", session.Values["codeVerifier"].(string)),
 		}
 	}
-
 	if err := getUserInfo(r, &user, &customClaims, &ptokens, authCodeOptions...); err != nil {
 		responses.Error400(w, r, fmt.Errorf("/auth Error while retrieving user info after successful login at the OAuth provider: %w", err))
 		return

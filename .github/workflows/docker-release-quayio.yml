@@ -1,11 +1,6 @@
 name: Publish Docker image to Quay.io
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*'
+
 
 
 jobs:

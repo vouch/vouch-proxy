@@ -1,9 +1,6 @@
 name: Docker build and push voucher/vouch-proxy:latest-arm
 
-on:
-  push:
-    branches:
-      - master
+
 
 jobs:
   publish-to-docker-arm:

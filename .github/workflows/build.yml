@@ -1,0 +1,75 @@
+# .github/workflows/build-simple.yml
+# 简化版本 - 只构建Linux版本
+name: Build Vouch Proxy (Simple)
+
+on:
+  push:
+    branches: [ feat-* ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build Linux Binary
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Build Linux binary
+      env:
+        CGO_ENABLED: 0
+        GOOS: linux
+        GOARCH: amd64
+      run: |
+        # 获取构建信息
+        VERSION=$(git describe --always --long --dirty 2>/dev/null || echo "dev-$(date +%s)")
+        DT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        SEMVER=$(git tag --list --sort="-version:refname" | head -n1 || echo "v0.0.0-dev")
+        
+        echo "Building version: $VERSION"
+        echo "Build date: $DT"
+        echo "Branch: $BRANCH"
+        echo "Semver: $SEMVER"
+        
+        # 构建
+        go build -v -trimpath \
+          -ldflags="-w -s -X main.version=$VERSION -X main.uname=Linux -X main.builddt=$DT -X main.host=github-actions -X main.semver=$SEMVER -X main.branch=$BRANCH" \
+          -o vouch-proxy .
+        
+        # 检查文件
+        ls -la vouch-proxy
+        chmod +x vouch-proxy
+        ./vouch-proxy -version || echo "Build completed"
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: vouch-proxy-linux
+        path: vouch-proxy
+        retention-days: 30
+
+    # 如果是tag推送，创建release
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: vouch-proxy
+        name: Release ${{ github.ref_name }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

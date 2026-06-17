@@ -1,5 +1,4 @@
 name: "Push Notification"
-on: [push, pull_request, create]
 
 jobs:
   notify-irc:

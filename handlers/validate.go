@@ -34,6 +34,8 @@ var (
 func ValidateRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fastlog.Debug("/validate")
 
+
+
 	jwt := jwtmanager.FindJWT(r)
 	if jwt == "" {
 		send401or200PublicAccess(w, r, errNoJWT)
