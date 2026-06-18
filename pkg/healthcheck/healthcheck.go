@@ -49,7 +49,7 @@ func healthcheck() {
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err == nil {
-			var result map[string]interface{}
+			var result map[string]any
 			jsonErr := json.Unmarshal(body, &result)
 			if jsonErr == nil {
 				if result["ok"] == true {

@@ -34,7 +34,7 @@ const comma = ","
 // VouchClaims jwt Claims specific to vouch
 type VouchClaims struct {
 	Username     string `json:"username"`
-	CustomClaims map[string]interface{}
+	CustomClaims map[string]any
 	PAccessToken string
 	PIdToken     string
 	jwt.RegisteredClaims
@@ -147,7 +147,7 @@ func ParseTokenString(tokenString string) (*jwt.Token, error) {
 		log.Errorf("%s", err)
 	}
 
-	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
+	return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (any, error) {
 		// return jwt.ParseWithClaims(tokenString, &VouchClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.GetSigningMethod(cfg.Cfg.JWT.SigningMethod) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -164,7 +164,7 @@ func (claims *VouchClaims) SiteInAudience(s string) bool {
 	for _, a := range claims.Audience {
 		// jwt/v4 serialized the audience as a comma-separated string;
 		// jwt/v5 deserializes that into a single-element []string.
-		for _, d := range strings.Split(a, comma) {
+		for d := range strings.SplitSeq(a, comma) {
 			if s == d || strings.HasSuffix(s, "."+d) {
 				log.Debugf("site %s is found for claims.Audience %s", s, d)
 				return true

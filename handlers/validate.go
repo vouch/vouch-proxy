@@ -95,7 +95,7 @@ func generateCustomClaimsHeaders(w http.ResponseWriter, claims *jwtmanager.Vouch
 				// Check for matching claim
 				if claim == k {
 					log.Debugf("Found matching claim key: %s", k)
-					if val, ok := v.([]interface{}); ok {
+					if val, ok := v.([]any); ok {
 						strs := make([]string, len(val))
 						for i, v := range val {
 							strs[i] = fmt.Sprintf("\"%s\"", v)

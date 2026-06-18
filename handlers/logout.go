@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -57,17 +58,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure that redirectURL, if given, is allowed by config
 	if redirectURL != "" {
-		redirectValid := false
-		for _, allowed := range cfg.Cfg.LogoutRedirectURLs {
-			if allowed == redirectURL {
-				log.Debugf("/logout found ")
-				redirectValid = true
-				break
-			}
-		}
-		if !redirectValid {
+		if slices.Contains(cfg.Cfg.LogoutRedirectURLs, redirectURL) {
+			log.Debugf("/logout found ")
+		} else {
 			responses.Error400(w, r, fmt.Errorf("%w: %s", errUnauthRedirURL, redirectURL))
 			return
+
 		}
 	}
 

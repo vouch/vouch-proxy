@@ -391,7 +391,7 @@ func checkConfigFileWellFormed() error {
 }
 
 // UnmarshalKey populate struct from contents of cfg tree at key
-func UnmarshalKey(key string, rawVal interface{}) error {
+func UnmarshalKey(key string, rawVal any) error {
 	return viper.UnmarshalKey(key, rawVal)
 }
 
@@ -623,7 +623,7 @@ func InitForTestPurposesWithProvider(provider string) {
 
 }
 
-func DecryptionKey() (interface{}, error) {
+func DecryptionKey() (any, error) {
 	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") {
 		return []byte(Cfg.JWT.Secret), nil
 	}
@@ -638,7 +638,7 @@ func DecryptionKey() (interface{}, error) {
 		return nil, fmt.Errorf("error reading Key: %s", err)
 	}
 
-	var key interface{}
+	var key any
 	switch {
 	case strings.HasPrefix(Cfg.JWT.SigningMethod, "RS"):
 		key, err = jwt.ParseRSAPublicKeyFromPEM(keyBytes)
@@ -656,7 +656,7 @@ func DecryptionKey() (interface{}, error) {
 	return key, nil
 }
 
-func SigningKey() (interface{}, error) {
+func SigningKey() (any, error) {
 	if strings.HasPrefix(Cfg.JWT.SigningMethod, "HS") {
 		return []byte(Cfg.JWT.Secret), nil
 	}
@@ -671,7 +671,7 @@ func SigningKey() (interface{}, error) {
 		return nil, fmt.Errorf("error reading Key: %s", err)
 	}
 
-	var key interface{}
+	var key any
 	switch {
 	case strings.HasPrefix(Cfg.JWT.SigningMethod, "RS"):
 		key, err = jwt.ParseRSAPrivateKeyFromPEM(keyBytes)

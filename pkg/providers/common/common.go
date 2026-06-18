@@ -54,13 +54,13 @@ func PrepareTokensAndClient(r *http.Request, ptokens *structs.PTokens, setProvid
 
 // MapClaims populate CustomClaims from userInfo for each configure claims header
 func MapClaims(claims []byte, customClaims *structs.CustomClaims) error {
-	var f interface{}
+	var f any
 	err := json.Unmarshal(claims, &f)
 	if err != nil {
 		log.Error("Error unmarshaling claims")
 		return err
 	}
-	m := f.(map[string]interface{})
+	m := f.(map[string]any)
 	for k := range m {
 		var found = false
 		for claim := range cfg.Cfg.Headers.ClaimsCleaned {

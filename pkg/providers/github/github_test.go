@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"slices"
 	"testing"
 
 	mockhttp "github.com/karupanerura/go-mock-http-response"
@@ -66,13 +67,7 @@ func urlEquals(value string) ReqMatcher {
 }
 
 func assertURLCalled(t *testing.T, url string) {
-	found := false
-	for _, requestedURL := range requests {
-		if requestedURL == url {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(requests, url)
 	assert.True(t, found, "Expected %s to have been called, but got only %s", url, requests)
 }
 
