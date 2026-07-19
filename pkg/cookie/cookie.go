@@ -107,6 +107,9 @@ func Cookie(r *http.Request) (string, error) {
 			)
 			xOFy := strings.Replace(cookie.Name, cookieUnder, "", 1)
 			xyArray := strings.Split(xOFy, "of")
+			if len(xyArray) != 2 {
+				return "", fmt.Errorf("multipart cookie fail: invalid part count %s", xOFy)
+			}
 			if numParts == -1 { // then its uninitialized
 				if numParts, err = strconv.Atoi(xyArray[1]); err != nil {
 					return "", fmt.Errorf("multipart cookie fail: %s", err)
@@ -121,7 +124,7 @@ func Cookie(r *http.Request) (string, error) {
 			if i, err = strconv.Atoi(xyArray[0]); err != nil {
 				return "", fmt.Errorf("multipart cookie fail: %s", err)
 			}
-			if i > numParts {
+			if i < 1 || i > numParts {
 				return "", fmt.Errorf("multipart cookie fail: invalid part count %s", xOFy)
 			}
 			cookieParts[i-1] = cookie.Value
