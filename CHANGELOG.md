@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.49.1
+
+- upgrade `golang.org/x/net` to `v0.59.0` and other module upgrades
+
 ## v0.49.0
 
 - upgrade golang to `v1.27` from `v1.26`
