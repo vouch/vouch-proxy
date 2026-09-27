@@ -4,6 +4,10 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.50.0
+
+- avoid potential gzip compression bomb
+
 ## v0.49.2
 
 - [improve multipart cookie checks](https://github.com/vouch/vouch-proxy/issues/615) (even better) HT @kanywst 

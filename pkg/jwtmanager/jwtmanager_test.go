@@ -11,6 +11,7 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package jwtmanager
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -165,5 +166,61 @@ func TestSiteInAudienceLegacyFormat(t *testing.T) {
 				t.Errorf("SiteInAudience(%q) = %v, want %v", tt.s, got, tt.want)
 			}
 		})
+	}
+}
+func Test_decodeAndDecompressTokenString(t *testing.T) {
+	validToken, err := compressAndEncodeTokenString("test")
+	if err != nil {
+		t.Fatalf("compress valid token: %v", err)
+	}
+
+	tooBig := make([]byte, maxDecompressedJWTSize+1)
+	compressedTooBig, err := compressAndEncodeTokenString(string(tooBig))
+	if err != nil {
+		t.Fatalf("compress oversized payload: %v", err)
+	}
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		encgzipss string
+		want      string
+		wantErr   bool
+	}{
+		{"valid compressed token", validToken, "test", false},
+		{"invalid base64", "invalid_base64_string", "", true},
+		{"invalid gzip", "aW52YWxpZF9ncG9fZGF0YQ==", "", true},
+		{"gzip too big", compressedTooBig, "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeAndDecompressTokenString(tt.encgzipss)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_decodeAndDecompressTokenStringLimit(t *testing.T) {
+	tooBig := make([]byte, maxDecompressedJWTSize+1)
+	if _, err := rand.Read(tooBig); err != nil {
+		t.Fatalf("generate random payload: %v", err)
+	}
+
+	compressedTooBig, err := compressAndEncodeTokenString(string(tooBig))
+	if err != nil {
+		t.Fatalf("compress oversized payload: %v", err)
+	}
+
+	got, err := decodeAndDecompressTokenString(compressedTooBig)
+	if err == nil {
+		t.Fatal("expected oversized decompressed payload to fail")
+	}
+	if got != "" {
+		t.Fatalf("decompressed payload = %d bytes, want no payload on error", len(got))
 	}
 }

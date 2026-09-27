@@ -138,7 +138,12 @@ func SiteInToken(site string, token *jwt.Token) bool {
 func ParseTokenString(tokenString string) (*jwt.Token, error) {
 	log.Debugf("tokenString length: %d", len(tokenString))
 	if cfg.Cfg.JWT.Compress {
-		tokenString = decodeAndDecompressTokenString(tokenString)
+		decompressedTokenString, err := decodeAndDecompressTokenString(tokenString)
+		if err != nil {
+			log.Debugf("Error decompressing token: %v", err)
+			return nil, err
+		}
+		tokenString = decompressedTokenString
 		log.Debugf("decompressed tokenString length %d", len(tokenString))
 	}
 
@@ -185,25 +190,30 @@ func PTokenClaims(ptoken *jwt.Token) (*VouchClaims, error) {
 	return ptokenClaims, nil
 }
 
-func decodeAndDecompressTokenString(encgzipss string) string {
+const maxDecompressedJWTSize = 1 << 20 // 1 MiB
+
+func decodeAndDecompressTokenString(encgzipss string) (string, error) {
 	var gzipss []byte
 	// gzipss, err := url.QueryUnescape(encgzipss)
 	gzipss, err := base64.URLEncoding.DecodeString(encgzipss)
 	if err != nil {
-		log.Debugf("Error in Base64decode: %v", err)
+		return "", fmt.Errorf("Error in Base64decode: %w", err)
 	}
 
 	breader := bytes.NewReader(gzipss)
 	zr, err := gzip.NewReader(breader)
 	if err != nil {
-		log.Debugf("Error reading gzip data: %v", err)
-		return ""
+		return "", fmt.Errorf("Error reading gzip data: %w", err)
 	}
-	if err := zr.Close(); err != nil {
-		log.Debugf("Error decoding token: %v", err)
+	defer zr.Close()
+	ss, err := io.ReadAll(io.LimitReader(zr, maxDecompressedJWTSize+1))
+	if err != nil {
+		return "", fmt.Errorf("Error decoding token: %w", err)
 	}
-	ss, _ := io.ReadAll(zr)
-	return string(ss)
+	if len(ss) > maxDecompressedJWTSize {
+		return "", fmt.Errorf("decompressed JWT exceeds maximum size of %d bytes", maxDecompressedJWTSize)
+	}
+	return string(ss), nil
 }
 
 func compressAndEncodeTokenString(ss string) (string, error) {
