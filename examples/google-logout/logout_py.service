@@ -1,0 +1,13 @@
+[Unit]
+Description=Logout.py
+After=network.target
+
+[Service]
+User=logout_py
+Environment="PORT=8080"
+ExecStart=/opt/logout_py/venv/bin/python3 /opt/logout_py/logout.py ${PORT}
+RestartSec=5
+Restart=on-success
+
+[Install]
+WantedBy=multi-user.target
