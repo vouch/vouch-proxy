@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+## v0.49.0
+
 - upgrade golang to `v1.27` from `v1.26`
 - updates suggested by `go fix`
 
