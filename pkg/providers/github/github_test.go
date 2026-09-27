@@ -162,16 +162,14 @@ func TestGetUserInfo(t *testing.T) {
 	setUp()
 
 	userInfoContent, _ := json.Marshal(structs.GitHubUser{
-		User: structs.User{
-			Username:   "test",
-			CreatedOn:  123,
-			Email:      "email@example.com",
-			ID:         1,
-			LastUpdate: 123,
-			Name:       "name",
-		},
-		Login:   "myusername",
-		Picture: "avatar-url",
+		Username:   "test",
+		CreatedOn:  123,
+		Email:      "email@example.com",
+		ID:         1,
+		LastUpdate: 123,
+		Name:       "name",
+		Login:      "myusername",
+		Picture:    "avatar-url",
 	})
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL), http.StatusOK, map[string]string{}, userInfoContent)
 

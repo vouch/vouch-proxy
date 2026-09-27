@@ -141,9 +141,7 @@ func TestVouchClaims_SiteInAudience(t *testing.T) {
 
 func TestSiteInAudienceLegacyFormat(t *testing.T) {
 	claims := &VouchClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Audience: jwt.ClaimStrings{"vouch.github.io,other.test"},
-		},
+		Audience: jwt.ClaimStrings{"vouch.github.io,other.test"},
 	}
 
 	tests := []struct {

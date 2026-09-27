@@ -4,6 +4,9 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- upgrade golang to `v1.27` from `v1.26`
+- updates suggested by `go fix`
+
 ## v0.48.0 SECURITY UPDATE
 
 - fixes [Unbounded Multipart Cookie Allocation DoS in vouch-proxy](https://github.com/vouch/vouch-proxy/security/advisories/GHSA-qqff-5854-px68) 
