@@ -135,7 +135,7 @@ func TestValidateRequestHandlerWithGroupClaims(t *testing.T) {
 	setUp("/config/testing/handler_claims.yml")
 
 	customClaims := structs.CustomClaims{
-		Claims: map[string]interface{}{
+		Claims: map[string]any{
 			"sub": "f:a95afe53-60ba-4ac6-af15-fab870e72f3d:mrtester",
 			"groups": []string{
 				"Website Users",

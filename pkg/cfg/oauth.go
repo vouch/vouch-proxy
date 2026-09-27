@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -96,9 +97,9 @@ type oauthClaimsConfig struct {
 }
 
 type oauthClaimValueConfig struct {
-	Essential bool          `mapstructure:"essential" json:"essential,omitempty"`
-	Value     interface{}   `mapstructure:"value" json:"value,omitempty"`
-	Values    []interface{} `mapstructure:"values" json:"values,omitempty"`
+	Essential bool  `mapstructure:"essential" json:"essential,omitempty"`
+	Value     any   `mapstructure:"value" json:"value,omitempty"`
+	Values    []any `mapstructure:"values" json:"values,omitempty"`
 }
 
 func configureOauth() error {
@@ -337,10 +338,5 @@ func checkCallbackConfig(url string) error {
 }
 
 func arrContains(arr []string, str string) bool {
-	for _, v := range arr {
-		if v == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(arr, str)
 }

@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"slices"
 	"testing"
 
 	mockhttp "github.com/karupanerura/go-mock-http-response"
@@ -66,13 +67,7 @@ func urlEquals(value string) ReqMatcher {
 }
 
 func assertURLCalled(t *testing.T, url string) {
-	found := false
-	for _, requestedURL := range requests {
-		if requestedURL == url {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(requests, url)
 	assert.True(t, found, "Expected %s to have been called, but got only %s", url, requests)
 }
 
@@ -167,16 +162,14 @@ func TestGetUserInfo(t *testing.T) {
 	setUp()
 
 	userInfoContent, _ := json.Marshal(structs.GitHubUser{
-		User: structs.User{
-			Username:   "test",
-			CreatedOn:  123,
-			Email:      "email@example.com",
-			ID:         1,
-			LastUpdate: 123,
-			Name:       "name",
-		},
-		Login:   "myusername",
-		Picture: "avatar-url",
+		Username:   "test",
+		CreatedOn:  123,
+		Email:      "email@example.com",
+		ID:         1,
+		LastUpdate: 123,
+		Name:       "name",
+		Login:      "myusername",
+		Picture:    "avatar-url",
 	})
 	mockResponse(urlEquals(cfg.GenOAuth.UserInfoURL), http.StatusOK, map[string]string{}, userInfoContent)
 

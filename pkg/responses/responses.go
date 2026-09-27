@@ -11,13 +11,13 @@ OR CONDITIONS OF ANY KIND, either express or implied.
 package responses
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 )
 
 // Index variables passed to index.tmpl

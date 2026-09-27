@@ -13,6 +13,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 	"github.com/vouch/vouch-proxy/pkg/cookie"
@@ -127,7 +128,7 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // verifyUser validates that the domains match for the user
-func verifyUser(u interface{}) (bool, error) {
+func verifyUser(u any) (bool, error) {
 
 	user := u.(structs.User)
 
@@ -140,11 +141,9 @@ func verifyUser(u interface{}) (bool, error) {
 
 	// WhiteList
 	case len(cfg.Cfg.WhiteList) != 0:
-		for _, wl := range cfg.Cfg.WhiteList {
-			if user.Username == wl {
-				log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
-				return true, nil
-			}
+		if slices.Contains(cfg.Cfg.WhiteList, user.Username) {
+			log.Debugf("verifyUser: Success! found user.Username in WhiteList: %s", user.Username)
+			return true, nil
 		}
 		return false, fmt.Errorf("verifyUser: user.Username not found in WhiteList: %s", user.Username)
 
