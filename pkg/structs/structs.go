@@ -69,6 +69,10 @@ func (u *AzureUser) PrepareUserData() {
 		u.Username = u.PreferredUsername
 	}
 
+	if u.Username == "" {
+		u.Username = u.Name
+	}
+
 	if u.Email == "" {
 		u.Email = u.UPN
 	}
