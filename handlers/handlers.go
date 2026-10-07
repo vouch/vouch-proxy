@@ -31,6 +31,7 @@ import (
 	"github.com/vouch/vouch-proxy/pkg/providers/nextcloud"
 	"github.com/vouch/vouch-proxy/pkg/providers/openid"
 	"github.com/vouch/vouch-proxy/pkg/providers/openstax"
+	"github.com/vouch/vouch-proxy/pkg/session"
 	"github.com/vouch/vouch-proxy/pkg/structs"
 )
 
@@ -45,7 +46,7 @@ const (
 )
 
 var (
-	sessstore *sessions.CookieStore
+	sessstore sessions.Store
 	log       *zap.SugaredLogger
 	fastlog   *zap.Logger
 	provider  Provider
@@ -55,12 +56,14 @@ var (
 func Configure() {
 	log = cfg.Logging.Logger
 	fastlog = cfg.Logging.FastLogger
-	// http://www.gorillatoolkit.org/pkg/sessions
-	sessstore = sessions.NewCookieStore([]byte(cfg.Cfg.Session.Key))
-	sessstore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
-	sessstore.Options.Secure = cfg.Cfg.Cookie.Secure
-	sessstore.Options.SameSite = cookie.SameSite()
-	sessstore.Options.MaxAge = cfg.Cfg.Session.MaxAge * 60 // convert minutes to seconds
+	// Use MultiPartCookieStore to support large session cookies (long URLs)
+	// This fixes https://github.com/vouch/vouch-proxy/issues/348
+	multiPartStore := session.NewMultiPartCookieStore([]byte(cfg.Cfg.Session.Key))
+	multiPartStore.Options.HttpOnly = cfg.Cfg.Cookie.HTTPOnly
+	multiPartStore.Options.Secure = cfg.Cfg.Cookie.Secure
+	multiPartStore.Options.SameSite = cookie.SameSite()
+	multiPartStore.Options.MaxAge = cfg.Cfg.Session.MaxAge * 60 // convert minutes to seconds
+	sessstore = multiPartStore
 
 	provider = getProvider()
 	provider.Configure()
