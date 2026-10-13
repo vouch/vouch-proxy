@@ -180,6 +180,17 @@ server {
 }
 ```
 
+Common HTTP security headers should usually be set at the reverse proxy (NGINX), not in Vouch Proxy itself. There are many such headers, each with subtle nuances, so [NGINX `add_header`](https://nginx.org/en/docs/http/ngx_http_headers_module.html) is the typical place to apply them on the Vouch host, for example:
+
+```nginx
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "SAMEORIGIN" always;
+```
+
+Header choice is environment-specific. See the [OWASP HTTP Headers Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html) and [OWASP Secure Headers Project](https://owasp.org/www-project-secure-headers/) for guidance.
+
 ### Vouch Proxy "in a path"
 
 As of `v0.33.0` Vouch Proxy can be served within an Nginx location (path) by configuring `vouch.document_root: /vp_in_a_path`
