@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 	"github.com/vouch/vouch-proxy/pkg/cfg"
 )
@@ -219,6 +220,49 @@ func TestLoginHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestOAuthLoginURLUsesRequestCallbackURLWithoutMutatingGlobalConfig(t *testing.T) {
+	setUp("/config/testing/handler_login_redirecturls.yml")
+	startupRedirectURL := cfg.OAuthClient.RedirectURL
+
+	firstRequest := httptest.NewRequest(http.MethodGet, "/login", nil)
+	firstRequest.Host = "vouch.example.com"
+	firstURL, err := url.Parse(oauthLoginURL(firstRequest, loginSession("first")))
+	assert.NoError(t, err)
+	assert.Equal(t, "http://vouch.example.com:9090/auth", firstURL.Query().Get("redirect_uri"))
+
+	secondRequest := httptest.NewRequest(http.MethodGet, "/login", nil)
+	secondRequest.Host = "vouch.other.com"
+	secondURL, err := url.Parse(oauthLoginURL(secondRequest, loginSession("second")))
+	assert.NoError(t, err)
+	assert.Equal(t, "http://vouch.other.com:9090/auth", secondURL.Query().Get("redirect_uri"))
+
+	assert.Equal(t, "http://vouch.example.com:9090/auth", firstURL.Query().Get("redirect_uri"))
+	assert.Equal(t, startupRedirectURL, cfg.OAuthClient.RedirectURL)
+}
+
+func TestOAuthLoginURLUsesRequestCallbackURLForIndieAuth(t *testing.T) {
+	setUp("/config/testing/handler_login_redirecturls.yml")
+	startupRedirectURL := cfg.OAuthClient.RedirectURL
+	cfg.GenOAuth.Provider = cfg.Providers.IndieAuth
+
+	request := httptest.NewRequest(http.MethodGet, "/login", nil)
+	request.Host = "vouch.other.com"
+	oauthURL, err := url.Parse(oauthLoginURL(request, loginSession("state")))
+
+	assert.NoError(t, err)
+	assert.Equal(t, "http://vouch.other.com:9090/auth", oauthURL.Query().Get("redirect_uri"))
+	assert.Equal(t, "id", oauthURL.Query().Get("response_type"))
+	assert.Equal(t, startupRedirectURL, cfg.OAuthClient.RedirectURL)
+}
+
+func loginSession(state string) sessions.Session {
+	return sessions.Session{Values: map[interface{}]interface{}{
+		"state":         state,
+		"codeChallenge": "challenge",
+	}}
+}
+
 func TestLoginErrTooManyRedirects(t *testing.T) {
 
 	handler := http.HandlerFunc(LoginHandler)
