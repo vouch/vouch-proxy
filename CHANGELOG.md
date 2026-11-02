@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix OAuth `redirect_uri` race with multiple `callback_urls`
+
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
 ## v0.50.0
