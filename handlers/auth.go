@@ -13,6 +13,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 
 	"github.com/vouch/vouch-proxy/pkg/cfg"
@@ -24,6 +25,12 @@ import (
 
 	"golang.org/x/oauth2"
 )
+
+// validStateNonce matches the state nonce format produced by generateStateNonce
+// in login.go, which strips everything outside [a-zA-Z0-9]. Any state value that
+// does not match was never issued by Vouch and must be rejected before it is
+// reflected into a redirect target (prevents open-redirect via crafted state).
+var validStateNonce = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 
 // CallbackHandler /auth
 // - redirects to /auth/{state}/ with the state coming from the query parameter
@@ -41,6 +48,15 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	queryState := r.URL.Query().Get("state")
 	if queryState == "" {
 		responses.Error400(w, r, fmt.Errorf("/auth: could not find state in query %s", r.URL.RawQuery))
+		return
+	}
+
+	// The state must be an alphanumeric nonce exactly as issued by generateStateNonce.
+	// Rejecting anything else prevents a crafted state (e.g. containing path separators
+	// such as "/" or "\") from being reflected into the redirect Location and resolving
+	// to an attacker-controlled origin (open redirect).
+	if !validStateNonce.MatchString(queryState) {
+		responses.Error400(w, r, fmt.Errorf("/auth: invalid state nonce in query %s", r.URL.RawQuery))
 		return
 	}
 
