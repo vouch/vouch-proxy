@@ -79,6 +79,38 @@ func TestCallbackHandlerDocumentRoot(t *testing.T) {
 	}
 }
 
+// TestCallbackHandlerStateOpenRedirect confirms that a crafted, non-nonce state
+// value is rejected with 400 rather than reflected into the redirect Location.
+// See the open-redirect fix in CallbackHandler (handlers/auth.go).
+func TestCallbackHandlerStateOpenRedirect(t *testing.T) {
+	handlerA := http.HandlerFunc(CallbackHandler)
+	setUp("/config/testing/handler_login_url.yml")
+
+	// states that were never issued by generateStateNonce (which emits [a-zA-Z0-9]+)
+	badStates := []string{
+		"..%2f..%2f%5Cevil.example.com", // backslash scheme-relative payload from the report
+		"../../\\evil.example.com",      // raw separators
+		"legit/state",                   // forward slash
+		"legit.state",                   // dot
+		"legit state",                   // space
+	}
+
+	for _, bad := range badStates {
+		t.Run(bad, func(t *testing.T) {
+			reqAuth, err := http.NewRequest("GET", cfg.Cfg.DocumentRoot+"/auth?state="+bad, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			reqAuth.Header.Set("Host", "my.example.com")
+			rrA := httptest.NewRecorder()
+			handlerA.ServeHTTP(rrA, reqAuth)
+
+			assert.Equal(t, http.StatusBadRequest, rrA.Code, "crafted state must be rejected")
+			assert.Empty(t, rrA.Header().Get("Location"), "no redirect Location should be emitted for a crafted state")
+		})
+	}
+}
+
 func TestAuthStateHandler(t *testing.T) {
 	type args struct {
 		w http.ResponseWriter

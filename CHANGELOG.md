@@ -4,6 +4,8 @@
 
 Coming soon! Please document any work in progress here as part of your PR. It will be moved to the next tag when released.
 
+- fix open redirect in the `/auth` callback by validating the `state` query parameter against the alphanumeric nonce format issued by `generateStateNonce`; a crafted `state` containing path separators is now rejected with `400` instead of being reflected into the redirect `Location`
+
 ## v0.50.0
 
 - avoid potential gzip compression bomb
